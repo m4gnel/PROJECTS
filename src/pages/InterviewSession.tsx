@@ -16,9 +16,13 @@ import {
   AlertCircle,
   CheckCircle2,
   BrainCircuit,
-  Loader2
+  Loader2,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+
+const ANALYZE_FUNCTION_URL = 'https://kwauxn5v--analyze-interview.functions.blink.new';
 
 interface InterviewData {
   id: string;
@@ -34,7 +38,29 @@ export function InterviewSession() {
   const { user } = useBlinkAuth();
   const [interview, setInterview] = useState<InterviewData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const speakText = async (text: string) => {
+    if (!isVoiceEnabled) return;
+    try {
+      const audioUrl = await blink.ai.generateSpeech({
+        text,
+        voice: 'alloy' // Professional recruiter voice
+      });
+      if (audioRef.current) {
+        audioRef.current.src = audioUrl;
+        audioRef.current.play();
+      } else {
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+        audio.play();
+      }
+    } catch (error) {
+      console.error('Speech generation failed:', error);
+    }
+  };
 
   const {
     messages,
@@ -47,12 +73,18 @@ export function InterviewSession() {
   } = useAgent({
     agent: interviewCoachAgent,
     onFinish: (response) => {
+      // Speak the AI's question
+      speakText(response.text);
+      
       // Check if the interview has concluded based on AI response
       if (response.text.toLowerCase().includes('interview has concluded')) {
-        handleInterviewEnd(response.text);
+        handleInterviewEnd();
       }
     }
   });
+
+  // Track interview conclusion
+  const [isConcluding, setIsConcluding] = useState(false);
 
   useEffect(() => {
     async function loadInterview() {
@@ -93,20 +125,66 @@ Please start the interview by introducing yourself and asking me to introduce my
     }
   }, [messages, isAgentThinking]);
 
-  const handleInterviewEnd = async (finalFeedback: string) => {
-    if (!id) return;
+  const handleInterviewEnd = async () => {
+    if (!id || isConcluding) return;
+    setIsConcluding(true);
+    
     try {
-      // Analyze performance with one more AI call or use the existing one
-      // For MVP, we mark as completed and navigate to feedback
+      toast.loading('Alex is finalising your performance review...', { id: 'concluding' });
+      
+      // Construct transcript
+      const transcript = messages
+        .filter(m => !m.hidden)
+        .map(m => `${m.role.toUpperCase()}: ${m.content}`)
+        .join('\n\n');
+
+      // Call analysis function
+      const response = await fetch(ANALYZE_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${blink.auth.getValidToken()}`
+        },
+        body: JSON.stringify({
+          transcript,
+          field: interview?.field,
+          experienceLevel: interview?.experienceLevel,
+          category: interview?.category
+        })
+      });
+
+      if (!response.ok) throw new Error('Analysis failed');
+      
+      const analysis = await response.json();
+
+      // Update database with structured results
       await blink.db.interviews.update(id, {
         status: 'completed',
-        overallFeedback: finalFeedback,
-        score: 85 // Mock score for now, real analysis in next step
+        score: analysis.overallScore,
+        overallFeedback: analysis.coachRemark,
+        analysisData: JSON.stringify(analysis) // Store full JSON for the report
       });
-      toast.success('Interview completed! Analyzing results...');
-      setTimeout(() => navigate(`/feedback/${id}`), 2000);
+
+      // Also store individual questions
+      if (analysis.questions && analysis.questions.length > 0) {
+        await blink.db.questions.createMany(
+          analysis.questions.map((q: any, index: number) => ({
+            interviewId: id,
+            questionText: q.question,
+            userAnswer: q.answer,
+            aiFeedback: q.feedback,
+            score: q.score,
+            orderIndex: index
+          }))
+        );
+      }
+
+      toast.success('Analysis complete! Redirecting to your report...', { id: 'concluding' });
+      setTimeout(() => navigate(`/feedback/${id}`), 1500);
     } catch (error) {
       console.error('Failed to conclude interview:', error);
+      toast.error('Error during performance analysis. Please try manually.', { id: 'concluding' });
+      setIsConcluding(false);
     }
   };
 
@@ -116,13 +194,13 @@ Please start the interview by introducing yourself and asking me to introduce my
     }
   };
 
-  if (isLoading || !interview) {
+  if (isLoading || !interview || isConcluding) {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-          <p className="text-xl font-bold">Initializing Simulation...</p>
-          <p className="text-muted-foreground">Setting up your professional AI recruiter</p>
+          <p className="text-xl font-bold">{isConcluding ? 'Alex is writing your feedback...' : 'Initializing Simulation...'}</p>
+          <p className="text-muted-foreground">{isConcluding ? 'Processing STAR method analysis and communication scores' : 'Setting up your professional AI recruiter'}</p>
         </div>
       </div>
     );
@@ -153,6 +231,15 @@ Please start the interview by introducing yourself and asking me to introduce my
         </div>
 
         <div className="mt-auto space-y-4 pt-8 border-t border-border">
+          <Button 
+            variant="outline" 
+            className={`w-full h-14 rounded-2xl border-2 font-bold transition-all ${isVoiceEnabled ? 'text-primary border-primary/20 bg-primary/5' : 'text-muted-foreground border-border'}`}
+            onClick={() => setIsVoiceEnabled(!isVoiceEnabled)}
+          >
+            {isVoiceEnabled ? <Volume2 className="mr-2 w-5 h-5" /> : <VolumeX className="mr-2 w-5 h-5" />}
+            AI Voice: {isVoiceEnabled ? 'ON' : 'OFF'}
+          </Button>
+
           <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />

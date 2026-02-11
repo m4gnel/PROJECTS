@@ -74,7 +74,9 @@ module.exports = {
   			'slide-up': 'slide-up 0.5s ease-out',
   			'animate-in': 'animate-in 0.5s ease-out both',
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			'float': 'float 6s ease-in-out infinite',
+  			'shimmer': 'shimmer 2s linear infinite'
   		},
   		keyframes: {
   			'fade-in': {
@@ -119,6 +121,19 @@ module.exports = {
   				'100%': {
   					opacity: '1',
   					transform: 'translateY(0)'
+  				}
+  			},
+  			'float': {
+  				'0%, 100%': {
+  					transform: 'translateY(0)'
+  				},
+  				'50%': {
+  					transform: 'translateY(-20px)'
+  				}
+  			},
+  			'shimmer': {
+  				'100%': {
+  					transform: 'translateX(100%)'
   				}
   			}
   		}

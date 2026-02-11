@@ -14,8 +14,22 @@ import {
   BrainCircuit,
   Star,
   TrendingUp,
-  Globe
+  Globe,
+  PlayCircle
 } from 'lucide-react'
+import { motion } from 'framer-motion'
+
+const SimulationButton = ({ onClick }: { onClick: () => void }) => (
+  <button 
+    onClick={onClick}
+    className="relative group h-20 px-12 overflow-hidden rounded-[1.5rem] bg-primary text-white text-xl font-black shadow-elegant transition-all hover:scale-[1.02] active:scale-[0.98] hover:shadow-glow"
+  >
+    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] transition-transform" />
+    <div className="relative flex items-center gap-3">
+      Enter Simulation <ArrowRight className="h-6 w-6 group-hover:translate-x-2 transition-transform" />
+    </div>
+  </button>
+);
 
 export function LandingPage() {
   const { isAuthenticated } = useBlinkAuth()
@@ -63,39 +77,70 @@ export function LandingPage() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background selection:bg-primary selection:text-white">
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden hero-gradient">
+      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.08),transparent_70%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none brightness-100 contrast-150" />
+        
         <div className="container relative z-10 px-6">
           <div className="mx-auto max-w-5xl text-center">
-            <Badge variant="secondary" className="mb-6 animate-reveal py-1.5 px-4 text-sm font-medium tracking-wide glass border-primary/20">
-              <Sparkles className="mr-2 h-4 w-4 text-primary" />
-              Trusted by 50,000+ Professionals
-            </Badge>
-            <h1 className="mb-8 text-6xl font-bold tracking-tight text-foreground sm:text-7xl lg:text-8xl animate-reveal leading-[1.05]">
-              Land your dream job with <br />
-              <span className="text-primary text-glow italic">AI-powered</span> practice
-            </h1>
-            <p className="mx-auto mb-12 max-w-2xl text-lg text-muted-foreground sm:text-xl animate-reveal [animation-delay:200ms]">
-              The most advanced AI interview coach. Realistic simulations, instant behavioral analysis, 
-              and tailored feedback that blows your mind.
-            </p>
-            <div className="flex flex-col items-center justify-center gap-6 sm:flex-row animate-reveal [animation-delay:400ms]">
-              <Button size="lg" className="h-16 px-10 text-xl font-bold rounded-full group shadow-2xl hover:shadow-primary/30 transition-all" onClick={handleCTA}>
-                Start Training Free <ArrowRight className="ml-2 h-6 w-6 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <Button size="lg" variant="outline" className="h-16 px-10 text-xl font-bold rounded-full border-2 glass hover:bg-secondary/50">
-                View Sample Report
-              </Button>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <Badge variant="secondary" className="mb-6 py-2 px-6 text-sm font-bold tracking-widest glass border-primary/20 rounded-full uppercase">
+                <Sparkles className="mr-2 h-4 w-4 text-primary animate-pulse" />
+                Next-Gen AI Interview Prep
+              </Badge>
+            </motion.div>
 
-            <div className="mt-24 flex flex-wrap justify-center items-center gap-10 md:gap-16 opacity-40 grayscale animate-reveal [animation-delay:600ms]">
+            <motion.h1 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.1 }}
+              className="mb-8 text-6xl font-black tracking-tighter text-foreground sm:text-7xl lg:text-9xl leading-[0.9] text-balance"
+            >
+              Master Your <br />
+              <span className="text-primary text-glow italic">Future Self</span>
+            </motion.h1>
+
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="mx-auto mb-12 max-w-2xl text-xl text-muted-foreground sm:text-2xl leading-relaxed font-medium"
+            >
+              Step into a hyper-realistic AI simulation that conducts domain-specific interviews, 
+              analyzes your every word, and prepares you for the world's most elite roles.
+            </motion.p>
+
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="flex flex-col items-center justify-center gap-6 sm:flex-row"
+            >
+              <SimulationButton onClick={handleCTA} />
+              <Button size="lg" variant="outline" className="h-20 px-12 text-xl font-black rounded-[1.5rem] border-2 glass border-primary/10 hover:bg-primary/5 transition-all group">
+                <PlayCircle className="mr-3 h-6 w-6 text-primary group-hover:scale-110 transition-transform" />
+                See Alex in Action
+              </Button>
+            </motion.div>
+
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              transition={{ duration: 1, delay: 0.8 }}
+              className="mt-24 flex flex-wrap justify-center items-center gap-10 md:gap-20 grayscale brightness-150"
+            >
               <span className="text-2xl font-bold tracking-tighter">GOOGLE</span>
               <span className="text-2xl font-bold tracking-tighter">AMAZON</span>
               <span className="text-2xl font-bold tracking-tighter">MICROSOFT</span>
               <span className="text-2xl font-bold tracking-tighter">STRIPE</span>
               <span className="text-2xl font-bold tracking-tighter">MCKINSEY</span>
-            </div>
+            </motion.div>
           </div>
         </div>
 
@@ -115,7 +160,7 @@ export function LandingPage() {
             {features.map((feature, i) => (
               <div 
                 key={i} 
-                className="group glass p-10 rounded-[2rem] transition-all hover:-translate-y-2 hover:shadow-2xl border-transparent hover:border-primary/20 animate-reveal"
+                className="group glass p-10 rounded-[3rem] transition-all hover:-translate-y-2 shadow-elegant hover:shadow-glow border-transparent hover:border-primary/20 animate-reveal border-beam"
                 style={{ animationDelay: `${i * 100}ms` }}
               >
                 <div className="mb-8 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all">
@@ -248,4 +293,3 @@ export function LandingPage() {
     </div>
   )
 }
-
