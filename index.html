@@ -1,99 +1,15 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Fake VS Code</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div id="vscode">
-    <!-- Top Bar -->
-    <div class="top-bar">
-      <div class="menu-item" id="file-menu">File
-        <div class="dropdown">
-          <div id="new-file">New File</div>
-          <div><label for="open-file-input" style="cursor:pointer; margin:0;">Open File</label></div>
-          <div id="save-file">Save</div>
-          <div id="save-as-file">Save As...</div>
-        </div>
-      </div>
-      <div class="menu-item" id="edit-menu">Edit
-        <div class="dropdown">
-          <div id="undo">Undo</div>
-          <div id="redo">Redo</div>
-          <div id="cut">Cut</div>
-          <div id="copy">Copy</div>
-          <div id="paste">Paste</div>
-        </div>
-      </div>
-      <div class="menu-item" id="view-menu">View
-        <div class="dropdown">
-          <div id="toggle-explorer">Explorer</div>
-          <div id="toggle-terminal">Terminal</div>
-          <div id="toggle-extensions">Extensions</div>
-        </div>
-      </div>
-      <div class="menu-item" id="run-menu">Run
-        <div class="dropdown">
-          <div id="start-debugging">Start Debugging</div>
-          <div id="run-without-debugging">Run Without Debugging</div>
-        </div>
-      </div>
-      <div class="menu-item" id="terminal-menu">Terminal
-        <div class="dropdown">
-          <div id="new-terminal">New Terminal</div>
-          <div id="split-terminal">Split Terminal</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Hidden file input for open file -->
-    <input type="file" id="open-file-input" style="display:none" />
-
-    <!-- Main Area -->
-    <div class="main" id="main-content">
-      <div class="sidebar" id="sidebar">
-        <h3>LANGUAGE</h3>
-        <ul>
-          <li class="folder" data-folder="BASH">BASH</li>
-          <li class="folder" data-folder="HTML">HTML</li>
-          <li class="folder" data-folder="CSS">CSS</li>
-          <li class="folder" data-folder="JS">JS</li>
-          <li class="folder" data-folder="JAVA">JAVA</li>
-          <li class="folder" data-folder="PYTHON">PYTHON</li>
-          <li class="folder" data-folder="C++">C++</li>
-          <li class="folder" data-folder="C">C</li>
-          <li class="folder" data-folder="SQL">SQL</li>
-        </ul>
-      </div>
-
-      <div class="editor-area">
-        <div class="tabs">
-          <span class="tab" id="tab-name">BASH</span>
-          <div class="controls">
-            <button id="run-btn">▶ Run</button>
-            <button id="clear-btn">🧹 Clear</button>
-            <button id="debug-btn">🐞 Debug</button>
-          </div>
-        </div>
-        <div class="editor" id="editor" contenteditable="true" spellcheck="false">
-          <p>// Write your BASH code here</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Resizer -->
-    <div id="resizer"></div>
-
-    <!-- Terminal -->
-    <div class="terminal" id="terminal">
-      <div id="output">
-        Microsoft Windows [Version 10.0.19045.4046]<br>
-        (c) Microsoft Corporation. All rights reserved.<br><br>
-      </div>
-    </div>
-  </div>
-
-  <script src="script.js"></script>
-</body>
-</html>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blink App</title>
+    <!-- CRITICAL: DO NOT REMOVE/MODIFY THIS COMMENT OR THE SCRIPT BELOW -->
+    <script src="https://blink.new/auto-engineer.js?projectId=ai-interview-coach-kwauxn5v" type="module"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html> 
