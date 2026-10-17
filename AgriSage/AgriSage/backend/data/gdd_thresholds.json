@@ -1,0 +1,35 @@
+{
+  "base_temperatures": {"rice":10,"maize":10,"tomato":10,"banana":15,"coconut":20},
+  "thresholds": {
+    "rice": {
+      "germination":{"gdd_from":0,"gdd_to":50,"vulnerability":"low","diseases_expected":[]},
+      "seedling":{"gdd_from":50,"gdd_to":200,"vulnerability":"low","diseases_expected":["rice_leaf_folder"]},
+      "tillering":{"gdd_from":200,"gdd_to":400,"vulnerability":"high","diseases_expected":["rice_blast","rice_brown_spot","rice_leaf_folder"]},
+      "panicle_initiation":{"gdd_from":400,"gdd_to":600,"vulnerability":"high","diseases_expected":["rice_blast","rice_sheath_blight"]},
+      "flowering":{"gdd_from":600,"gdd_to":750,"vulnerability":"critical","diseases_expected":["rice_blast","rice_bacterial_blight"]},
+      "grain_fill":{"gdd_from":750,"gdd_to":900,"vulnerability":"medium","diseases_expected":["rice_sheath_blight","rice_brown_spot"]},
+      "maturity":{"gdd_from":900,"gdd_to":1100,"vulnerability":"low","diseases_expected":[]}
+    },
+    "banana": {
+      "establishment":{"gdd_from":0,"gdd_to":300,"vulnerability":"low","diseases_expected":[]},
+      "vegetative":{"gdd_from":300,"gdd_to":800,"vulnerability":"medium","diseases_expected":["banana_sigatoka"]},
+      "shooting":{"gdd_from":800,"gdd_to":1200,"vulnerability":"high","diseases_expected":["banana_fusarium","banana_sigatoka"]},
+      "flowering":{"gdd_from":1200,"gdd_to":1600,"vulnerability":"high","diseases_expected":["banana_fusarium","banana_bbtv"]},
+      "maturity":{"gdd_from":1600,"gdd_to":2000,"vulnerability":"medium","diseases_expected":[]}
+    },
+    "tomato": {
+      "seedling":{"gdd_from":0,"gdd_to":150,"vulnerability":"low","diseases_expected":[]},
+      "vegetative":{"gdd_from":150,"gdd_to":400,"vulnerability":"medium","diseases_expected":["tomato_early_blight"]},
+      "flowering":{"gdd_from":400,"gdd_to":600,"vulnerability":"high","diseases_expected":["tomato_late_blight","tomato_leaf_curl"]},
+      "fruit_set":{"gdd_from":600,"gdd_to":800,"vulnerability":"high","diseases_expected":["tomato_late_blight"]},
+      "maturity":{"gdd_from":800,"gdd_to":1000,"vulnerability":"medium","diseases_expected":[]}
+    },
+    "maize": {
+      "germination":{"gdd_from":0,"gdd_to":60,"vulnerability":"low","diseases_expected":[]},
+      "vegetative":{"gdd_from":60,"gdd_to":400,"vulnerability":"medium","diseases_expected":["maize_northern_blight"]},
+      "tasseling":{"gdd_from":400,"gdd_to":600,"vulnerability":"high","diseases_expected":["maize_northern_blight","maize_common_rust"]},
+      "grain_fill":{"gdd_from":600,"gdd_to":1000,"vulnerability":"medium","diseases_expected":["maize_grey_leaf_spot"]},
+      "maturity":{"gdd_from":1000,"gdd_to":1200,"vulnerability":"low","diseases_expected":[]}
+    }
+  }
+}

@@ -1,0 +1,236 @@
+body {
+  margin: 0;
+  background: #1e1e1e;
+  font-family: Consolas, monospace;
+  color: #d4d4d4;
+  overflow: hidden;
+}
+
+#vscode {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Top Bar */
+.top-bar {
+  display: flex;
+  background-color: #2d2d2d;
+  padding: 6px 12px;
+  font-size: 14px;
+  color: #ccc;
+  border-bottom: 1px solid #444;
+  z-index: 10;
+}
+
+.menu-item {
+  position: relative;
+  padding: 4px 12px;
+  cursor: default;
+  transition: background 0.3s ease;
+  user-select: none;
+}
+
+.menu-item:hover {
+  background-color: #3a3a3a;
+}
+
+.dropdown {
+  display: none;
+  position: absolute;
+  top: 24px;
+  left: 0;
+  background: #2e2e2e;
+  border: 1px solid #555;
+  min-width: 140px;
+  z-index: 99;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.menu-item:hover .dropdown {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.dropdown div {
+  padding: 6px 12px;
+  color: #ccc;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dropdown div:hover {
+  background-color: #444;
+}
+
+/* Layout */
+.main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  transition: height 0.2s ease;
+}
+
+.sidebar {
+  width: 200px;
+  background-color: #252526;
+  padding: 12px;
+  border-right: 1px solid #444;
+  overflow-y: auto;
+}
+
+.sidebar h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  color: #ccc;
+}
+
+.sidebar ul {
+  padding: 0;
+  list-style: none;
+  margin: 0;
+}
+
+.folder {
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.folder:hover {
+  background-color: #3c3c3c;
+}
+
+.editor-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #1e1e1e;
+}
+
+.tabs {
+  background-color: #2d2d2d;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #444;
+}
+
+.controls button {
+  margin-left: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  background: #007acc;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.controls button:hover {
+  background: #005f99;
+}
+
+.editor {
+  flex: 1;
+  padding: 14px;
+  font-size: 14px;
+  overflow-y: auto;
+  outline: none;
+  white-space: pre-wrap;
+  caret-color: #00ff00;
+  color: #d4d4d4;
+}
+
+/* Terminal */
+.terminal {
+  height: 200px;
+  background: black;
+  color: #00ff00;
+  font-family: Consolas, monospace;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #333;
+  margin-left: 225px;
+  width: calc(100% - 200px);
+  overflow-y: auto;
+  transition: height 0.15s ease;
+}
+
+#output {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.prompt {
+  color: #00ff00;
+  font-weight: bold;
+  user-select: none;
+  margin-right: 8px;
+}
+
+.terminal-input {
+  background: transparent;
+  border: none;
+  color: #00ff00;
+  font-size: 14px;
+  width: 80%;
+  font-family: inherit;
+  caret-color: #00ff00;
+  outline: none;
+}
+
+/* Animations */
+.lazy-red {
+  color: #ff4c4c;
+  font-weight: 600;
+  opacity: 0;
+  animation: fadeInLazy 1s forwards;
+}
+
+@keyframes fadeInLazy {
+  to {
+    opacity: 1;
+  }
+}
+
+.user-blue {
+  color: #2196f3;
+  font-weight: 600;
+  opacity: 0;
+  animation: fadeInUser 0.6s forwards;
+}
+
+@keyframes fadeInUser {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Terminal Resizer */
+#resizer {
+  height: 6px;
+  background: #444;
+  cursor: row-resize;
+  user-select: none;
+  margin-left: 225px;
+  width: calc(100% - 200px);
+  transition: background 0.3s ease;
+}
+
+#resizer:hover {
+  background: #666;
+}

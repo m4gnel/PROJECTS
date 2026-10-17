@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">அக்ரி-சேஜ்</string>
+    <string name="app_tagline">விவசாய வழிகாட்டி இயந்திரம்</string>
+    <string name="nav_home">முகப்பு</string>
+    <string name="nav_advisor">ஆலோசகர்</string>
+    <string name="nav_fields">வயல்கள்</string>
+    <string name="nav_weather">வானிலை</string>
+    <string name="nav_alerts">எச்சரிக்கைகள்</string>
+    <string name="nav_profile">சுயவிவரம்</string>
+    <string name="ask_advisor">ஆலோசனை பெற</string>
+    <string name="my_fields">எனது வயல்கள்</string>
+    <string name="get_started">தொடங்குங்கள்</string>
+    <string name="welcome">அக்ரி-சேஜுக்கு நல்வரவு</string>
+</resources>

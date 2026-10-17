@@ -1,0 +1,32 @@
+data:
+  train_dir: "dataset/train"
+  test_dir: "dataset/test"
+  output_dir: "output"
+
+normalization:
+  abbreviation_file: "configs/abbreviations.json"
+  unicode_form: "NFC"
+  max_text_length: 500
+
+blocking:
+  max_candidates_per_s1: 15
+  use_cache: true
+
+matching:
+  model_type: "lightgbm"
+  n_estimators: 1000
+  learning_rate: 0.05
+  max_depth: 8
+  num_leaves: 63
+  threshold: 0.5
+  hard_negative_ratio: 5
+  random_negative_ratio: 2
+  random_seed: 42
+  n_jobs: -1
+  subsample: 0.8
+  colsample_bytree: 0.8
+
+validation:
+  split_ratio: 0.2
+  random_seed: 42
+  val_sample_size: 20000

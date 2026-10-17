@@ -1,0 +1,467 @@
+AGRI-SAGE
+IMPLEMENTATION PLAN
+Zero-Cost Build · VSCode AI Agent · Phase-by-Phase with Daily Tasks
+Field
+Detail
+Document
+Implementation Plan v1.0
+Audience
+Developer (Beginner–Intermediate), VSCode AI Agent
+Build Cost
+Zero — 100% free/open-source tools and hosting
+Timeline
+52 weeks — 6 phases — MVP at Week 16
+Execution
+VSCode + GitHub Copilot / Cursor AI Agent
+Revenue Start
+Freemium subscription after closed beta (Week 48+)
+HOW TO USE THIS DOCUMENT
+This document is the single source of truth for building Agri-SAGE from zero. Every task is specific enough for a VSCode AI agent to execute. Work through phases in order. Never skip a phase. Each phase has a clear exit criteria — do not proceed until all exit criteria pass.
+Each task is a VSCode AI agent prompt or a manual step — labelled clearly
+Code blocks show exact commands to run in terminal
+Exit criteria at the end of each phase must ALL pass before moving to next phase
+Free-tier services are used throughout — commercial alternatives noted where needed at scale
+⚠ Read the entire LICENSE_REGISTRY.md (created in Phase 0 Task 3) before writing any code. APSIM requires a separate commercial license for revenue-generating use. Open-Meteo free API is non-commercial. These constraints affect architecture decisions.
+PHASE 0: FOUNDATION (Weeks 1–2)
+Goal: Repository structure, development environment, database running, CI/CD pipeline. No features yet — only the foundation everything else builds on.
+Phase 0 — Prerequisites (Before Any Code)
+Item
+Action
+Link
+Oracle Cloud Account
+Sign up for Always Free — provides 2 AMD instances 24GB RAM permanently
+cloud.oracle.com/free
+Cloudflare Account
+Sign up — R2 storage, CDN, DNS, all free tier
+cloudflare.com
+GitHub Account
+Sign up — free for public and private repos
+github.com
+Google Play Console
+Pay one-time $25 developer fee — required for Android distribution
+play.google.com/console
+Firebase Project
+Create project — needed for FCM push notifications (free)
+console.firebase.google.com
+Bhashini API
+Apply for API access — 4-6 week approval — apply NOW on Day 1
+bhashini.gov.in
+MSG91 Account
+Sign up — cheapest India SMS for OTP at Rs.0.12/SMS — free trial credits
+msg91.com
+VSCode + Extensions
+Install: Python, Pylance, Android, Kotlin, Docker, GitLens, GitHub Copilot
+marketplace.visualstudio.com
+Phase 0 — Task List
+Task 0.1: Repository Setup
+# Run in terminal
+mkdir agrisage && cd agrisage
+git init
+git remote add origin https://github.com/YOUR_USERNAME/agrisage.git
+VSCode AI Agent Prompt:
+✓ Create the complete Agri-SAGE project directory structure exactly as defined in the TRD Section 2.2. Create every folder and an empty .gitkeep file in each leaf folder. Also create: .gitignore (Python + Android + Node + .env), .env.example with all variables from TRD Section 8.3 as empty placeholders, README.md with project overview, LICENSE_REGISTRY.md with the dependency table from Master Blueprint Section 19.2.
+Task 0.2: Docker Development Environment
+VSCode AI Agent Prompt:
+✓ Create docker-compose.yml for Agri-SAGE local development with: (1) pgvector/pgvector:pg16 service named 'db' with POSTGRES_DB=agrisage_dev, port 5432, named volume. (2) Backend service built from Dockerfile, port 8000, all env vars from .env file, depends_on db. Include Dockerfile for backend: python:3.11-slim base, install system deps (libgdal-dev for PostGIS client), copy requirements.txt, pip install, copy source, CMD uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload.
+# Verify Docker works
+docker compose up -d
+docker compose ps   # Both services should show 'running'
+docker compose logs db  # Should show 'ready to accept connections'
+Task 0.3: Python Backend Skeleton
+VSCode AI Agent Prompt:
+✓ Create backend/requirements.txt with exact pinned versions: fastapi==0.110.0, uvicorn[standard]==0.27.0, sqlalchemy[asyncio]==2.0.28, asyncpg==0.29.0, alembic==1.13.1, pydantic==2.6.3, pydantic-settings==2.2.1, pgvector==0.2.5, httpx==0.27.0, python-jose[cryptography]==3.3.0, passlib[bcrypt]==1.7.4, python-multipart==0.0.9, structlog==24.1.0, pytest==8.1.0, pytest-asyncio==0.23.5, httpx==0.27.0. Then create backend/main.py as FastAPI app factory with: CORS middleware (origins from env), structlog logging middleware, include_router for each API module, /health endpoint returning status+version+db_connected.
+Task 0.4: Configuration & Settings
+VSCode AI Agent Prompt:
+✓ Create backend/config.py using pydantic-settings BaseSettings class. Fields: DATABASE_URL (str), SECRET_KEY (str), ENVIRONMENT (str default 'development'), R2_BUCKET (str), R2_ACCESS_KEY (str), R2_SECRET_KEY (str), R2_ACCOUNT_ID (str), FCM_KEY (str default ''), BHASHINI_API_KEY (str default ''), OTP_PROVIDER_KEY (str), WEATHER_PROVIDER (str default 'open_meteo'), MAX_IMAGE_SIZE_MB (int default 5), MODEL_VERSION (str default 'v0.1.0'), KNOWLEDGE_VERSION (str default '2026-01-01'), LOG_LEVEL (str default 'INFO'). Load from .env file. Export a single settings = Settings() instance.
+Task 0.5: Database Connection
+VSCode AI Agent Prompt:
+✓ Create backend/database.py with: async SQLAlchemy engine using asyncpg driver from settings.DATABASE_URL, AsyncSessionLocal factory, Base = declarative_base(), async get_db() dependency that yields session and closes on exit, async check_db_connection() function that runs SELECT 1 and returns bool — used by /health endpoint.
+Task 0.6: Database Migrations
+VSCode AI Agent Prompt:
+✓ Set up Alembic for Agri-SAGE. Run 'alembic init alembic'. Configure alembic.ini to use DATABASE_URL from environment. Configure alembic/env.py to use asyncio run_migrations_online with our SQLAlchemy engine. Create the first migration file 001_extensions.py that runs CREATE EXTENSION IF NOT EXISTS uuid-ossp, vector, postgis in a execute_ddl call. Create migration 002_users.py with the exact SQL DDL for users, otp_sessions, refresh_tokens tables from Backend Schema Document Section 1.2 including all indexes.
+# Apply first two migrations
+alembic upgrade head
+# Verify in psql
+docker exec -it agrisage-db-1 psql -U agrisage -d agrisage_dev -c '\dt'
+Task 0.7: GitHub Actions CI/CD
+VSCode AI Agent Prompt:
+✓ Create .github/workflows/ci.yml for Agri-SAGE. Trigger on: push to main and all pull_requests. Jobs: (1) test: runs on ubuntu-latest, starts PostgreSQL 16 service with pgvector, runs pip install -r requirements.txt, alembic upgrade head, pytest tests/ -v --tb=short. (2) lint: runs black --check and ruff check on backend/. (3) security: runs pip-audit on requirements.txt — fails build on CRITICAL CVEs. All jobs must pass before merge.
+Phase 0 Exit Criteria — ALL must pass
+docker compose up -d starts without errors
+curl http://localhost:8000/health returns {status: ok, db_connected: true}
+alembic upgrade head runs clean — users table exists in database
+pytest tests/ passes (empty test suite is fine at this stage)
+GitHub Actions CI pipeline runs green on first push
+.env.example has all required variables with comments
+LICENSE_REGISTRY.md exists and is populated with all dependencies
+PHASE 1: VISION MVP (Weeks 3–8)
+Goal: Farmer can take a photo and receive a basic disease advisory. Vision model trained and deployed. Image quality check running on-device.
+Phase 1 — Task List
+Task 1.1: All Remaining Database Migrations
+VSCode AI Agent Prompt:
+✓ Create Alembic migrations 003 through 016 for Agri-SAGE using the exact SQL DDL from Backend Schema Document Section 1.3 through 1.10. Each migration in a separate file. Order: 003_farms (farms, fields, soil_profiles), 004_crop_cycles, 005_observations (observations, images), 006_weather, 007_diagnoses, 008_advisories, 009_interventions_outcomes, 010_simulation, 011_knowledge (knowledge_documents, knowledge_chunks, IVFFlat index), 012_schemes, 013_market, 014_notifications, 015_expert_reviews, 016_audit_logs. Run alembic upgrade head after creating all files.
+Task 1.2: Row-Level Security Migration
+VSCode AI Agent Prompt:
+✓ Create Alembic migration 017_rls.py for Agri-SAGE. This migration applies all PostgreSQL Row-Level Security policies from Backend Schema Document Section 1.11. Run as the last migration — all tables must exist. Include: ALTER TABLE ... ENABLE ROW LEVEL SECURITY for all user-facing tables, and CREATE POLICY statements for farms, fields, notifications using current_setting('app.current_user_id').
+Task 1.3: Auth API Endpoints
+VSCode AI Agent Prompt:
+✓ Create backend/api/v1/auth.py for Agri-SAGE with these endpoints: POST /api/v1/auth/send-otp (accepts phone, generates 6-digit OTP, hashes with bcrypt, stores in otp_sessions with 5-minute expiry, calls OTP provider — use stub that prints OTP to console in development), POST /api/v1/auth/verify-otp (accepts phone+otp, verifies hash, checks expiry, checks attempts<5, creates or retrieves user, returns JWT access_token + refresh_token), POST /api/v1/auth/refresh (accepts refresh_token, validates, rotates token), POST /api/v1/auth/logout (revokes refresh_token). Use python-jose for JWT with HS256. Access token expiry 15 minutes. Refresh token expiry 7 days. Rate limit: max 5 OTP attempts per phone per 10 minutes.
+Task 1.4: Farm & Field CRUD
+VSCode AI Agent Prompt:
+✓ Create backend/api/v1/farms.py for Agri-SAGE with full CRUD: POST /api/v1/farms (create farm — requires JWT — set app.current_user_id in DB session for RLS), GET /api/v1/farms (list user's farms), GET /api/v1/farms/{id} (get single farm), PUT /api/v1/farms/{id} (update), DELETE /api/v1/farms/{id} (soft delete). POST /api/v1/farms/{id}/fields, GET/PUT/DELETE for fields. All endpoints: validate JWT, set PostgreSQL session variable for RLS, use Pydantic v2 request/response schemas, return 404 if resource not found or not owned by user.
+Task 1.5: Image Upload Endpoint
+VSCode AI Agent Prompt:
+✓ Create backend/api/v1/observations.py for Agri-SAGE. POST /api/v1/observations accepts multipart form: crop_cycle_id (str), description (str optional), images (List[UploadFile] max 5). For each image: validate MIME type is image/jpeg or image/png only, validate size < settings.MAX_IMAGE_SIZE_MB MB, strip EXIF metadata using Pillow, resize to max 1200px longest edge preserving aspect ratio, generate UUID filename, upload to Cloudflare R2 using boto3 with R2 endpoint URL. Store observation and image records in DB. Return observation_id and list of image_ids. Use httpx for R2 uploads or boto3 with endpoint_url='https://ACCOUNT_ID.r2.cloudflarestorage.com'.
+Task 1.6: Vision Model Training
+VSCode AI Agent Prompt:
+✓ Create backend/ml/vision/train.py for Agri-SAGE. Training script for EfficientNet-B3 disease classifier. Uses torchvision.models.efficientnet_b3 with pretrained=True. Final classifier replaced with Linear(1536, num_classes). Training: Adam optimizer lr=1e-4, CosineAnnealingLR scheduler, CrossEntropyLoss with class weights for imbalance. Augmentation pipeline: RandomCrop(300), RandomHorizontalFlip, ColorJitter(brightness=0.3, contrast=0.3), GaussianBlur(p=0.2), Normalize(ImageNet stats). Evaluation: macro-F1, per-class precision/recall, confusion matrix. FARMER-LEVEL train/val/test split — never random split on image level. Post-training: temperature scaling calibration targeting ECE < 0.10. Save best model checkpoint and calibrated model separately.
+Task 1.7: ONNX Export
+VSCode AI Agent Prompt:
+✓ Create backend/ml/vision/export.py for Agri-SAGE. Function export_to_onnx(model_path, output_path): loads calibrated PyTorch model, sets eval(), runs torch.onnx.export with opset_version=17, input_names=['image'], output_names=['logits'], dynamic_axes for batch. Function quantize_int8(onnx_path, quantized_path): uses onnxruntime.quantization.quantize_dynamic with QInt8 weight type. Function verify_accuracy_loss(fp32_path, int8_path, test_loader): runs both models on test set, asserts macro-F1 difference < 0.02. Script main() runs all three steps and prints final size and accuracy metrics.
+Task 1.8: Vision Service
+VSCode AI Agent Prompt:
+✓ Create backend/services/vision_service.py for Agri-SAGE. Class VisionService with: __init__ loads ONNX Runtime session from model file path (uses CUDAExecutionProvider if GPU available, fallback CPUExecutionProvider), preprocess_image(image_bytes) resizes to 300x300 and normalizes to ImageNet stats returning numpy array, check_image_quality(image_bytes) computes Laplacian variance for blur + mean brightness for lighting + estimates crop region coverage — returns QualityResult with score and specific failure reason, classify(image_bytes) runs full pipeline: quality check → if fails return INSUFFICIENT_DATA with message → else run ONNX inference → apply temperature scaling → return VisionResult with top-5 predictions, confidence state, severity. All crop class names loaded from JSON file.
+Task 1.9: Intake & Critic Agents
+VSCode AI Agent Prompt:
+✓ Create backend/agents/intake.py: IntakeAgent.run(state) merges raw request data with stored farm profile from DB, validates and fills all FarmStateSchema fields, computes days_after_sowing from planting_date, returns updated state. Create backend/agents/critic.py: CriticAgent.run(state) implements all 8 safety checks from TRD Section 5.3 — check_chemical_in_cibrc_database, check_dosage_within_label_range, check_crop_chemical_registration, check_preharvest_interval, check_reentry_interval, check_scheme_exists_in_database, check_document_not_expired, check_no_llm_invented_products. Runs conflict detection between vision/weather/stage results. Computes confidence_state using ConfidenceState enum. Sets run_simulation=True only if confidence_score > 0.65 AND no conflicts AND confidence_state in [CONFIRMED, LIKELY].
+Task 1.10: Basic Diagnose Endpoint
+VSCode AI Agent Prompt:
+✓ Create backend/api/v1/diagnose.py for Agri-SAGE. POST /api/v1/diagnose accepts {observation_id: str}, requires JWT. Flow: load observation + images from DB, validate ownership via RLS, run advisory_graph (LangGraph) with farm state, record timing, save advisory to DB, return full AdvisoryResponse schema. For MVP: Vision agent runs ONNX locally, Weather agent calls Open-Meteo (development), Crop Stage agent computes GDD, Knowledge agent returns cached placeholder text, Critic agent runs all safety checks. No simulation in MVP. Return advisory even if some agents return partial results — mark clearly in confidence_state.
+Task 1.11: Android Project Setup
+VSCode AI Agent Prompt:
+✓ Create Android project in mobile/android/ using Kotlin + Jetpack Compose. Package name: com.agrisage.app. MinSdk: 26 (Android 8.0). TargetSdk: 34. Add to build.gradle.kts dependencies: compose-bom latest, navigation-compose, room-runtime + room-ktx + room-compiler (kapt), retrofit2 + converter-gson, okhttp3 logging-interceptor, hilt-android + hilt-compiler, coil-compose, camerax (camera2 + lifecycle + view), onnxruntime-android, work-runtime-ktx, firebase-messaging-ktx. Create base package structure: ui/screens, ui/components, ui/theme, data/local (Room), data/remote (Retrofit), domain/usecases, di (Hilt modules).
+Task 1.12: Android Design System
+VSCode AI Agent Prompt:
+✓ Create ui/theme/Theme.kt for Agri-SAGE Android app. AgriSAGETheme using MaterialTheme with custom ColorScheme. Define ALL color tokens from UI/UX Spec Section 1.1 as Color constants: colorPrimary=#2D7D2D, colorPrimaryDark=#1A5C1A, colorPrimaryLight=#E8F5E8, all risk colors, all confidence colors, surface colors, offline colors. Create Typography.kt using Noto Sans font family (add to assets/fonts/) with all text styles from UI/UX Spec Section 2 — displayLarge through labelSmall with correct size/weight/line height. Create Shapes.kt with cornerSmall=8dp, cornerMd=12dp, cornerLg=16dp, cornerXl=24dp.
+Task 1.13: Android Room Database
+VSCode AI Agent Prompt:
+✓ Create Room database for Agri-SAGE Android app. Entities: FarmerEntity (id, phone, name, language, subscriptionTier, updatedAt), FarmEntity (id, userId, name, locationLat, locationLon, district, state, areaHa, isSynced, createdAt), FieldEntity, CropCycleEntity (id, fieldId, crop, cultivar, plantingDate, status, isSynced), ObservationEntity (id, cropCycleId, problemDescription, observedAt, isSynced), CachedAdvisoryEntity (id, observationId, advisoryJson, createdAt), WeatherCacheEntity (lat, lon, dataJson, cachedAt), SyncQueueEntity (id autoGenerate, entityType, entityId, action, payloadJson, priority, retryCount, createdAt). Create DAO for each with suspend functions. Create AgriSAGEDatabase @Database class. Create Hilt module providing database and DAOs.
+Task 1.14: Android Camera Screen
+VSCode AI Agent Prompt:
+✓ Create CameraScreen.kt for Agri-SAGE using CameraX. Full-screen camera preview using PreviewView in AndroidView composable. Real-time image quality check: every 500ms analyze current camera frame using ImageAnalysis use case — compute Laplacian variance (blur), mean brightness (exposure), estimate crop region coverage — update QualityIndicatorBar composable that shows green/amber/red bar with text message as specified in UI/UX Spec Section 5.6. Capture button 80dp circular white, centered bottom 48dp from edge. On capture: run final quality check — if fails show rejection overlay with specific message and retry button — if passes save to local file and navigate to ContextFormScreen. All UI matches UI/UX Spec Section 5.6 exactly.
+Task 1.15: Android Advisory Screen
+VSCode AI Agent Prompt:
+✓ Create AdvisoryResultScreen.kt for Agri-SAGE. Receives AdvisoryResponse object. Layout per UI/UX Spec Section 5.7: sticky header with ConfidenceBadge + RiskLevelBadge + speaker icon, scrollable body with EvidenceCard (expanded default), ActionCard (color_primary_light bg, 2dp border, action details), ScenarioRow (A/B/C cards horizontal scroll — only shown if scenarios present), ModelledEstimate label under all yield/return figures, WhatWouldChangeSection (expandable), SourcesSection, FeedbackRow (thumbs up/down). All colors match design system tokens exactly. ConfidenceBadge: text and color per ConfidenceState enum — CONFIRMED=dark green, LIKELY=green, POSSIBLE=amber, UNCERTAIN=deep orange, INSUFFICIENT_DATA=grey.
+Phase 1 Exit Criteria — ALL must pass
+POST /api/v1/auth/send-otp → OTP delivered (console log in dev), verify-otp → JWT returned
+POST /api/v1/farms creates farm, only owner can retrieve it (RLS verified)
+POST /api/v1/observations with image → image stored in R2 → URL accessible
+POST /api/v1/diagnose → advisory returned in < 8 seconds — all 8 AdvisoryResponse fields present
+Vision model Macro-F1 > 0.82 on field test set (NOT PlantVillage lab set)
+ONNX INT8 model runs on Android emulator — inference < 4 seconds
+Camera screen shows real-time quality indicator — blurry image rejected with message
+Advisory result screen shows confidence badge, evidence, action, modelled estimate label
+All 8 Critic safety checks have unit tests — all pass
+GitHub Actions CI green
+PHASE 2: CONTEXT & KNOWLEDGE (Weeks 9–16)
+Goal: Full multi-signal advisory — weather, crop stage, RAG knowledge, Malayalam language. This is the MVP milestone — a complete, usable product.
+Phase 2 — Task List
+Task 2.1: Weather Agent
+VSCode AI Agent Prompt:
+✓ Create backend/agents/weather.py for Agri-SAGE. WeatherAgent.run(state) calls WeatherProvider to get current conditions and 7-day forecast for farm location. Derive ALL agricultural indicators: DFI (Disease Favorability Index) = weighted average of (humidity > 80% score) + (temperature 20-30°C score) + (consecutive_wet_days score), clamped 0-1. SprayWindow: rain probability < 20% AND wind < 15 km/h for any 4-hour block today — return best window time. IrrigationRecommendation: if rain > 10mm expected in 24hrs → 'skip', if soil dry estimate AND no rain → 'proceed', else 'delay'. HeatStressRisk: based on crop-specific temperature thresholds. Return WeatherResult with all indicators. Cache by (lat, lon) rounded to 2dp with 30-minute TTL using in-memory dict.
+Task 2.2: Crop Stage Agent
+VSCode AI Agent Prompt:
+✓ Create backend/agents/crop_stage.py for Agri-SAGE. CropStageAgent.run(state) computes phenological stage using Growing Degree Days (GDD). GDD formula: ((Tmax + Tmin) / 2) - Tbase where Tbase is crop-specific (rice=10°C, maize=10°C, tomato=10°C, banana=15°C, coconut=20°C). Load historical weather from DB to compute cumulative GDD from planting_date to today. Compare against crop-cultivar GDD thresholds table (JSON file per crop defining: germination, seedling, tillering, panicle_initiation, flowering, grain_fill, maturity with GDD values). Return CropStageResult with: stage_name, gdd_accumulated, gdd_total_required (to maturity), disease_vulnerability (per stage-disease mapping JSON), upcoming_windows (next stage and estimated days). If farmer provided observed_growth_stage, use that to correct GDD estimate.
+Task 2.3: Knowledge Ingestion Pipeline
+VSCode AI Agent Prompt:
+✓ Create backend/knowledge/ingestion.py for Agri-SAGE. DocumentIngestionPipeline class with: fetch_document(url) downloads PDF/HTML using httpx, parse_pdf(content) extracts text preserving tables using PyMuPDF (fitz), parse_html(content) extracts text using BeautifulSoup, extract_metadata(text, url) uses regex patterns to find crop mentions, state mentions, publication date, extract_chunks(text, metadata) does hierarchical chunking — split at heading boundaries first (H1/H2/H3 patterns), then at paragraph boundaries, max 512 tokens per chunk, min 100 tokens, preserve table rows intact, embed_chunks(chunks) calls multilingual-e5-large embedding model with 'passage: ' prefix per e5 convention, store_chunks(document_id, chunks, embeddings) bulk inserts into knowledge_chunks table. Script seed_knowledge.py: for each document URL in a seed_urls.json file, run the full pipeline.
+Task 2.4: Hybrid RAG Retrieval
+VSCode AI Agent Prompt:
+✓ Create backend/knowledge/retrieval.py for Agri-SAGE. HybridRetriever class: dense_search(query_text, crop, state, top_k=15) embeds query with 'query: ' prefix using multilingual-e5-large, queries pgvector using SELECT ... ORDER BY embedding <=> query_vec WHERE crop=? AND status='PUBLISHED' AND valid_until > NOW() LIMIT top_k. sparse_search(keywords, crop, state, top_k=15) uses PostgreSQL full-text search: to_tsvector('english', content) @@ plainto_tsquery(:keywords). reciprocal_rank_fusion(dense_hits, sparse_hits, k=60) merges by RRF formula: score = sum(1/(k+rank)) per document. rerank(query, merged_hits, top_k=5) uses cross-encoder/ms-marco-MiniLM-L-6-v2 from sentence-transformers to score each chunk against query. apply_authority_boost(reranked): Tier 1 documents multiply score by 1.3. Return top_k chunks with source metadata.
+Task 2.5: Knowledge Agent
+VSCode AI Agent Prompt:
+✓ Create backend/agents/knowledge.py for Agri-SAGE. KnowledgeAgent.run(state) builds query from: crop name, disease label from vision_result, growth stage from crop_stage_result, state/district from location, problem_description. Calls HybridRetriever.retrieve() with metadata filters. Validates all returned chunks have valid_until > today and status=PUBLISHED — filters stale chunks silently. Returns KnowledgeResult with chunks, sources list, highest_tier found. If no Tier 1-2 sources found for a recommendation topic, sets a warning in state.
+Task 2.6: LangGraph Orchestration
+VSCode AI Agent Prompt:
+✓ Create backend/agents/orchestrator.py for Agri-SAGE implementing the complete LangGraph graph as defined in Backend Schema Document Section 3.2. Use asyncio-compatible LangGraph. Intake node runs first. Vision + Weather + CropStage + Knowledge nodes run in parallel using asyncio.gather() — LangGraph fan-out. Critic node is barrier — waits for all 4. After Critic: Scheme node always runs (async). Simulation node runs only if state['run_simulation']=True — conditional edge. Decision + Explanation nodes run sequentially last. Total timeout: 10 seconds — if any agent exceeds 3 seconds individually, log warning and continue with partial result. Store langgraph_trace_id in advisory record for debugging.
+Task 2.7: Decision & Explanation Agents
+VSCode AI Agent Prompt:
+✓ Create backend/agents/decision.py: DecisionAgent scores each scenario using: yield_score (normalized expected yield), profit_score (expected net return), risk_penalty (risk_level: critical=-3, high=-2, medium=-1, low=0), water_penalty (irrigation cost), uncertainty_penalty (1-confidence_score * 2). Recommends highest scoring scenario. Returns DecisionResult with all 3 scenarios scored and ranked. Create backend/agents/explanation.py: ExplanationAgent builds advisory text using Qwen3-7B (server) or Qwen3-1.7B (offline). System prompt enforces: only use evidence bundle facts, label all yield as modelled estimate, use confidence_state to gate recommendations (UNCERTAIN → no treatment recommended), output structured JSON matching AdvisoryTextSchema. Uses LLM at temperature=0.2. Validates LLM output against schema before returning — retries once if invalid JSON.
+Task 2.8: Malayalam Language Support
+VSCode AI Agent Prompt:
+✓ Create backend/services/speech_provider.py with SpeechProvider ABC and BhashiniProvider implementation. BhashiniProvider.transcribe(audio_bytes, language='ml'): POST to Bhashini ULCA ASR API with audio, model=ai4bharat/conformer-ml-gpu, language=ml. Returns transcript text. BhashiniProvider.synthesize(text, language='ml'): POST to Bhashini TTS API with text, speaker=female, language=ml. Returns audio bytes WAV format. Create fallback AndroidTTSHint — returns None (Android handles TTS locally). Create POST /api/v1/voice/transcribe endpoint that accepts audio upload, calls BhashiniProvider, extracts structured intent from transcript using simple keyword matching (NOT LLM), returns structured query. Create GET /api/v1/voice/synthesize?advisory_id=... that returns audio file of advisory read aloud.
+Task 2.9: Android Offline Mode
+VSCode AI Agent Prompt:
+✓ Create SyncWorker.kt for Agri-SAGE using WorkManager CoroutineWorker. doWork(): (1) Check connectivity using ConnectivityManager. (2) If connected: query sync_queue ordered by priority ASC, retryCount ASC. For each item: call appropriate API endpoint, on success delete from queue, on failure increment retryCount — if retryCount > 5 log and skip. (3) After upload: download delta from GET /api/v1/sync/delta?last_sync=[timestamp], update local Room tables. (4) Check knowledge cache version: GET /api/v1/knowledge/version — if different from stored, download updated cache for user's crops+state. Schedule SyncWorker with Constraints.requiresNetworkType(CONNECTED) and exponential backoff. Also create OfflineAdvisoryEngine.kt that runs local ONNX vision + local crop stage GDD + cached knowledge text → returns simplified offline advisory clearly marked as 'Offline Analysis'.
+Task 2.10: Android Home & Morning Briefing
+VSCode AI Agent Prompt:
+✓ Create HomeScreen.kt for Agri-SAGE matching UI/UX Spec Section 5.5 exactly. TopAppBar with farm name and sync status icon. AlertBanner shown when connectivity state is OFFLINE or LIMITED (from ConnectivityManager network callback). MorningBriefingCard: loaded from Room DB cachedAdvisories (type='morning_briefing') — shows crop stage, risk level, weather summary, one recommended action — all with icons. If no briefing cached: shows 'Check your crop today' default card. 4 action tiles in 2x2 grid per spec. BottomNavBar. ViewModel: HomeViewModel collects StateFlow from LocalFarmRepository and connectivity state. Morning briefing refreshes on CONNECTED state if cached briefing is >12 hours old.
+Phase 2 Exit Criteria — ALL must pass
+Full advisory pipeline: image → 8 agents → advisory in < 8s online, < 4s offline
+Weather indicators computed correctly — DFI tested against known weather scenarios
+Crop stage GDD calculation tested for rice and maize against known planting dates
+RAG retrieval: recall@5 > 0.80 on 20-query benchmark set — measured
+Critic conflict detection tested: vision+weather contradiction → CONFLICTING_EVIDENCE state
+Malayalam advisory text returned by explanation agent — reviewed by native speaker
+Offline advisory generated without internet — clearly marked as offline
+Home screen morning briefing loads in < 2s with cached data
+Sync queue uploads observations on reconnect — verified with airplane mode test
+50 ICAR + KAU documents ingested into knowledge base with valid metadata
+PHASE 3: INTELLIGENCE (Weeks 17–26)
+Goal: Simulation scenarios, government scheme matching, voice input, proactive alerts, morning briefing automation. Platform becomes daily-use tool.
+Phase 3 — Task List
+Task 3.1: DSSAT Simulation Adapter
+VSCode AI Agent Prompt:
+✓ Create backend/simulation/dssat.py for Agri-SAGE. DSSATEngine class implementing SimulationEngine ABC. get_supported_crops() returns ['rice','maize','tomato']. simulate(params: SimulationParams): (1) Validate params against schema — reject unknown crops. (2) Create temp directory for this run. (3) Write DSSAT input files: SOIL file from params.soil, WEATHER file from params.weather (WTH format: daily SRAD TMAX TMIN RAIN columns), CULTIVAR file lookup from JSON mapping cultivar name to DSSAT code, Experiment file (FileX) with management events from params.fertilizer_events + irrigation_events. (4) subprocess.run(['dscsm048', 'B', 'DSSBatch.v48'], cwd=tmpdir, timeout=60). (5) Parse Summary.OUT and Overview.OUT files to extract: HWAM (harvest yield kg/ha), CWAM (biomass), NLOSS (nitrogen loss), PRCP (total rainfall), IRRC (irrigation). (6) Clean up temp directory. (7) Return SimulationResult. Run DSSAT binary path from environment variable DSSAT_BIN_PATH.
+Task 3.2: Scenario Engine
+VSCode AI Agent Prompt:
+✓ Create backend/simulation/scenarios.py for Agri-SAGE. ScenarioEngine.build_scenarios(farm_state, critic_result): builds 3 SimulationParams objects. Scenario A (Do nothing): no intervention — current management only. Scenario B (Recommended now): adds the recommended intervention from critic_result at tomorrow's date. Scenario C (Delayed — 5 days): same intervention 5 days later. Runs all 3 simulations in asyncio.gather() for parallel execution. Returns list of ScenarioResult with: expected_yield_kgha (MODELLED label always attached), expected_cost_inr (fertilizer+pesticide cost from params), expected_net_return_inr (yield_kg * current_market_price_per_kg - cost). All yield/return fields carry a 'modelled_estimate': True flag that Explanation Agent must surface to farmer.
+Task 3.3: Scheme Agent
+VSCode AI Agent Prompt:
+✓ Create backend/agents/scheme.py for Agri-SAGE. SchemeAgent.run(state): (1) Load farmer profile (state, district, crop, land_area from farm). (2) Query schemes table: SELECT * FROM schemes WHERE :crop = ANY(crops_applicable) AND (state = :state OR state IS NULL) AND valid_until > NOW() AND status='active'. (3) For each scheme: run eligibility_rules JSON against farmer profile — eligibility_rules is a JSON structure like {land_ha_max: 5, crops: ['rice'], state: 'Kerala', requires_soil_card: false}. (4) Score eligibility: 1.0=all criteria met, 0.5=most met, 0.0=fails mandatory criteria. (5) Return top 3 matches. ALWAYS include caveat: 'Final eligibility determined by concerned authority' — this is mandatory. NEVER return a scheme with valid_until in the past.
+Task 3.4: Notification & Morning Briefing Service
+VSCode AI Agent Prompt:
+✓ Create backend/services/notifications.py for Agri-SAGE. FCMNotificationService.send(user_id, title, body, data): looks up user's FCM token from DB, calls Firebase Admin SDK messages.send(). Create backend/services/morning_briefing.py: MorningBriefingGenerator.generate_for_user(user_id): loads user's active farm + crop cycle + latest weather + current risk scores. Builds briefing: crop_stage_summary (stage name + DAS), top_risk (highest risk score + reason), weather_today (2-word summary), recommended_action (one specific action based on risk + stage). Stores in notifications table type='morning_briefing'. Sends FCM push. Create APScheduler job that runs generate_for_all_active_users() daily at 05:30 UTC (which is 11:00 IST). Generate for users who have been active in past 30 days.
+Task 3.5: Risk Engine
+VSCode AI Agent Prompt:
+✓ Create backend/services/risk_engine.py for Agri-SAGE. RiskEngine.compute_farm_risks(farm_id): returns RiskProfile with 6 scores. DiseaseRisk: DFI from weather × stage_vulnerability. PestRisk: temperature + humidity + historical pest patterns for crop. WaterStress: (days_since_rain + days_since_irrigation) / crop_water_need_days — capped 0-1. HeatStress: max(0, T - crop_threshold) / 10 capped at 1. FloodRisk: cumulative_rainfall_mm_48h / 150 capped at 1. MarketRisk: price_volatility_7day / mean_price. Each risk: level = critical(>0.8)/high(>0.6)/medium(>0.4)/low. Store computed risks in a farm_risk_cache table with 3-hour TTL. Create GET /api/v1/risk/{farm_id} endpoint returning RiskProfile.
+Task 3.6: Android Voice Integration
+VSCode AI Agent Prompt:
+✓ Create VoiceInputManager.kt for Agri-SAGE Android. startRecording(): uses MediaRecorder to capture audio as WAV 16kHz mono. stopRecording(): stops capture, calls POST /api/v1/voice/transcribe with audio bytes. On success: returns TranscriptionResult with text + structuredIntent {crop, problem, location}. On failure or no internet: falls back to Android SpeechRecognizer in offline mode. Create VoiceOutputManager.kt: speakText(text, language): if Bhashini available call GET /api/v1/voice/synthesize and play returned audio with MediaPlayer. Fallback: Android TextToSpeech.speak() in selected language. Both managers injected via Hilt. Add voice button to DiagnoseStartScreen and speaker button to AdvisoryResultScreen.
+Task 3.7: Android Push Notifications
+VSCode AI Agent Prompt:
+✓ Create AgriSAGEFirebaseService.kt extending FirebaseMessagingService for Agri-SAGE. onNewToken(token): save token to local SharedPreferences and POST to /api/v1/users/fcm-token. onMessageReceived(message): check message.data['type']. If 'morning_briefing': create NotificationCompat with large icon, content from message data, PendingIntent to open MorningBriefingScreen. If 'risk_alert': use RED color, PRIORITY_HIGH, full-screen intent if URGENT severity. If 'spray_window': create with spray icon and time window in body. All notifications: show in AGRI_SAGE channel (importance HIGH). Create NotificationChannelManager.kt that creates all channels on first launch: MORNING_BRIEFING (importance DEFAULT), RISK_ALERTS (importance HIGH), MARKET_UPDATES (importance LOW).
+Phase 3 Exit Criteria — ALL must pass
+DSSAT simulation runs for rice and maize — returns yield estimate in < 30 seconds
+3 scenarios (A/B/C) generated for a test advisory — all labelled 'Modelled estimate'
+Scheme agent returns PMFBY match for Kerala rice farmer — with eligibility caveat
+Morning briefing generated and sent as FCM push to test device at scheduled time
+Risk engine returns 6 risk scores for test farm — disease risk responds to weather DFI
+Voice input: Malayalam speech → transcript → structured intent — tested on device
+Voice output: advisory text → audio playback in Malayalam — tested on device
+Android notifications received for morning briefing and risk alert
+PHASE 4: ECONOMICS & MARKET (Weeks 27–36)
+Goal: Market prices, full economic analysis, farmer constraint optimization. Platform becomes complete decision engine.
+Phase 4 — Task List
+Task 4.1: Market Agent & e-NAM Integration
+VSCode AI Agent Prompt:
+✓ Create backend/agents/market.py for Agri-SAGE. MarketAgent.run(state): fetch current market prices for crop from e-NAM API (data.gov.in dataset 9ef84268-d588-465a-a308-a864a43d0070, JSON format). Filter to farmer's state+district. Store fetched prices in market_prices table. Compute: current_modal_price (most recent), price_7day_avg, price_7day_change_pct, nearest_markets (sorted by distance from farm location using haversine formula), best_price_market (highest modal price within 100km). Return MarketResult. Cache results 30 minutes. If e-NAM API unavailable: return cached prices with is_cached=True and cache_age_hours. If no cache: return MarketResult with prices=None and message explaining unavailability.
+Task 4.2: Economics Agent
+VSCode AI Agent Prompt:
+✓ Create backend/agents/economics.py for Agri-SAGE. EconomicsAgent.run(state): takes SimulationResult + MarketResult + farmer_budget_inr. For each scenario A/B/C: revenue = scenario.expected_yield_kgha * field.area_ha * market.current_modal_price_per_kg, input_cost = sum of fertilizer_events costs + pesticide costs + irrigation_cost_estimate, labour_cost = action_type_to_labour_days[action] * local_labour_rate_per_day, transport_cost = haversine(farm, nearest_market) * 2 * transport_rate_per_km_per_quintal * yield_quintals, net_return = revenue - input_cost - labour_cost - transport_cost. Return EconomicsResult with net_return per scenario. If farmer_budget_inr provided: flag scenarios exceeding budget as BUDGET_EXCEEDED. Label all values as 'estimated' — not guaranteed.
+Task 4.3: Farm Season Report
+VSCode AI Agent Prompt:
+✓ Create GET /api/v1/farms/{id}/season-summary endpoint for Agri-SAGE. Queries: all interventions + costs for crop_cycle, all outcomes, all advisories, all simulation runs. Computes: total_input_cost_inr (sum of interventions.cost_inr), estimated_yield_kgha (latest simulation or null), estimated_revenue_inr (yield * market price), estimated_net_return_inr, intervention_count, advisory_count, outcome_success_rate (outcomes where improved='yes' / total outcomes with response), major_stresses_faced (list of diagnoses from advisories), most_effective_intervention (intervention with best outcome), weather_anomalies (days with extreme values). Returns SeasonSummaryResponse. Also create Android SeasonSummaryScreen.kt displaying all fields with appropriate icons and formatting.
+Task 4.4: Farmer Constraint Optimization
+VSCode AI Agent Prompt:
+✓ Update DecisionAgent in backend/agents/decision.py to incorporate farmer constraints. If farm_state.farmer_budget_inr is set: filter out scenarios where expected_cost_inr > farmer_budget_inr, flag them as BUDGET_EXCEEDED. If farmer has flagged low labour availability: penalise labour-intensive scenarios by 0.3 in scoring. Add POST /api/v1/farms/{id}/constraints endpoint accepting {budget_inr, labour_available, water_available, risk_tolerance} — stores in farm table constraints_json field. Update Android: add FarmerConstraintsScreen.kt accessible from farm settings — slider for budget, toggles for labour/water availability, risk tolerance selector (Minimize Risk / Balanced / Maximize Yield). Constraints used automatically in all future advisories for that farm.
+Phase 4 Exit Criteria — ALL must pass
+e-NAM prices fetched and stored for at least 3 crops across 5 markets
+Economics agent computes net return for all 3 scenarios — values are reasonable for Kerala rice
+Season summary report generated for a test season with real intervention data
+Budget constraint: scenario exceeding farmer budget flagged as BUDGET_EXCEEDED
+Android market price screen shows current prices with trend arrow
+PHASE 5: VALIDATION & EXPERT NETWORK (Weeks 37–46)
+Goal: Expert panel, field validation study, ablation study, web dashboard, security audit. Platform becomes scientifically credible.
+Phase 5 — Task List
+Task 5.1: Expert Review Dashboard (Web)
+VSCode AI Agent Prompt:
+✓ Create a simple React web dashboard in apps/web-expert/ for Agri-SAGE expert users. Tech stack: React 18 + Vite + TailwindCSS (all free). Pages: Login (JWT auth), Dashboard (list of pending expert_reviews ordered by created_at), Review Detail (shows full advisory + evidence bundle + farmer's context + form for verdict: agree/disagree/partial + safety_ok checkbox + notes text area + optional corrections JSON). API: GET /api/v1/expert/queue, POST /api/v1/expert/reviews/{advisory_id}. Restrict to users with role='expert' in JWT claims. Build produces static files deployable to Cloudflare Pages (free).
+Task 5.2: Ablation Study Execution
+VSCode AI Agent Prompt:
+✓ Create scripts/ablation_study.py for Agri-SAGE. Runs 6 experimental conditions on the golden test set (/tests/golden/). Condition A: image-only (disable weather, stage, knowledge, simulation). Condition B: image + weather. Condition C: + crop stage. Condition D: + knowledge RAG. Condition E: full system no simulation. Condition F: full system with simulation. For each condition: run all golden test cases through the advisory pipeline, record: diagnosis_accuracy (matches expert label), confidence_calibration (ECE), false_negative_rate_critical_diseases, recommendation_matches_expert (binary), hallucination_detected (any claim not in evidence bundle). Output results table as CSV and print summary. This becomes the data for the technical report.
+Task 5.3: Security Audit Checklist
+VSCode AI Agent Prompt:
+✓ Create scripts/security_audit.py for Agri-SAGE. Automated checks: (1) pip-audit requirements.txt — fail if any CRITICAL CVE. (2) grep recursively for hardcoded secrets patterns (API_KEY=, password=, secret= followed by non-env-var values) — fail if found. (3) Verify all API endpoints require JWT (parse FastAPI router definitions). (4) Verify RLS is enabled on all user tables (query pg_tables + pg_policies). (5) Test rate limiting: send 6 OTP requests from same IP in 60 seconds — expect 5th to return 429. (6) Test SQL injection: send '; DROP TABLE users; -- in all string fields — expect 400, not 500 or empty response. Output: PASS/FAIL per check with details.
+Task 5.4: Performance Optimization
+VSCode AI Agent Prompt:
+✓ Profile and optimize Agri-SAGE advisory generation pipeline. Add timing instrumentation: record ms for each agent in LangGraph state. Identify bottleneck agents. Optimizations to implement: (1) Vision service: cache ONNX session as singleton — do not reload per request. (2) Weather: in-memory cache dict keyed by (round(lat,2), round(lon,2)) with 30-min TTL. (3) Knowledge RAG: pre-compute and cache top-5 chunks for the 20 most common crop+district+stage combinations — refresh cache nightly. (4) LLM explanation: if confidence_state is INSUFFICIENT_DATA or OUT_OF_SCOPE — skip LLM entirely, use template response. (5) Database: add EXPLAIN ANALYZE to the 5 most-called queries and add missing indexes. Target: P95 advisory generation < 8 seconds on Oracle Always-Free hardware.
+Task 5.5: Closed Beta Deployment
+VSCode AI Agent Prompt:
+✓ Create deployment scripts for Agri-SAGE on Oracle Always-Free. deploy.sh: SSH to Oracle instance, git pull, docker compose pull, docker compose up -d --no-deps backend, alembic upgrade head, run smoke tests. nginx.conf: reverse proxy to FastAPI on port 8000, SSL termination (Let's Encrypt via certbot), rate limiting: limit_req_zone for /api/v1/diagnose (2r/s) and /api/v1/auth/send-otp (5r/10m). Cloudflare: point domain to Oracle IP, enable proxy (DDoS protection + CDN). Create smoke_tests.py: hits /health, /api/v1/auth/send-otp (dev mode), /api/v1/weather/10.12/76.34 — all must return 200. Set up Grafana Cloud free tier: dashboard showing request rate, P95 latency, error rate, active users, advisory count per day.
+Phase 5 Exit Criteria — ALL must pass
+Ablation study completed — results table showing contribution of each component
+Security audit script passes all 6 automated checks
+Expert dashboard deployed to Cloudflare Pages — at least 1 agronomist can log in and review
+Closed beta: 50 farmers using app for 2+ weeks — NPS collected
+P95 advisory latency < 8s on Oracle Always-Free hardware — measured with locust
+All critical CVEs resolved in pip-audit output
+PHASE 6: LAUNCH & SCALE (Weeks 47–52)
+Goal: Public launch, subscription activation, Tamil/Telugu/Hindi, region expansion.
+Phase 6 — Task List
+Task 6.1: Subscription Payment Integration
+VSCode AI Agent Prompt:
+✓ Integrate Razorpay for Agri-SAGE subscription payments (free to integrate — Razorpay charges 2% per transaction, no monthly fee). Backend: POST /api/v1/subscriptions/create-order (calls Razorpay Orders API, returns order_id), POST /api/v1/subscriptions/verify-payment (validates Razorpay signature using HMAC-SHA256 of order_id+payment_id with Razorpay secret key, updates user.subscription_tier and subscription_expires). Webhook endpoint for Razorpay payment events. Android: RazorpayCheckout.open() with order details, handle onSuccess/onFailure callbacks, call verify-payment on success. UPI payment options shown prominently (GPay, PhonePe, Paytm, any UPI ID). Subscription tiers: free (5 advisories/month), basic Rs.49/month, pro Rs.149/month as defined in PRD Section 6.
+Task 6.2: V2 Language Support
+VSCode AI Agent Prompt:
+✓ Add Tamil, Telugu, and Hindi language support to Agri-SAGE. Create res/values-ta/strings.xml, res/values-te/strings.xml, res/values-hi/strings.xml with all string keys from UI/UX Spec Section 8.2 translated. Update BhashiniProvider to support language codes: ml, ta, te, hi. Update Explanation Agent system prompt to generate advisory in the farmer's selected language. Update morning briefing generator to use farmer's language. Update knowledge ingestion to tag Tamil Nadu documents as language='ta'. NOTE: All agricultural terminology in regional languages must be verified by a native speaker with agricultural knowledge before release — do not use automated translation alone for safety-critical strings.
+Task 6.3: Play Store Submission
+✓ Agri-SAGE Play Store listing requirements: App name: 'Agri-SAGE — Farm Advisory' (30 chars). Short description: 'AI crop advisory in Malayalam, offline-capable' (80 chars). Full description: explain disease detection, weather advisory, government schemes, offline use, Malayalam voice. Screenshots: minimum 8 phone screenshots showing: Home, Camera, Advisory Result, Risk Dashboard, Schemes, Morning Briefing, Voice Input, Farm Timeline. Feature graphic: 1024x500 green gradient with Agri-SAGE branding. Privacy policy URL: required — create simple privacy policy page on Cloudflare Pages explaining what data is collected and user rights. Content rating questionnaire: No violence, no adult content. Category: Lifestyle or Agriculture.
+Phase 6 Exit Criteria — ALL must pass
+Razorpay payment flow tested end-to-end — test payment Rs.1 goes through, subscription tier updates
+Advisory limit enforced — free tier user blocked at 6th advisory with upgrade prompt
+Tamil advisory text reviewed and approved by native Tamil speaker with agriculture knowledge
+Play Store internal test track: app installs and runs on 3 different Android devices
+Privacy policy page published and URL accessible
+Public launch announcement: product page live, social media post, KAU/ICAR outreach email sent
+WHAT YOU NEED TO START — COMPLETE CHECKLIST
+Everything required before writing the first line of code:
+Item
+Status
+Priority
+Notes
+Oracle Cloud Always-Free account
+Must have
+P0
+2 AMD instances 24GB RAM — permanent free tier
+Cloudflare account
+Must have
+P0
+R2 storage + CDN + DNS — all free tier
+GitHub account + repo created
+Must have
+P0
+Private repo — add CI/CD from Day 1
+Google Play Console ($25)
+Must have before launch
+P1
+Apply in Month 2 so review completes before launch
+Firebase project created
+Must have
+P0
+FCM free — create project and download google-services.json
+Bhashini API application submitted
+Submit Day 1
+P0
+4-6 week approval — apply immediately, build fallback meanwhile
+MSG91 account + trial credits
+Must have
+P0
+OTP delivery — Rs.0.12/SMS, free trial credits available
+VSCode with Python + Android + GitHub Copilot
+Must have
+P0
+Copilot: $10/month or use Cursor free tier
+Python 3.11+ on dev machine
+Must have
+P0
+pyenv recommended for version management
+Docker Desktop on dev machine
+Must have
+P0
+For local PostgreSQL + backend
+Android Studio on dev machine
+Must have
+P0
+For Android development + emulator
+Java 17+ on dev machine
+Must have
+P0
+Required by Android build tools
+KAU / ICAR partnership email sent
+Start Week 1
+P1
+Field image collection + agronomist review — critical for model quality
+DSSAT software installed
+Before Phase 3
+P1
+dssat.net — free download after registration
+Git LFS configured
+Must have
+P1
+Model files and test images are large — use Git LFS
+LICENSE_REGISTRY.md created
+Day 1
+P0
+Track every dependency license from first commit
+TOTAL COST BREAKDOWN — ZERO TO LAUNCH
+Item
+Cost
+When
+Notes
+Oracle Always-Free hosting
+Rs.0 forever
+Throughout
+2 AMD instances — backend + DB + worker
+Cloudflare R2 storage
+Rs.0 for first 10GB
+Throughout
+~Rs.1.25/GB/month after 10GB
+Cloudflare CDN + DNS
+Rs.0 forever
+Throughout
+Free tier sufficient for launch
+Firebase FCM
+Rs.0 forever
+Throughout
+Push notifications always free
+GitHub private repo
+Rs.0 (1 user free)
+Throughout
+Free for individual developers
+Google Play Console
+Rs.2,060 one-time ($25)
+Before launch
+One-time fee — covers all apps forever
+MSG91 OTP SMS
+Rs.0.12 per OTP SMS
+From Month 2
+Test: ~Rs.50 total. Launch: ~Rs.120/1000 users
+Open-Meteo weather
+Rs.0 dev/pilot
+Phase 0-2
+Non-commercial only — must upgrade before monetization
+IMD weather API (commercial)
+~Rs.5,000-15,000/month
+Before monetization
+Switch before first paid subscriber
+Bhashini API
+Rs.0 (Government)
+Phase 3+
+After approval — free for now, terms may change
+Razorpay payment gateway
+2% per transaction
+Phase 6
+No monthly fee — pay only when revenue comes in
+VSCode Copilot / Cursor
+Rs.830/month ($10) OR Rs.0
+Throughout
+Cursor free tier has generous limits
+Domain name
+~Rs.800/year
+Before launch
+yourname.in or agrisage.in
+SSL certificate
+Rs.0 forever
+Throughout
+Let's Encrypt via Cloudflare
+TOTAL TO LAUNCH
+~Rs.3,000-4,000
+One-time + first 2 months — essentially zero cost
+⚠ APSIM commercial license is required before any revenue-generating deployment using APSIM. DSSAT (BSD-3-Clause) has no such restriction and is the recommended production simulation backend. Open-Meteo free API must be replaced with a commercial weather API before first paid subscriber.
+VALIDATION CHECKLIST — BEFORE ANY PUBLIC ANNOUNCEMENT
+Check
+Method
+Pass Criteria
+Vision model field accuracy
+Run on 200+ Kerala field photos with expert labels
+Macro-F1 > 0.82 on field test set
+Advisory safety audit
+2 agronomists review 100 random advisories
+Zero unsafe recommendations
+Critic safety checks
+Automated test suite
+All 8 checks pass 100% of test cases
+Malayalam accuracy
+Native speaker reviews all advisory strings
+Zero incorrect agricultural terms
+Offline mode
+Airplane mode test on Tier 2 device
+All core features work without internet
+Performance
+locust load test 50 concurrent users
+P95 advisory < 8s, home screen < 2.5s
+Security
+security_audit.py script
+All 6 automated checks PASS
+RLS verification
+Test User A cannot access User B's farm
+HTTP 404 returned — no data leak
+License compliance
+LICENSE_REGISTRY.md review
+Zero unlicensed commercial dependencies
+Scheme freshness
+Check valid_until on all scheme records
+Zero expired schemes in PUBLISHED status
+AGRI-SAGE IMPLEMENTATION PLAN v1.0
+Zero cost · 52 weeks · 6 phases · VSCode AI Agent ready

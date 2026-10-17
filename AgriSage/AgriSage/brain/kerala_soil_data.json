@@ -1,0 +1,72 @@
+{
+  "Thiruvananthapuram": {
+    "ph_min": 5.0, "ph_max": 6.2, "texture": "laterite",
+    "organic_carbon": "medium", "n_status": "low", "p_status": "medium", "k_status": "medium",
+    "suitable_crops": ["coconut", "tapioca", "banana", "pepper", "rubber"]
+  },
+  "Kollam": {
+    "ph_min": 5.2, "ph_max": 6.3, "texture": "laterite",
+    "organic_carbon": "medium", "n_status": "medium", "p_status": "low", "k_status": "medium",
+    "suitable_crops": ["coconut", "rice", "tapioca", "cashew", "rubber"]
+  },
+  "Pathanamthitta": {
+    "ph_min": 4.8, "ph_max": 5.8, "texture": "forest_clay",
+    "organic_carbon": "high", "n_status": "medium", "p_status": "medium", "k_status": "medium",
+    "suitable_crops": ["rubber", "cardamom", "pepper", "tapioca", "banana"]
+  },
+  "Alappuzha": {
+    "ph_min": 4.5, "ph_max": 6.0, "texture": "coastal_alluvial",
+    "organic_carbon": "high", "n_status": "low", "p_status": "medium", "k_status": "low",
+    "suitable_crops": ["rice", "coconut", "banana", "tapioca"]
+  },
+  "Kottayam": {
+    "ph_min": 5.0, "ph_max": 6.0, "texture": "laterite_alluvial",
+    "organic_carbon": "high", "n_status": "medium", "p_status": "high", "k_status": "medium",
+    "suitable_crops": ["rubber", "rice", "coconut", "banana", "pepper"]
+  },
+  "Idukki": {
+    "ph_min": 4.5, "ph_max": 5.8, "texture": "forest_loam",
+    "organic_carbon": "high", "n_status": "high", "p_status": "medium", "k_status": "high",
+    "suitable_crops": ["cardamom", "pepper", "tea", "coffee", "ginger", "garlic"]
+  },
+  "Ernakulam": {
+    "ph_min": 5.5, "ph_max": 6.5, "texture": "laterite",
+    "organic_carbon": "medium", "n_status": "low", "p_status": "medium", "k_status": "high",
+    "suitable_crops": ["coconut", "tapioca", "banana", "yam", "rice"]
+  },
+  "Thrissur": {
+    "ph_min": 5.2, "ph_max": 6.4, "texture": "alluvial_laterite",
+    "organic_carbon": "medium", "n_status": "medium", "p_status": "medium", "k_status": "medium",
+    "suitable_crops": ["rice", "coconut", "banana", "arecanut", "nutmeg"]
+  },
+  "Palakkad": {
+    "ph_min": 6.0, "ph_max": 7.5, "texture": "black_alluvial",
+    "organic_carbon": "medium", "n_status": "high", "p_status": "high", "k_status": "high",
+    "suitable_crops": ["rice", "cotton", "pulses", "groundnut", "sugarcane", "mango"]
+  },
+  "Malappuram": {
+    "ph_min": 5.0, "ph_max": 6.2, "texture": "laterite",
+    "organic_carbon": "medium", "n_status": "low", "p_status": "medium", "k_status": "medium",
+    "suitable_crops": ["coconut", "arecanut", "rubber", "tapioca", "pepper"]
+  },
+  "Kozhikode": {
+    "ph_min": 5.1, "ph_max": 6.3, "texture": "coastal_laterite",
+    "organic_carbon": "medium", "n_status": "low", "p_status": "medium", "k_status": "medium",
+    "suitable_crops": ["coconut", "arecanut", "banana", "spice_crops", "tapioca"]
+  },
+  "Wayanad": {
+    "ph_min": 4.8, "ph_max": 5.8, "texture": "red_loam",
+    "organic_carbon": "high", "n_status": "high", "p_status": "medium", "k_status": "high",
+    "suitable_crops": ["coffee", "pepper", "tea", "cardamom", "ginger", "paddy"]
+  },
+  "Kannur": {
+    "ph_min": 5.0, "ph_max": 6.2, "texture": "laterite",
+    "organic_carbon": "medium", "n_status": "medium", "p_status": "medium", "k_status": "medium",
+    "suitable_crops": ["coconut", "cashew", "pepper", "rubber", "arecanut"]
+  },
+  "Kasaragod": {
+    "ph_min": 5.0, "ph_max": 6.0, "texture": "laterite_coastal",
+    "organic_carbon": "medium", "n_status": "low", "p_status": "medium", "k_status": "low",
+    "suitable_crops": ["coconut", "arecanut", "cashew", "rubber", "tobacco"]
+  }
+}

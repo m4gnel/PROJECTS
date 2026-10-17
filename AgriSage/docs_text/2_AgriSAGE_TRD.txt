@@ -1,0 +1,1352 @@
+AGRI-SAGE
+TECHNICAL REQUIREMENTS DOCUMENT (TRD)
+Version 1.0 — Full Stack Technical Specification
+Field
+Detail
+Document
+Technical Requirements Document (TRD)
+Audience
+Lead Developer, VSCode AI Agent, Technical Reviewers
+Stack
+Python FastAPI · PostgreSQL · pgvector · LangGraph · PyTorch · ONNX · Android/Kotlin
+Build Cost
+Zero — 100% free/open-source stack
+Deployment Target
+Oracle Always-Free → Budget VPS → Cloud (as revenue permits)
+1. SYSTEM ARCHITECTURE OVERVIEW
+1.1 Architecture Principles
+Offline-first: Every core feature must function without internet. Internet enhances, not enables.
+Provider-independent: No hard dependency on any paid API. Every external service behind an abstraction interface.
+Deterministic-first: Rules and cache answer before LLM is called. LLM synthesizes, does not invent.
+Evidence-grounded: Every advisory output must carry a traceable evidence bundle — no free-floating AI assertions.
+Schema-first: All agent outputs are validated JSON schemas — never free-form text passed between agents.
+Cost-aware: Architecture designed for zero infrastructure cost during development and minimum cost during pilot.
+Security-by-default: Row-level security, JWT auth, encrypted storage, input validation — from day one.
+1.2 High-Level Component Map
+Layer
+Component
+Technology
+Purpose
+Mobile
+Android App
+Kotlin + Jetpack Compose
+Primary farmer interface
+Mobile
+Local ML Runtime
+ONNX Runtime Android
+On-device vision inference
+Mobile
+Local Database
+Room (SQLite)
+Offline data persistence
+Mobile
+Background Sync
+WorkManager
+Async sync when connected
+Mobile
+Voice
+Bhashini API + Android STT fallback
+Speech input/output
+API
+Gateway
+FastAPI + nginx
+Routing, rate limiting, auth
+API
+Auth Service
+FastAPI + JWT + OTP
+Phone-based authentication
+API
+Farm Service
+FastAPI + SQLAlchemy
+Farm/field/crop CRUD
+API
+Advisory Service
+FastAPI + LangGraph
+Multi-agent orchestration
+API
+Vision Service
+FastAPI + ONNX Runtime
+Server-side image inference
+API
+Weather Service
+FastAPI + httpx
+Weather abstraction + caching
+API
+Knowledge Service
+FastAPI + pgvector
+RAG retrieval + doc management
+API
+Scheme Service
+FastAPI + SQLAlchemy
+Government scheme matching
+API
+Simulation Service
+FastAPI + subprocess
+DSSAT execution + results
+API
+Notification Service
+FastAPI + FCM
+Push alerts + morning briefing
+API
+Sync Service
+FastAPI
+Mobile offline sync coordination
+Data
+Primary DB
+PostgreSQL 16
+All relational data
+Data
+Vector Index
+pgvector extension
+Knowledge embeddings
+Data
+Object Storage
+Cloudflare R2
+Images, reports, model files
+Data
+Cache
+In-memory (FastAPI) → Redis v2+
+Weather, session, hot queries
+AI
+Vision Model
+EfficientNet-B3 (ONNX INT8)
+Disease/pest/deficiency detection
+AI
+LLM Server
+Qwen3-7B (4-bit)
+Advisory synthesis
+AI
+LLM On-device
+Qwen3-1.7B (ONNX)
+On-device language generation
+AI
+Embeddings
+multilingual-e5-large
+Knowledge retrieval embeddings
+AI
+Reranker
+cross-encoder-ms-marco-MiniLM
+RAG result reranking
+Simulation
+Primary
+DSSAT CSM (BSD-3-Clause)
+Crop scenario simulation
+Simulation
+Research
+APSIM Next Gen
+Validation only — NOT production commercial
+Simulation
+Offline
+Local rules engine
+Simplified offline scenarios
+2. BACKEND TECHNICAL SPECIFICATION
+2.1 Environment & Runtime
+Component
+Specification
+Notes
+Python version
+3.11+
+Required for modern asyncio and type hints
+FastAPI
+0.110+
+Async-native, auto OpenAPI docs
+SQLAlchemy
+2.0+ async
+Async engine required — not legacy 1.x
+Alembic
+Latest
+Database migration management
+PostgreSQL
+16+
+pgvector requires PG 12+ but 16 recommended
+pgvector
+0.6+
+Approximate nearest neighbor search for RAG
+LangGraph
+0.2+
+Stateful multi-agent workflow orchestration
+PyTorch
+2.0+
+Vision model training and server inference
+ONNX Runtime
+1.17+
+Cross-platform inference
+Pydantic
+2.0+
+Schema validation — required for agent I/O contracts
+httpx
+Latest
+Async HTTP client for external API calls
+Structlog
+Latest
+Structured JSON logging
+pytest
+Latest + pytest-asyncio
+All tests async-compatible
+Docker
+Latest
+Container runtime
+Docker Compose
+Latest
+Local development orchestration
+2.2 Project Directory Structure
+agrisage/
+├── backend/
+│   ├── main.py                    # FastAPI app factory
+│   ├── config.py                  # Settings from environment
+│   ├── dependencies.py            # Shared DI (DB session, auth)
+│   ├── api/
+│   │   ├── v1/
+│   │   │   ├── auth.py            # POST /auth/register, /auth/login
+│   │   │   ├── farms.py           # CRUD /farms /fields
+│   │   │   ├── crops.py           # CRUD /crop-cycles
+│   │   │   ├── observations.py    # POST /observations, image upload
+│   │   │   ├── diagnose.py        # POST /diagnose → advisory pipeline
+│   │   │   ├── weather.py         # GET /weather/{lat}/{lon}
+│   │   │   ├── schemes.py         # GET /schemes
+│   │   │   ├── markets.py         # GET /markets/{crop}
+│   │   │   ├── simulate.py        # POST /simulate
+│   │   │   ├── notifications.py   # GET /notifications
+│   │   │   └── sync.py            # GET /sync/delta
+│   ├── agents/
+│   │   ├── orchestrator.py        # LangGraph graph definition
+│   │   ├── intake.py              # Agent 1: Farm state assembly
+│   │   ├── vision.py              # Agent 2: Image analysis
+│   │   ├── weather.py             # Agent 3: Weather + indicators
+│   │   ├── crop_stage.py          # Agent 4: GDD phenology
+│   │   ├── knowledge.py           # Agent 5: RAG retrieval
+│   │   ├── critic.py              # Agent 6: Cross-validation + safety
+│   │   ├── scheme.py              # Agent 7: Scheme matching
+│   │   ├── soil.py                # Agent 8: Soil constraints
+│   │   ├── decision.py            # Agent 9: Scenario ranking
+│   │   ├── explanation.py         # Agent 10: Local language generation
+│   │   ├── simulation.py          # Agent 11: Simulation invocation
+│   │   ├── market.py              # Agent 12: Price analysis
+│   │   ├── economics.py           # Agent 13: Cost-profit analysis
+│   │   └── monitoring.py          # Agent 14: Daily risk assessment
+│   ├── models/
+│   │   ├── db/                    # SQLAlchemy ORM models
+│   │   └── schemas/               # Pydantic I/O schemas
+│   ├── services/
+│   │   ├── weather_provider.py    # WeatherProvider ABC + implementations
+│   │   ├── speech_provider.py     # SpeechProvider ABC + implementations
+│   │   ├── storage.py             # R2 / local object storage
+│   │   ├── notifications.py       # FCM wrapper
+│   │   └── otp.py                 # OTP generation + verification
+│   ├── simulation/
+│   │   ├── interface.py           # SimulationEngine ABC
+│   │   ├── dssat.py               # DSSAT adapter
+│   │   ├── apsim.py               # APSIM adapter (research only)
+│   │   ├── rules.py               # Offline rules engine
+│   │   └── scenarios.py           # A/B/C scenario builder
+│   ├── knowledge/
+│   │   ├── ingestion.py           # Document pipeline
+│   │   ├── chunking.py            # Hierarchical chunking
+│   │   ├── retrieval.py           # Hybrid dense + BM25
+│   │   ├── reranker.py            # Cross-encoder reranking
+│   │   └── freshness.py           # Expiry monitoring
+│   ├── ml/
+│   │   ├── vision/
+│   │   │   ├── train.py           # EfficientNet-B3 training
+│   │   │   ├── evaluate.py        # Metrics, calibration, OOD
+│   │   │   └── export.py          # ONNX INT8 export
+│   │   └── embeddings/
+│   │       └── embed.py           # multilingual-e5-large wrapper
+│   ├── safety/
+│   │   ├── chemical_check.py      # CIB&RC label validation
+│   │   ├── scheme_check.py        # Scheme existence + freshness
+│   │   └── hallucination_check.py # Claim traceability
+│   └── tests/
+│       ├── unit/
+│       ├── integration/
+│       ├── golden/                # Golden test set (100+ images)
+│       └── safety/                # Unsafe recommendation tests
+├── mobile/
+│   └── android/                   # Kotlin + Compose Android app
+├── data/
+│   └── migrations/                # Alembic migration files
+├── docs/                          # All 6 product documents
+├── scripts/
+│   ├── seed_knowledge.py          # Initial RAG document ingestion
+│   ├── seed_schemes.py            # Government scheme seeding
+│   └── evaluate_model.py          # Model evaluation pipeline
+├── docker-compose.yml             # Local dev environment
+├── Dockerfile                     # Backend container
+├── .env.example                   # All required environment variables
+├── LICENSE_REGISTRY.md            # All dependency licenses
+└── README.md
+3. DATABASE TECHNICAL SPECIFICATION
+3.1 PostgreSQL Configuration
+-- Required PostgreSQL extensions
+CREATE EXTENSION IF NOT EXISTS postgis;        -- Geographic queries
+CREATE EXTENSION IF NOT EXISTS vector;         -- pgvector for embeddings
+CREATE EXTENSION IF NOT EXISTS pg_cron;        -- Scheduled freshness checks
+CREATE EXTENSION IF NOT EXISTS uuid-ossp;      -- UUID generation
+-- Performance settings (for free-tier 1GB RAM instance)
+shared_buffers = 256MB
+effective_cache_size = 768MB
+maintenance_work_mem = 64MB
+work_mem = 4MB
+max_connections = 100
+3.2 Complete Database Schema
+Users & Authentication
+CREATE TABLE users (
+  id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  phone         VARCHAR(15) UNIQUE NOT NULL,
+  name          VARCHAR(100),
+  language      VARCHAR(10) NOT NULL DEFAULT 'ml',  -- BCP-47
+  location_lat  DECIMAL(9,6),
+  location_lon  DECIMAL(9,6),
+  district      VARCHAR(100),
+  state         VARCHAR(100) DEFAULT 'Kerala',
+  subscription_tier  VARCHAR(20) DEFAULT 'free',
+  subscription_expires_at TIMESTAMPTZ,
+  trial_started_at  TIMESTAMPTZ DEFAULT NOW(),
+  is_active     BOOLEAN DEFAULT true,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW(),
+  last_active   TIMESTAMPTZ
+);
+CREATE TABLE otp_sessions (
+  id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  phone      VARCHAR(15) NOT NULL,
+  otp_hash   VARCHAR(255) NOT NULL,  -- bcrypt hashed
+  expires_at TIMESTAMPTZ NOT NULL,
+  used       BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE refresh_tokens (
+  id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash VARCHAR(255) NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  revoked    BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+Farm & Field Management
+CREATE TABLE farms (
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name        VARCHAR(200) NOT NULL,
+  location    GEOMETRY(POINT, 4326),  -- PostGIS point
+  district    VARCHAR(100),
+  state       VARCHAR(100),
+  area_ha     DECIMAL(8,2),
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE fields (
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  farm_id     UUID NOT NULL REFERENCES farms(id) ON DELETE CASCADE,
+  name        VARCHAR(100),
+  boundaries  GEOMETRY(POLYGON, 4326),  -- Field boundary
+  area_ha     DECIMAL(8,2),
+  slope       VARCHAR(20),  -- flat/gentle/moderate/steep
+  irrigation  VARCHAR(30),  -- rainfed/canal/drip/sprinkler/tube-well
+  soil_type   VARCHAR(50),
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE soil_profiles (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  field_id        UUID NOT NULL REFERENCES fields(id) ON DELETE CASCADE,
+  pH              DECIMAL(4,2),
+  nitrogen_kgha   DECIMAL(8,2),
+  phosphorus_kgha DECIMAL(8,2),
+  potassium_kgha  DECIMAL(8,2),
+  organic_carbon  DECIMAL(5,2),
+  texture         VARCHAR(30),  -- sandy/loamy/clayey/silty
+  field_capacity  DECIMAL(5,2),
+  wilting_point   DECIMAL(5,2),
+  source          VARCHAR(50),  -- soil_health_card/lab_test/estimated
+  measured_at     DATE,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+Crop Cycles & Observations
+CREATE TABLE crop_cycles (
+  id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  field_id      UUID NOT NULL REFERENCES fields(id) ON DELETE CASCADE,
+  crop          VARCHAR(50) NOT NULL,  -- rice/banana/coconut/tomato/maize
+  cultivar      VARCHAR(100),
+  season        VARCHAR(20),  -- kharif/rabi/zaid/perennial
+  planting_date DATE NOT NULL,
+  expected_harvest_date DATE,
+  actual_harvest_date   DATE,
+  status        VARCHAR(20) DEFAULT 'active',  -- active/harvested/abandoned
+  notes         TEXT,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE observations (
+  id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  crop_cycle_id       UUID NOT NULL REFERENCES crop_cycles(id) ON DELETE CASCADE,
+  location            GEOMETRY(POINT, 4326),
+  problem_description TEXT,
+  voice_note_key      VARCHAR(500),  -- R2 object key
+  irrigation_status   VARCHAR(20),  -- irrigated/dry/waterlogged
+  fertilizer_recent   BOOLEAN,
+  pesticide_recent    BOOLEAN,
+  observed_growth_stage VARCHAR(50),
+  observed_at         TIMESTAMPTZ DEFAULT NOW(),
+  created_at          TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE images (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  observation_id  UUID NOT NULL REFERENCES observations(id) ON DELETE CASCADE,
+  r2_key          VARCHAR(500) NOT NULL,
+  mime_type       VARCHAR(50) NOT NULL,
+  file_size_bytes INT,
+  width_px        INT,
+  height_px       INT,
+  quality_score   DECIMAL(4,2),  -- 0.0-1.0 from quality checker
+  blur_score      DECIMAL(8,2),  -- Laplacian variance
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+Diagnoses & Advisories
+CREATE TABLE diagnoses (
+  id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  observation_id    UUID NOT NULL REFERENCES observations(id),
+  model_version     VARCHAR(50) NOT NULL,
+  label             VARCHAR(200) NOT NULL,
+  confidence_score  DECIMAL(4,3) NOT NULL,  -- 0.000-1.000 calibrated
+  confidence_state  VARCHAR(30) NOT NULL,
+  severity          VARCHAR(20),  -- low/medium/high/critical
+  affected_area_pct DECIMAL(5,2),
+  top_predictions   JSONB,  -- [{label, score}, ...] top-5
+  created_at        TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE weather_snapshots (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  observation_id  UUID REFERENCES observations(id),
+  lat             DECIMAL(9,6),
+  lon             DECIMAL(9,6),
+  temperature_c   DECIMAL(5,2),
+  humidity_pct    DECIMAL(5,2),
+  rainfall_24h_mm DECIMAL(8,2),
+  wind_speed_kmh  DECIMAL(6,2),
+  dew_point_c     DECIMAL(5,2),
+  solar_rad       DECIMAL(8,2),
+  consecutive_wet_days INT,
+  forecast_json   JSONB,  -- 7-day forecast
+  indicators_json JSONB,  -- DFI, spray_window, heat_stress etc.
+  provider        VARCHAR(50),  -- open_meteo/imd/cached
+  snapshot_at     TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE advisories (
+  id                    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  observation_id        UUID NOT NULL REFERENCES observations(id),
+  confidence_state      VARCHAR(30) NOT NULL,
+  recommended_scenario  VARCHAR(5),  -- A/B/C
+  scenarios_json        JSONB NOT NULL,
+  evidence_bundle_json  JSONB NOT NULL,
+  recommended_action_json JSONB NOT NULL,
+  what_would_change     JSONB,  -- list of strings
+  safe_to_act           BOOLEAN NOT NULL DEFAULT true,
+  sources_json          JSONB,  -- [{title, authority, url, tier}]
+  model_version         VARCHAR(50),
+  knowledge_version     VARCHAR(50),
+  generation_ms         INT,  -- latency tracking
+  created_at            TIMESTAMPTZ DEFAULT NOW()
+);
+Interventions & Outcomes
+CREATE TABLE interventions (
+  id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  crop_cycle_id UUID NOT NULL REFERENCES crop_cycles(id),
+  advisory_id   UUID REFERENCES advisories(id),
+  action_type   VARCHAR(50),  -- spray/irrigate/fertilize/harvest/other
+  description   TEXT,
+  product_used  VARCHAR(200),
+  quantity      DECIMAL(10,3),
+  quantity_unit VARCHAR(20),
+  cost_inr      DECIMAL(10,2),
+  performed_at  DATE NOT NULL,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE outcomes (
+  id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  intervention_id  UUID NOT NULL REFERENCES interventions(id),
+  observed_at      DATE,
+  improved         VARCHAR(10),  -- yes/no/partial/unsure
+  notes            TEXT,
+  follow_up_image_id UUID REFERENCES images(id),
+  created_at       TIMESTAMPTZ DEFAULT NOW()
+);
+Simulation
+CREATE TABLE simulation_runs (
+  id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  advisory_id   UUID REFERENCES advisories(id),
+  simulator     VARCHAR(20) NOT NULL,  -- dssat/apsim/rules
+  crop          VARCHAR(50),
+  input_json    JSONB NOT NULL,
+  output_json   JSONB,
+  error_message TEXT,
+  runtime_ms    INT,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+Knowledge Base
+CREATE TABLE knowledge_documents (
+  id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title             VARCHAR(500),
+  crop              VARCHAR(50),
+  state             VARCHAR(100),
+  district          VARCHAR(100),
+  topic             VARCHAR(100),  -- disease/pest/fertilizer/irrigation/scheme
+  growth_stage      VARCHAR(50),
+  source_tier       INT NOT NULL,  -- 1-6
+  source_authority  VARCHAR(200),
+  source_url        VARCHAR(1000),
+  language          VARCHAR(10) DEFAULT 'en',
+  published_at      DATE,
+  valid_until       DATE,  -- REQUIRED — triggers stale check
+  status            VARCHAR(20) DEFAULT 'PUBLISHED',
+  content_hash      VARCHAR(64),  -- SHA-256
+  version           INT DEFAULT 1,
+  license           VARCHAR(100),
+  created_at        TIMESTAMPTZ DEFAULT NOW(),
+  updated_at        TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE knowledge_chunks (
+  id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  document_id   UUID NOT NULL REFERENCES knowledge_documents(id) ON DELETE CASCADE,
+  chunk_index   INT NOT NULL,
+  content       TEXT NOT NULL,
+  embedding     vector(1024),  -- multilingual-e5-large dimension
+  metadata_json JSONB,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+-- IVFFlat index for approximate nearest neighbor
+CREATE INDEX ON knowledge_chunks USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+Schemes & Market
+CREATE TABLE schemes (
+  id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name                VARCHAR(300) NOT NULL,
+  short_name          VARCHAR(50),
+  authority           VARCHAR(200),
+  authority_level     VARCHAR(20),  -- central/state/district
+  state               VARCHAR(100),  -- null = all India
+  crops_applicable    JSONB,  -- ["rice", "maize"]
+  eligibility_rules   JSONB,  -- structured rules engine
+  benefits_json       JSONB,
+  enrollment_url      VARCHAR(500),
+  helpline            VARCHAR(50),
+  valid_from          DATE,
+  valid_until         DATE NOT NULL,  -- mandatory freshness
+  status              VARCHAR(20) DEFAULT 'active',
+  created_at          TIMESTAMPTZ DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE market_prices (
+  id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  crop         VARCHAR(50) NOT NULL,
+  market_name  VARCHAR(200) NOT NULL,
+  district     VARCHAR(100),
+  state        VARCHAR(100),
+  price_date   DATE NOT NULL,
+  min_price    DECIMAL(10,2),
+  modal_price  DECIMAL(10,2),
+  max_price    DECIMAL(10,2),
+  unit         VARCHAR(20) DEFAULT 'quintal',
+  source       VARCHAR(50) DEFAULT 'enam',
+  created_at   TIMESTAMPTZ DEFAULT NOW()
+);
+Notifications & Audit
+CREATE TABLE notifications (
+  id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  farm_id      UUID REFERENCES farms(id),
+  type         VARCHAR(50),  -- morning_briefing/risk_alert/spray_window/scheme
+  severity     VARCHAR(20),  -- info/watch/attention/action/urgent
+  title        VARCHAR(300),
+  body         TEXT,
+  data_json    JSONB,  -- deep link payload
+  fcm_message_id VARCHAR(200),
+  delivered_at TIMESTAMPTZ,
+  opened_at    TIMESTAMPTZ,
+  created_at   TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE audit_logs (
+  id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id      UUID REFERENCES users(id),
+  entity_type  VARCHAR(50),
+  entity_id    UUID,
+  action       VARCHAR(50),  -- create/read/update/delete/advisory/export
+  ip_address   INET,
+  user_agent   TEXT,
+  details_json JSONB,
+  created_at   TIMESTAMPTZ DEFAULT NOW()
+);
+Expert Reviews
+CREATE TABLE expert_reviews (
+  id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  advisory_id  UUID NOT NULL REFERENCES advisories(id),
+  expert_id    UUID NOT NULL REFERENCES users(id),
+  verdict      VARCHAR(20),  -- agree/disagree/partial
+  safety_ok    BOOLEAN,
+  notes        TEXT,
+  corrections  JSONB,
+  reviewed_at  TIMESTAMPTZ DEFAULT NOW()
+);
+Row-Level Security
+-- Enable RLS on all user-facing tables
+ALTER TABLE farms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fields ENABLE ROW LEVEL SECURITY;
+ALTER TABLE crop_cycles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE observations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE images ENABLE ROW LEVEL SECURITY;
+ALTER TABLE advisories ENABLE ROW LEVEL SECURITY;
+-- Users see only their own farms
+CREATE POLICY user_farms ON farms
+  USING (user_id = current_setting('app.current_user_id')::UUID);
+-- Cascade via farm ownership for fields, cycles, observations
+CREATE POLICY user_fields ON fields
+  USING (farm_id IN (SELECT id FROM farms WHERE user_id = current_setting('app.current_user_id')::UUID));
+4. API SPECIFICATION
+4.1 Authentication Flow
+Step
+Endpoint
+Request
+Response
+Notes
+1. Send OTP
+POST /api/v1/auth/send-otp
+{ phone: '+919876543210' }
+{ message: 'OTP sent', expires_in: 300 }
+6-digit OTP, 5min expiry, SMS via MSG91/free tier
+2. Verify OTP
+POST /api/v1/auth/verify-otp
+{ phone, otp }
+{ access_token, refresh_token, user }
+JWT 15min access + 7day refresh
+3. Refresh
+POST /api/v1/auth/refresh
+{ refresh_token }
+{ access_token }
+Refresh token rotates on use
+4. Logout
+POST /api/v1/auth/logout
+{ refresh_token }
+{ message }
+Revokes refresh token
+4.2 Core Endpoint Specifications
+Method
+Path
+Auth
+Request Body
+Response
+Status Codes
+POST
+/api/v1/farms
+JWT
+{ name, location_lat, location_lon, area_ha }
+Farm object
+201 / 400 / 401
+POST
+/api/v1/farms/{id}/fields
+JWT
+{ name, area_ha, slope, irrigation, soil_type }
+Field object
+201 / 400 / 404
+POST
+/api/v1/crop-cycles
+JWT
+{ field_id, crop, cultivar, season, planting_date }
+CropCycle object
+201 / 400
+POST
+/api/v1/observations
+JWT + multipart
+{ crop_cycle_id, description, images[] }
+Observation + image_ids
+201 / 400 / 413
+POST
+/api/v1/diagnose
+JWT
+{ observation_id }
+AdvisoryResponse (full schema)
+200 / 400 / 422 / 503
+GET
+/api/v1/weather/{lat}/{lon}
+JWT
+—
+WeatherSnapshot + Indicators
+200 / 503
+GET
+/api/v1/risk/{farm_id}
+JWT
+—
+RiskProfile
+200 / 404
+GET
+/api/v1/schemes
+JWT
+?state=&crop=&problem=
+SchemeMatch[]
+200
+GET
+/api/v1/markets/{crop}
+JWT
+?state=&district=
+MarketObservation[]
+200
+POST
+/api/v1/simulate
+JWT
+SimulationParams JSON
+{ scenarios: [] }
+200 / 400 / 503
+GET
+/api/v1/farms/{id}/timeline
+JWT
+?from=&to=
+TimelineEvent[]
+200 / 404
+GET
+/api/v1/farms/{id}/season-summary
+JWT
+?cycle_id=
+SeasonSummary
+200
+POST
+/api/v1/interventions
+JWT
+{ crop_cycle_id, advisory_id, action_type, ... }
+Intervention object
+201
+POST
+/api/v1/outcomes
+JWT
+{ intervention_id, improved, notes }
+Outcome object
+201
+GET
+/api/v1/sync/delta
+JWT
+?last_sync=ISO8601
+{ updates, deletes }
+200
+GET
+/api/v1/notifications
+JWT
+?unread=true
+Notification[]
+200
+4.3 POST /api/v1/diagnose — Full Advisory Response Schema
+{
+  "advisory_id": "uuid",
+  "observation_id": "uuid",
+  "confidence_state": "LIKELY",   // CONFIRMED|LIKELY|POSSIBLE|UNCERTAIN|INSUFFICIENT_DATA|CONFLICTING_EVIDENCE|OUT_OF_SCOPE
+  "diagnosis": {
+    "label": "Rice blast (Magnaporthe oryzae)",
+    "common_name": { "ml": "നെൽ ബ്ലാസ്റ്റ്", "ta": "...", "en": "Rice blast" },
+    "confidence_score": 0.782,     // calibrated — not raw model output
+    "severity": "medium",         // low|medium|high|critical
+    "affected_area_pct": 12.4
+  },
+  "risk": {
+    "level": "high",
+    "horizon_days": 4,
+    "factors": ["high_humidity_3_days", "tillering_stage", "night_temperature"]
+  },
+  "scenarios": [
+    {
+      "id": "A", "label": "Do nothing",
+      "expected_yield_kgha": 3200,   // MODELLED ESTIMATE
+      "expected_cost_inr": 0,
+      "expected_net_return_inr": 64000,
+      "risk_level": "high"
+    },
+    {
+      "id": "B", "label": "Treat now (recommended)",
+      "action": "Apply Tricyclazole 75 WP",
+      "timing": "Within 24 hours — before next rain",
+      "how": "0.6g per litre water, knapsack sprayer, cover underside of leaves",
+      "expected_yield_kgha": 5100,   // MODELLED ESTIMATE
+      "expected_cost_inr": 480,
+      "expected_net_return_inr": 101520,
+      "risk_level": "low"
+    },
+    {
+      "id": "C", "label": "Treat in 3-5 days",
+      "expected_yield_kgha": 4400,   // MODELLED ESTIMATE
+      "expected_cost_inr": 480,
+      "risk_level": "medium"
+    }
+  ],
+  "recommended_scenario": "B",
+  "recommended_action": {
+    "what": "Apply Tricyclazole 75 WP fungicide",
+    "when": "Today — rain expected tomorrow afternoon",
+    "how": "Mix 0.6g per litre water. Use knapsack sprayer.",
+    "spray_window": "07:00-10:00 today",
+    "cost_estimate_inr": { "min": 420, "max": 540 }
+  },
+  "evidence": {
+    "items": [
+      { "type": "vision", "label": "Diamond-shaped lesions with grey centre", "confidence": 0.82 },
+      { "type": "weather", "indicator": "humidity_3_consecutive_wet_days", "value": true, "supports": true },
+      { "type": "crop_stage", "stage": "tillering", "vulnerability": "high" },
+      { "type": "knowledge", "excerpt": "Blast disease favoured by...", "tier": 1 }
+    ],
+    "contradictions": [],
+    "missing_data": [{ "field": "soil_pH", "impact": "low" }]
+  },
+  "what_would_change_this": [
+    "A soil test would help rule out nitrogen deficiency as co-factor",
+    "If symptoms do not progress in 48 hours, re-assess severity"
+  ],
+  "safe_to_act": true,
+  "scheme_matches": [],
+  "sources": [
+    { "title": "ICAR Rice Disease Management Advisory", "authority": "ICAR-CRRI", "tier": 1, "url": "https://..." }
+  ],
+  "model_version": "agrisage-vision-v1.2.0",
+  "knowledge_version": "2026-08-01",
+  "generation_ms": 3847,
+  "created_at": "2026-09-02T08:23:11Z"
+}
+5. AGENT TECHNICAL SPECIFICATION
+5.1 LangGraph State Schema
+class AgriSAGEState(TypedDict):
+    # Input
+    farm_state: FarmStateSchema
+    images: List[ImageData]
+    # Agent outputs (populated progressively)
+    vision_result: Optional[VisionResult]
+    weather_result: Optional[WeatherResult]
+    crop_stage_result: Optional[CropStageResult]
+    knowledge_result: Optional[KnowledgeResult]
+    critic_result: Optional[CriticResult]
+    scheme_result: Optional[SchemeResult]
+    simulation_result: Optional[SimulationResult]
+    decision_result: Optional[DecisionResult]
+    # Final output
+    advisory: Optional[AdvisoryResponse]
+    # Control
+    errors: List[str]
+    warnings: List[str]
+    run_simulation: bool  # set by Critic based on decision weight
+5.2 Agent I/O Contracts — All Pydantic
+Agent
+Input Schema
+Output Schema
+LLM Called?
+Intake
+Raw request JSON
+FarmStateSchema (typed, validated)
+NO — pure parsing
+Vision
+FarmStateSchema + images
+VisionResult {label, confidence, severity, top_k}
+NO — ONNX model
+Weather
+FarmStateSchema
+WeatherResult {snapshot, indicators, forecast}
+NO — API + rules
+Crop Stage
+FarmStateSchema + weather
+CropStageResult {stage, gdd, vulnerability, windows}
+NO — GDD formula
+Knowledge
+FarmStateSchema + vision + stage
+KnowledgeResult {chunks, sources, authority_tiers}
+NO — retrieval only
+Critic
+All upstream results
+CriticResult {confidence_state, conflicts, missing, safe_to_act}
+NO — rule-based
+Scheme
+FarmStateSchema + critic
+SchemeResult {matches, eligibility_notes}
+YES — complex eligibility
+Decision
+All results + simulation
+DecisionResult {scenarios, recommended, ranking_score}
+YES — synthesis
+Explanation
+DecisionResult + language
+ExplanationResult {advisory_text, voice_text, local_translations}
+YES — generation
+Simulation
+FarmStateSchema + interventions
+SimulationResult {scenarios_a_b_c, yield_est, stress}
+NO — DSSAT subprocess
+Market
+FarmStateSchema
+MarketResult {current_price, trend, best_market}
+NO — data lookup
+Economics
+SimulationResult + market
+EconomicsResult {net_return_per_scenario, cost_breakdown}
+NO — arithmetic
+Monitoring
+FarmStateSchema + weather + stage
+MonitoringResult {risk_scores, alerts, briefing}
+NO — rule-based
+5.3 Critic Agent Logic — Safety Rules
+class CriticAgent:
+    CONFLICTS = [
+        # Vision says fungal but weather is unfavorable
+        Rule(vision='fungal', weather_dfi='<0.3', action='REDUCE_CONFIDENCE'),
+        # Disease uncommon at current stage
+        Rule(vision_label_not_in=stage_disease_map[stage], action='FLAG_STAGE_MISMATCH'),
+    ]
+    SAFETY_CHECKS = [
+        check_chemical_in_cibrc_database,    # BLOCKS if not found
+        check_dosage_within_label_range,      # BLOCKS if exceeded
+        check_crop_chemical_registration,     # BLOCKS if not registered
+        check_preharvest_interval,            # WARNS if PHI not met
+        check_reentry_interval,               # WARNS if REI not met
+        check_scheme_exists_in_database,      # WARNS if not found
+        check_document_not_expired,           # WARNS if valid_until passed
+        check_no_llm_invented_products,       # BLOCKS — name must resolve to DB entry
+    ]
+    def run(self, state: AgriSAGEState) -> CriticResult:
+        conflicts = self._detect_conflicts(state)
+        safe = all(check(state) for check in self.SAFETY_CHECKS)
+        confidence = self._calibrate(state, conflicts)
+        missing = self._find_missing_data(state)
+        run_sim = confidence.score > 0.65 and not conflicts
+        return CriticResult(confidence=confidence, conflicts=conflicts,
+                            safe_to_act=safe, missing=missing, run_simulation=run_sim)
+6. ML/AI TECHNICAL SPECIFICATION
+6.1 Vision Model Training
+# Training script: backend/ml/vision/train.py
+MODEL = 'efficientnet_b3'
+IMAGE_SIZE = 300  # EfficientNet-B3 native resolution
+BATCH_SIZE = 32
+LEARNING_RATE = 1e-4
+EPOCHS = 50
+EARLY_STOPPING_PATIENCE = 7
+# Data splits — FARMER-LEVEL, not random
+# farmers_train / farmers_val / farmers_test — no overlap
+# This prevents inflated accuracy from near-duplicate images
+AUGMENTATION = {
+    'train': [RandomCrop(300), RandomHorizontalFlip(), ColorJitter(0.3),
+              GaussianBlur(p=0.2), RandomRotation(30)],
+    'val': [CenterCrop(300)],  # No augmentation for evaluation
+}
+# Post-training calibration (REQUIRED)
+# Temperature scaling on validation set
+# Target ECE < 0.10 before deployment
+from temperature_scaling import ModelWithTemperature
+calibrated_model = ModelWithTemperature(model)
+calibrated_model.set_temperature(val_loader)
+6.2 ONNX Export Pipeline
+# backend/ml/vision/export.py
+def export_to_onnx(model_path: str, output_path: str):
+    model = load_calibrated_model(model_path)
+    model.eval()
+    dummy = torch.randn(1, 3, 300, 300)
+    torch.onnx.export(
+        model, dummy, output_path,
+        opset_version=17,
+        input_names=['image'],
+        output_names=['logits'],
+        dynamic_axes={'image': {0: 'batch'}}
+    )
+def quantize_int8(onnx_path: str, quantized_path: str):
+    from onnxruntime.quantization import quantize_dynamic, QuantType
+    quantize_dynamic(onnx_path, quantized_path, weight_type=QuantType.QInt8)
+    # Verify accuracy loss < 2% after quantization
+    verify_quantized_accuracy(onnx_path, quantized_path, test_loader)
+6.3 RAG Retrieval Pipeline
+# backend/knowledge/retrieval.py
+class HybridRetriever:
+    def __init__(self):
+        self.dense = MultilingualE5Large()  # vector search via pgvector
+        self.sparse = BM25Index()           # keyword search
+        self.reranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+    async def retrieve(self, query: FarmStateQuery, top_k: int = 5):
+        # Parallel dense + sparse retrieval
+        dense_hits = await self.dense.search(query.to_text(), k=top_k*3,
+            filters={'crop': query.crop, 'state': query.state,
+                     'status': 'PUBLISHED', 'valid_until__gt': date.today()})
+        sparse_hits = self.sparse.search(query.to_keywords(), k=top_k*3)
+        # Merge by reciprocal rank fusion
+        merged = reciprocal_rank_fusion([dense_hits, sparse_hits])
+        # Cross-encoder reranking
+        reranked = self.reranker.rerank(query.to_text(), merged)
+        # Source authority boost: Tier 1 documents score * 1.3
+        boosted = apply_authority_boost(reranked)
+        return boosted[:top_k]
+6.4 LLM System Prompt Architecture
+# Advisory synthesis prompt structure (backend/agents/explanation.py)
+SYSTEM_PROMPT = """
+You are Agri-SAGE, an agricultural advisory system.
+Your role: Convert the structured evidence below into a clear farmer advisory.
+Language: {language}
+Farmer profile: {farmer_context}
+STRICT RULES:
+1. Only use information from the provided evidence bundle. Do not add facts.
+2. Only mention chemical products that appear in the provided CIB&RC data.
+3. If confidence_state is UNCERTAIN or INSUFFICIENT_DATA, do not recommend treatment.
+4. Label all yield estimates as 'modelled estimate'.
+5. Always end with: what_would_change_this based on the provided missing_data list.
+6. Output ONLY valid JSON matching the AdvisoryTextSchema. No markdown.
+"""
+# The LLM receives structured input — never raw user text
+USER_PROMPT = """
+Evidence bundle: {evidence_json}
+Decision result: {decision_json}
+Sources: {sources_json}
+Generate advisory in {language}. Output JSON only.
+"""
+7. MOBILE TECHNICAL SPECIFICATION
+7.1 Android App Architecture
+Layer
+Pattern
+Implementation
+UI
+MVVM + Unidirectional Data Flow
+Jetpack Compose + StateFlow + ViewModel
+Domain
+Use Cases
+AgriSAGEUseCases: DiagnoseUseCase, GetFarmStateUseCase, SyncUseCase
+Data (Remote)
+Repository pattern
+FarmRepository, AdvisoryRepository — Retrofit + OkHttp
+Data (Local)
+Repository pattern
+LocalFarmRepository — Room DAO
+Sync
+Offline queue + WorkManager
+SyncWorker: uploads queued actions on connectivity
+ML Inference
+ONNX Runtime session
+VisionInferenceManager — reuses session across calls
+Voice
+Provider abstraction
+SpeechManager: BhashiniProvider / AndroidSpeechProvider
+Navigation
+Navigation Compose
+NavGraph with typed arguments
+DI
+Hilt
+Module-per-feature, ViewModelFactory injection
+7.2 Android Permissions Required
+Permission
+Reason
+Optional?
+CAMERA
+Crop photo capture
+NO — core feature
+RECORD_AUDIO
+Voice input for queries
+YES — voice is optional
+ACCESS_FINE_LOCATION
+GPS for weather and scheme matching
+YES — can enter manually
+ACCESS_NETWORK_STATE
+Connectivity detection for online/offline mode
+NO
+RECEIVE_BOOT_COMPLETED
+Morning briefing scheduling on device restart
+YES
+POST_NOTIFICATIONS
+Push alerts — Android 13+ requires explicit permission
+YES
+FOREGROUND_SERVICE
+Background sync on low-end devices
+YES
+7.3 Room Database Schema (Android)
+@Entity(tableName = "farmers")
+data class FarmerEntity(
+    @PrimaryKey val id: String,
+    val name: String?,
+    val phone: String,
+    val language: String,
+    val subscriptionTier: String,
+    val updatedAt: Long
+)
+@Entity(tableName = "farms")
+data class FarmEntity(
+    @PrimaryKey val id: String,
+    val userId: String,
+    val name: String,
+    val locationLat: Double?,
+    val locationLon: Double?,
+    val areaHa: Double?,
+    val isSynced: Boolean = false,
+    val createdAt: Long
+)
+@Entity(tableName = "sync_queue")
+data class SyncQueueItem(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val entityType: String,
+    val entityId: String,
+    val action: String,  // create/update/delete
+    val payloadJson: String,
+    val priority: Int = 5,  // 1=highest (observations), 10=lowest
+    val retryCount: Int = 0,
+    val createdAt: Long
+)
+7.4 ONNX Inference Implementation
+class VisionInferenceManager(context: Context) {
+    private val session: OrtSession
+    private val env: OrtEnvironment = OrtEnvironment.getEnvironment()
+    init {
+        val options = OrtSession.SessionOptions().apply {
+            addNnapi()  // Hardware acceleration where available
+            setInterOpNumThreads(2)
+        }
+        val modelBytes = context.assets.open("vision_int8.onnx").readBytes()
+        session = env.createSession(modelBytes, options)
+    }
+    fun classify(bitmap: Bitmap): VisionResult {
+        val tensor = preprocessImage(bitmap)  // normalize to [0,1], resize 300x300
+        val output = session.run(mapOf("image" to tensor))
+        val logits = output[0].value as Array<FloatArray>
+        return parseResult(logits[0])
+    }
+    // Singleton — reuse session for performance
+}
+8. INFRASTRUCTURE & DEPLOYMENT
+8.1 Zero-Cost Development Stack
+Service
+Provider
+Free Tier
+Notes
+Backend hosting
+Oracle Cloud Always Free
+2x AMD OCPU, 24GB RAM, 200GB storage — permanent
+Best free compute available — use for backend + DB
+Object storage
+Cloudflare R2
+10GB storage, 10M Class A, 100M Class B ops/month
+No egress fees — best for image storage
+CDN
+Cloudflare Free
+Unlimited bandwidth for cached content
+Wrap API behind Cloudflare for DDoS protection
+Database
+PostgreSQL on Oracle
+Included in Oracle Always Free compute
+Run on same instance as backend in dev
+Email/OTP
+Twilio (Trial) → MSG91
+Free credits for trial; MSG91 cheapest for India SMS
+Rs.0.12/SMS for OTP — very low cost
+Push notifications
+Firebase FCM
+Free — unlimited notifications
+No cost for notifications ever
+DNS
+Cloudflare
+Free
+Free DNS management
+SSL
+Let's Encrypt via Cloudflare
+Free
+Auto-renewal
+CI/CD
+GitHub Actions
+2,000 min/month free
+Sufficient for small team
+Monitoring
+Grafana Cloud Free
+3 users, 10k metrics, 14-day retention
+Free forever tier
+Error tracking
+Sentry Free
+5,000 errors/month, 1 member
+Free tier adequate for early stage
+App distribution
+Google Play
+One-time $25 developer fee
+Required for Android distribution
+8.2 Docker Compose — Local Development
+version: '3.9'
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: agrisage_dev
+      POSTGRES_USER: agrisage
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports: ['5432:5432']
+    volumes: ['postgres_data:/var/lib/postgresql/data']
+  backend:
+    build: .
+    ports: ['8000:8000']
+    environment:
+      DATABASE_URL: postgresql+asyncpg://agrisage:${DB_PASSWORD}@db/agrisage_dev
+      SECRET_KEY: ${SECRET_KEY}
+      WEATHER_API_KEY: ${WEATHER_API_KEY}
+      R2_BUCKET: ${R2_BUCKET}
+      R2_ACCESS_KEY: ${R2_ACCESS_KEY}
+      R2_SECRET_KEY: ${R2_SECRET_KEY}
+      FCM_KEY: ${FCM_KEY}
+      BHASHINI_API_KEY: ${BHASHINI_API_KEY}
+      MODEL_VERSION: v1.2.0
+      KNOWLEDGE_VERSION: 2026-08-01
+    depends_on: [db]
+    volumes: ['./:/app', './models:/app/models']
+  worker:
+    build: .
+    command: python -m celery -A backend.worker worker --loglevel=info
+    depends_on: [db]
+volumes:
+  postgres_data:
+8.3 Required Environment Variables
+Variable
+Required
+Description
+Where to Get
+DATABASE_URL
+YES
+PostgreSQL async connection string
+Local: see docker-compose; Oracle: connection string from console
+SECRET_KEY
+YES
+JWT signing key — 32+ random characters
+Generate: python -c "import secrets; print(secrets.token_hex(32))"
+WEATHER_API_KEY
+Phase 2
+Open-Meteo (dev, free, non-commercial) → IMD commercial key
+Open-Meteo: no key needed; IMD: apply at imdaws.com
+R2_BUCKET
+YES
+Cloudflare R2 bucket name
+Cloudflare dashboard → R2 → Create bucket
+R2_ACCESS_KEY
+YES
+R2 API token Access Key ID
+Cloudflare dashboard → R2 → Manage API Tokens
+R2_SECRET_KEY
+YES
+R2 API token Secret
+Same as above
+R2_ACCOUNT_ID
+YES
+Cloudflare account ID
+Cloudflare dashboard → right sidebar
+FCM_KEY
+Phase 1
+Firebase Server Key for push notifications
+Firebase console → Project Settings → Cloud Messaging
+BHASHINI_API_KEY
+Phase 3
+Bhashini API key for STT/TTS
+Apply: bhashini.gov.in — allow 4-6 weeks
+OTP_PROVIDER_KEY
+YES
+SMS OTP provider API key
+MSG91: msg91.com (cheapest India SMS)
+ENVIRONMENT
+YES
+development / staging / production
+Set in deployment config
+LOG_LEVEL
+NO
+DEBUG / INFO / WARNING
+Default: INFO in production
+MAX_IMAGE_SIZE_MB
+NO
+Max upload size in MB
+Default: 5
+⚠ Never commit .env file to git. Add .env to .gitignore from day one. Use .env.example with placeholder values for documentation.
+9. TESTING SPECIFICATION
+9.1 Test Categories & Coverage Targets
+Category
+Coverage Target
+Tools
+Key Test Cases
+Unit — Business Logic
+80% line coverage
+pytest
+GDD calculation, DFI formula, confidence calibration, cost scoring
+Unit — Pydantic Schemas
+100% schema validation
+pytest
+All advisory fields present; invalid input rejected with 422
+Integration — API
+All endpoints
+pytest + httpx
+Happy path + error cases + auth failures
+Integration — Agent
+Each agent isolated
+pytest + mocks
+Each agent with known input → expected output type
+Vision Model
+Golden image set
+pytest + ONNX RT
+100 disease images, 50 healthy, 30 OOD — known labels
+RAG Retrieval
+Retrieval benchmark set
+pytest
+50 queries → known relevant chunks → recall@5 > 0.90
+Safety — Chemical
+CIB&RC boundary tests
+pytest
+Unknown product → BLOCKED; valid product → PASSES
+Safety — Hallucination
+Fabricated claim injection
+pytest
+LLM output with invented product → Critic blocks
+Offline Mode
+Connectivity-off tests
+Espresso (Android)
+All core features work with airplane mode on
+Performance — Vision
+Device benchmarks
+Android profiler
+< 4s on Snapdragon 665, < 1.5s on Snapdragon 778G
+Performance — API
+Load test
+locust
+100 concurrent advisory requests → P95 < 8s
+Security — Auth
+JWT edge cases
+pytest
+Expired token, tampered token, missing token → 401
+Security — RLS
+Cross-user data access
+pytest
+User A cannot read User B's farm data
+Regression
+Full test suite
+pytest + GitHub Actions
+Run on every PR — merge blocked if any test fails
+9.2 Golden Test Set Requirements
+Minimum 100 disease-positive images per supported crop with expert-verified labels
+Minimum 50 healthy crop images per crop
+Minimum 30 OOD images (human hands, walls, food, animals)
+Minimum 20 poor-quality images (blurry, dark, partial)
+All images from FIELD conditions — not studio/laboratory
+Farmer-level split maintained in golden set — no leakage
+Golden set frozen after creation — only additions allowed, no modifications
+⚠ The golden test set is sacred. Every model deployment must pass against it. Store in /tests/golden/ with SHA-256 manifest. Any change to the set requires documentation of reason.
+10. SECURITY TECHNICAL REQUIREMENTS
+Requirement
+Implementation
+Test
+JWT validation
+HS256 with 32-byte secret; exp claim checked; no algorithm confusion attack
+pytest: expired, wrong alg, missing claims → 401
+OTP brute force prevention
+Max 5 attempts per phone per 10 minutes; HMAC-SHA256 hashed; 5-minute expiry
+pytest: 6th attempt → 429
+SQL injection
+SQLAlchemy parameterised queries everywhere — no string f-formatting of SQL
+pytest: injection strings in all input fields → 400, not 500
+File upload security
+MIME type validation (not just extension); max 5MB; metadata strip with ExifTool; virus scan via ClamAV
+pytest: PHP file → rejected; >5MB → 413
+Image URL access
+Signed Cloudflare R2 URLs with 1-hour expiry — no public bucket
+pytest: unsigned URL → 403; expired URL → 403
+Rate limiting
+nginx: 10 req/s per IP general; 2 req/s for /diagnose; 5/10min for OTP
+locust: exceed rate → 429
+CORS
+Explicit allow-list — no wildcard in production
+pytest: unknown origin → 403
+Dependency scanning
+pip-audit in CI/CD on every PR
+GitHub Actions: critical CVE → fail build
+Secret management
+All secrets in environment variables; no hardcoded credentials anywhere
+grep scan in CI: any plaintext credential pattern → fail build
+Prompt injection
+User text never inserted as LLM instruction; retrieved docs never executed as code
+pytest: injection string in problem_description → parsed as data, not instruction
+AGRI-SAGE TRD v1.0 — IMPLEMENTATION READY

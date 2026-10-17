@@ -1,0 +1,37 @@
+[
+  {
+    "url": "https://www.icar.org.in/content/improved-management-practices-rice",
+    "title": "ICAR Rice Management Practices",
+    "crop": "rice",
+    "source_tier": 1,
+    "source_authority": "ICAR"
+  },
+  {
+    "url": "https://www.kau.in/sites/default/files/documents/package-practices-rice.pdf",
+    "title": "KAU Package of Practices - Rice",
+    "crop": "rice",
+    "source_tier": 1,
+    "source_authority": "KAU"
+  },
+  {
+    "url": "https://www.icar.org.in/content/banana-cultivation",
+    "title": "ICAR Banana Cultivation Guide",
+    "crop": "banana",
+    "source_tier": 1,
+    "source_authority": "ICAR"
+  },
+  {
+    "url": "https://www.kau.in/sites/default/files/documents/package-practices-banana.pdf",
+    "title": "KAU Package of Practices - Banana",
+    "crop": "banana",
+    "source_tier": 1,
+    "source_authority": "KAU"
+  },
+  {
+    "url": "https://www.icar.org.in/content/coconut-diseases",
+    "title": "ICAR Coconut Disease Management",
+    "crop": "coconut",
+    "source_tier": 1,
+    "source_authority": "ICAR"
+  }
+]

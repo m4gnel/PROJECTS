@@ -1,0 +1,30 @@
+{
+  "disease_detected": {
+    "text": "നിങ്ങളുടെ {crop} വിളയിൽ {disease} ന്റെ ലക്ഷണങ്ങൾ കാണുന്നു. ആത്മവിശ്വാസം: {confidence}. ഇന്ന് {action} ചെയ്യുക.",
+    "slots": ["crop", "disease", "confidence", "action"]
+  },
+  "insufficient_data": {
+    "text": "ഫോട്ടോ കൂടുതൽ വ്യക്തമല്ല. ഇലയുടെ അടുത്ത് നിന്ന് നല്ല വെളിച്ചത്തിൽ ഫോട്ടോ എടുക്കുക.",
+    "slots": []
+  },
+  "conflicting_evidence": {
+    "text": "ഫോട്ടോയും കാലാവസ്ഥ ഡേറ്റയും വ്യത്യസ്ത ഫലങ്ങൾ കാണിക്കുന്നു. ഒരു കൃഷി വിദഗ്ദ്ധനെ സമീപിക്കുക.",
+    "slots": []
+  },
+  "all_clear": {
+    "text": "ഇന്ന് നിങ്ങളുടെ {crop} ആരോഗ്യകരമായി കാണുന്നു. കാലാവസ്ഥ: {weather}.",
+    "slots": ["crop", "weather"]
+  },
+  "offline_notice": {
+    "text": "ഇന്റർനെറ്റ് ഇല്ല — ഇത് ഒരു ഓഫ്‌ലൈൻ വിശകലനമാണ്. ഇന്റർനെറ്റ് ലഭ്യമാകുമ്പോൾ കൂടുതൽ കൃത്യമായ ഉത്തരം ലഭിക്കും.",
+    "slots": []
+  },
+  "spray_window": {
+    "text": "ഇന്ന് {time} മുതൽ {time_end} വരെ കൃഷിമരുന്ന് തളിക്കാൻ അനുയോജ്യമായ സമയമാണ്.",
+    "slots": ["time", "time_end"]
+  },
+  "high_risk_alert": {
+    "text": "⚠ {crop} വിളയ്ക്ക് ഇന്ന് {risk_type} അപകടം കൂടുതലാണ്. {action} ചെയ്യുക.",
+    "slots": ["crop", "risk_type", "action"]
+  }
+}

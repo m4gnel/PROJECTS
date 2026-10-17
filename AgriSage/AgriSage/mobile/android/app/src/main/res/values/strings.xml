@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Agri-SAGE</string>
+    <string name="app_tagline">Scalable Agricultural Guidance Engine</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_advisor">Advisor</string>
+    <string name="nav_fields">Fields</string>
+    <string name="nav_weather">Weather</string>
+    <string name="nav_alerts">Alerts</string>
+    <string name="nav_profile">Profile</string>
+    <string name="ask_advisor">Ask Advisor</string>
+    <string name="my_fields">My Fields</string>
+    <string name="get_started">Get Started</string>
+    <string name="welcome">Welcome to Agri-SAGE</string>
+</resources>

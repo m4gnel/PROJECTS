@@ -1,0 +1,734 @@
+- generic [ref=e3]:
+  - generic:
+    - img:
+      - generic [ref=e4] [cursor=pointer]
+    - generic [ref=e15]:
+      - generic [ref=e16]: CH 01/12
+      - generic [ref=e20]: Space to Soil
+      - generic [ref=e26]: 0 px/s
+  - banner [ref=e29]:
+    - generic [ref=e36]:
+      - generic [ref=e37]:
+        - generic [ref=e38]: Agri-SAGE
+        - generic [ref=e39]: 3D Scrollytelling
+      - paragraph [ref=e40]: From a single seed to a smarter tomorrow.
+    - generic [ref=e41]:
+      - button "Audio Off" [ref=e42]
+      - button "Chapters 1/12" [ref=e48]:
+        - generic [ref=e53]: Chapters
+        - generic [ref=e54]: 1/12
+      - button "Switch to Dark Mode" [ref=e57]
+      - button "English" [ref=e60]
+      - button "Sign In" [ref=e65] [cursor=pointer]
+      - button "Enter Platform" [ref=e70] [cursor=pointer]
+  - button "CH 01 Hero & Mission" [ref=e75]:
+    - generic [ref=e77]: CH 01
+    - generic [ref=e78]: Hero & Mission
+  - generic [ref=e81]:
+    - generic:
+      - generic:
+        - img "Close-up bio-luminescent sprout with glowing cellular veins"
+    - generic [ref=e84] [cursor=pointer]:
+      - generic [ref=e85]:
+        - generic [ref=e86]: Live Bio-Telemetry
+        - generic [ref=e88]: INTERACTIVE
+      - generic [ref=e89]:
+        - button "Temp 29.4°C" [ref=e90]:
+          - generic [ref=e91]: Temp
+          - generic [ref=e94]: 29.4°C
+        - button "Moisture 64%" [ref=e95]:
+          - generic [ref=e96]: Moisture
+          - generic [ref=e100]: 64%
+        - button "Humidity 78%" [ref=e101]:
+          - generic [ref=e102]: Humidity
+          - generic [ref=e105]: 78%
+        - button "Disease Low" [ref=e106]:
+          - generic [ref=e107]: Disease
+          - generic [ref=e111]: Low
+      - generic [ref=e113]:
+        - text: "Canopy Transpiration:"
+        - strong [ref=e114]: Optimal 29.4°C
+    - generic [ref=e115]:
+      - generic [ref=e116]: Next-Gen Biophysical Precision Agriculture
+      - heading "Agr i -SAGE Intelligence for Every Field." [level=1] [ref=e121]:
+        - generic [ref=e122]:
+          - text: Agr
+          - generic [ref=e123]: i
+          - text: "-SAGE"
+        - generic [ref=e124]: Intelligence for Every Field.
+      - paragraph [ref=e125]: AI-powered precision agriculture spanning planetary satellite observation to single-stomata cellular action. Grounded in biophysical simulation and offline-first edge compute.
+      - generic [ref=e127]:
+        - textbox "Enter farm location or crop (e.g. Palakkad Paddy, Vidarbha Cotton)" [ref=e132]
+        - button "Simulate Field" [ref=e133] [cursor=pointer]
+      - generic [ref=e138]:
+        - button "Get Started with Agri-SAGE" [ref=e139] [cursor=pointer]
+        - button "Launch Live Workstation" [ref=e143] [cursor=pointer]
+      - generic [ref=e147]:
+        - generic [ref=e148]: 1,240+ Active Farm Clusters
+        - generic [ref=e150]: 99.4% Detection Accuracy
+        - generic [ref=e154]: Offline Edge INT8 Ready
+      - generic [ref=e158] [cursor=pointer]: Scroll to Explore the 12 Chapters
+  - generic [ref=e163]:
+    - generic [ref=e164]:
+      - heading "Initializing 441-Frame Scrollytelling Sequence" [level=4] [ref=e170]
+      - generic [ref=e172]: 0% Loaded
+    - generic [ref=e173]:
+      - generic:
+        - generic: Stage I · Embryonic Awakening
+        - generic:
+          - generic: FRAME
+          - generic: 001 / 441
+      - generic:
+        - generic:
+          - generic: Biophysical Transformation Engine
+          - heading "EMERGENCE. PERFECTED." [level=2]
+          - paragraph: Scroll to scrub through 441 hyper-photorealistic frames. Watch cellular plant phenology expand from embryonic seed awakening to full biophysical canopy saturation.
+      - generic: Scroll to Explore Sequence
+      - generic:
+        - generic:
+          - generic: SCROLL-LINKED SEQUENCE · 441 FRAMES
+          - generic: 0% COMPLETE
+  - generic [ref=e177]:
+    - generic [ref=e178]:
+      - generic [ref=e179]:
+        - generic [ref=e180]: Dynamic Squeeze Slat Carousel
+        - heading "Agri-SAGE Agronomic Intelligence Stack" [level=3] [ref=e185]
+      - generic [ref=e186]: Slide 1 of 6
+    - generic [ref=e188]:
+      - generic [ref=e189]:
+        - button "Previous" [ref=e190] [cursor=pointer]
+        - button "Next" [ref=e193] [cursor=pointer]
+      - tablist "Agri-SAGE Featured Intelligence" [ref=e197]:
+        - tab "Sentinel-2 Multi-Spectral Canopy Mesh." [selected] [ref=e198] [cursor=pointer]:
+          - img "Vast green farmland under golden hour sunlight with high precision crop rows" [ref=e199]
+          - generic [aria-hidden]:
+            - generic: Space-to-Soil
+        - tab "DSSAT & APSIM Biophysical Digital Twins." [ref=e200] [cursor=pointer]:
+          - img "Detailed close up of vibrant green plant leaf structure with dew drops" [ref=e201]
+          - generic [aria-hidden]:
+            - generic: Biophysical Twin
+        - tab "LoRaWAN Edge Soil Telemetry Nodes." [ref=e202] [cursor=pointer]:
+          - img "Solar energy panels surrounded by green crop fields" [ref=e203]
+          - generic [aria-hidden]:
+            - generic: IoT Edge Node
+        - tab "CIB&RC Chemical Safety & Toxicity Critic." [ref=e204] [cursor=pointer]:
+          - img "Modern hydroponic agricultural research facility with glowing LEDs" [ref=e205]
+          - generic [aria-hidden]:
+            - generic: Safety Guardrail
+        - tab "Vernacular Multilingual Voice Engine." [ref=e206] [cursor=pointer]:
+          - img "Indian farmer working in lush green agricultural field" [ref=e207]
+          - generic [aria-hidden]:
+            - generic: Vernacular Voice
+        - tab "Synthetic Aperture Radar (SAR) Subsoil Scanner." [ref=e208] [cursor=pointer]:
+          - img "Aerial view of geometric circular crop fields using pivot irrigation" [ref=e209]
+          - generic [aria-hidden]:
+            - generic: SAR Deep Moisture
+      - tabpanel [ref=e210]:
+        - generic [ref=e211]:
+          - paragraph [ref=e212]: Sentinel-2 Multi-Spectral Canopy Mesh. Agri-SAGE processes 10-meter resolution reflectance bands to detect canopy chlorophyll stress and nitrogen deficit 14 days before visible chlorosis.
+          - button "Explore Canopy Vision" [ref=e213] [cursor=pointer]
+  - generic [ref=e216]:
+    - generic [ref=e217]:
+      - generic [ref=e218]: 02 · The Invisible Pathogen Genesis
+      - heading "A Problem Doesn't Start WhenYou See It." [level=2] [ref=e222]:
+        - generic [aria-hidden] [ref=e224]:
+          - generic [aria-hidden] [ref=e225]: A
+          - generic [aria-hidden] [ref=e226]: Problem
+          - generic [aria-hidden] [ref=e227]: Doesn't
+          - generic [aria-hidden] [ref=e228]: Start
+          - generic [aria-hidden] [ref=e229]: When
+        - generic [aria-hidden] [ref=e231]:
+          - generic [aria-hidden] [ref=e232]: You
+          - generic [aria-hidden] [ref=e233]: See
+          - generic [aria-hidden] [ref=e234]: It.
+      - paragraph [ref=e235]: By the time you notice yellowing leaves or wilting tillers, the fungal mycelium has already colonized vascular bundles. Agri-SAGE detects subterranean plant stress 96 hours before visual manifestation.
+    - generic [ref=e236]:
+      - generic [ref=e238]:
+        - img "Thermal Spore Stress Detection" [ref=e239]
+        - generic [ref=e240]: SUBTERRANEAN INFRARED & PATHOGEN SPORE HEAT SIGNATURES
+        - generic [ref=e241]:
+          - generic [ref=e242]: Agri-SAGE Thermal Bio-Spectra (What's Happening)
+          - paragraph [ref=e244]: Localized leaf temperature anomaly (+2.8°C) reveals active mycelial respiration & cellular water tension breakdown 96 hours before chlorosis.
+          - generic [ref=e245]:
+            - generic [ref=e246]:
+              - text: "Spore Index:"
+              - strong [ref=e247]: 0.78 HIGH
+            - generic [ref=e248]:
+              - text: "Intervention:"
+              - strong [ref=e249]: Window 24h
+        - generic:
+          - generic:
+            - generic:
+              - text: FUNGAL SPORE CLUSTERS
+              - generic: (NEON AMBER)
+          - generic:
+            - generic:
+              - text: CELLULAR STRESS HOTSPOTS
+              - generic: (NEON ORANGE)
+          - generic: INFECTION ZONES
+          - generic: 31.4°C
+      - generic [ref=e250]:
+        - generic [ref=e251]:
+          - img "Daylight Natural Foliage" [ref=e252]
+          - generic [ref=e253]: DAYLIGHT HEALTHY LEAF
+        - generic [ref=e254]:
+          - generic [ref=e255]: Daylight Human Vision (What You See)
+          - paragraph [ref=e259]: Leaf surface appears completely emerald and healthy to naked eyes. Farmer delays action, unaware that spore colony is already dividing inside plant xylem.
+          - generic [ref=e260]:
+            - generic [ref=e261]:
+              - text: "Visual Symptoms:"
+              - strong [ref=e262]: 0%
+            - generic [ref=e263]:
+              - text: "Hidden Damage:"
+              - strong [ref=e264]: Active
+      - generic [ref=e265]: INFRARED & PATHOGEN STRESS
+      - generic [ref=e269]:
+        - generic [ref=e270]: Drag horizontally to contrast visible canopy vs. subterranean fungal heat
+        - generic [ref=e272]:
+          - button "Inspect Stress (20%)" [ref=e273]
+          - button "Split (50%)" [ref=e274]
+          - button "Inspect Visible (80%)" [ref=e275]
+    - generic [ref=e276]:
+      - generic [ref=e278] [cursor=pointer]:
+        - generic [ref=e279]:
+          - generic [ref=e280]: Stage 01
+          - generic [ref=e281]: VWC 18%
+        - strong [ref=e282]: Soil Dryness
+        - paragraph [ref=e283]: Capacitive sensors flag sub-wilting threshold
+      - generic [ref=e285] [cursor=pointer]:
+        - generic [ref=e286]:
+          - generic [ref=e287]: Stage 02
+          - generic [ref=e288]: +2.8°C
+        - strong [ref=e289]: Temperature Rise
+        - paragraph [ref=e290]: Canopy transpiration shutdown causes heat bloom
+      - generic [ref=e292] [cursor=pointer]:
+        - generic [ref=e293]:
+          - generic [ref=e294]: Stage 03
+          - generic [ref=e295]: RH 88%
+        - strong [ref=e296]: Humidity Trapping
+        - paragraph [ref=e297]: Microclimate dew creates ideal spore chamber
+      - generic [ref=e299] [cursor=pointer]:
+        - generic [ref=e300]:
+          - generic [ref=e301]: Stage 04
+          - generic [ref=e302]: Fv/Fm 0.69
+        - strong [ref=e303]: Leaf Stress
+        - paragraph [ref=e304]: Photosynthetic quantum efficiency plummets
+      - generic [ref=e306] [cursor=pointer]:
+        - generic [ref=e307]:
+          - generic [ref=e308]: Stage 05
+          - generic [ref=e309]: Sporulation
+        - strong [ref=e310]: Disease Begins
+        - paragraph [ref=e311]: Sub-epidermal mycelium begins colonial eruption
+  - generic [ref=e312]:
+    - generic [ref=e313]:
+      - generic [ref=e314]:
+        - generic [ref=e315]: 03 · The Connected Ecosystem
+        - heading "A Farm Is More Than A Field." [level=2] [ref=e321]:
+          - generic [aria-hidden] [ref=e323]:
+            - generic [aria-hidden] [ref=e324]: A
+            - generic [aria-hidden] [ref=e325]: Farm
+            - generic [aria-hidden] [ref=e326]: Is
+            - generic [aria-hidden] [ref=e327]: More
+            - generic [aria-hidden] [ref=e328]: Than
+            - generic [aria-hidden] [ref=e329]: A
+            - generic [aria-hidden] [ref=e330]: Field.
+        - paragraph [ref=e331]: Soil. Weather. Water. Crops. People. All connected. All vital. Agri-SAGE constructs a unified digital twin combining microclimate edge probes with Sentinel-2 multi-spectral orbital passes.
+      - generic [ref=e332]:
+        - button "All Layers" [ref=e333]
+        - button "Satellite" [ref=e334]
+        - button "Weather" [ref=e335]
+        - button "Soil" [ref=e336]
+        - button "Irrigation" [ref=e337]
+        - button "Sensors" [ref=e338]
+        - button "Farmer" [ref=e339]
+    - generic [ref=e340]:
+      - img "3D Isometric Connected Smart Farm with Floating Glass HUDs" [ref=e341]
+      - generic [ref=e347]:
+        - text: "Sentinel-2 L2A · 10m NDVI:"
+        - strong [ref=e348]: "0.78"
+      - generic [ref=e356]:
+        - text: "Microclimate:"
+        - strong [ref=e357]: 28°C · Rain 12%
+      - generic [ref=e362]:
+        - text: "Soil Probe #03:"
+        - strong [ref=e363]: pH 6.4 · VWC 64%
+      - generic [ref=e369]:
+        - text: "Drip Valve Cluster:"
+        - strong [ref=e370]: Standby 06:00 AM
+      - generic [ref=e371]:
+        - generic [ref=e372]:
+          - generic [ref=e373]: DIGITAL TWIN ONLINE
+          - generic [ref=e375]: ·
+          - generic [ref=e376]: 16 LoRaWAN Edge Nodes
+          - generic [ref=e377]: ·
+          - generic [ref=e378]:
+            - text: "Solar Irradiance:"
+            - strong [ref=e379]: 680 W/m²
+          - generic [ref=e380]: ·
+          - generic [ref=e381]:
+            - text: "Active Layer:"
+            - strong [ref=e382]: all
+        - generic [ref=e383]: "DSSAT Field Mesh Latency: 42ms"
+  - generic [ref=e384]:
+    - generic [ref=e385]:
+      - generic [ref=e386]: 04 · Sub-Cellular Optics
+      - heading "What If You Could See What Your Crops Can't Tell You?" [level=2] [ref=e392]
+      - paragraph [ref=e393]: From individual stomatal conductance to quantum chloroplast energy absorption. Agri-SAGE turns low-cost smartphone cameras into multi-spectral instruments with on-device INT8 computer vision.
+    - generic [ref=e394]:
+      - img "Microscopic Cellular Chloroplast and Stomata Structure" [ref=e395]
+      - generic [ref=e396]:
+        - generic [ref=e397]: Spectral Band
+        - button "Visible RGB (400-700nm)" [ref=e398]
+        - button "RedEdge (705nm)" [ref=e399]
+        - button "Near-Infrared NIR (842nm)" [ref=e400]
+        - button "Thermal IR (10.5µm)" [ref=e401]
+      - generic [ref=e402]:
+        - generic [ref=e403]:
+          - generic [ref=e404]: Chloroplast Yield
+          - strong [ref=e405]: Fv/Fm = 0.81
+          - generic [ref=e406]: Optimal Quantum Capture
+        - generic [ref=e407]:
+          - generic [ref=e408]: Stomata Aperture
+          - strong [ref=e409]: 12.4 µm
+          - generic [ref=e410]: gs = 280 mmol/m²s
+        - generic [ref=e411]:
+          - generic [ref=e412]: Water Potential
+          - strong [ref=e413]: Ψ = -0.42 MPa
+          - generic [ref=e414]: Turgor Pressure Intact
+        - generic [ref=e415]:
+          - generic [ref=e416]: Pathogen DNA Probe
+          - strong [ref=e417]: NEGATIVE
+          - generic [ref=e418]: Zero Xanthomonas
+  - generic [ref=e421]:
+    - generic [ref=e423]:
+      - generic [ref=e425]: Intelligence Pipeline
+      - generic [ref=e426]: · Scroll →
+    - generic [ref=e433]:
+      - generic [ref=e438]:
+        - generic [ref=e447]:
+          - generic [ref=e448]: "01"
+          - generic [ref=e449]: / 05
+        - heading "Space-to-Soil Data Ingestion" [level=3] [ref=e450]
+        - paragraph [ref=e451]: Sentinel-2 MSI · 10 m Resolution · 5-Day Revisit
+        - paragraph [ref=e452]: Multi-spectral satellite imagery flows through our edge pipeline, converting raw top-of-atmosphere radiance to surface reflectance in under 3 seconds per tile.
+        - generic [ref=e453]:
+          - generic [ref=e454]: "10"
+          - generic [ref=e455]: m
+          - generic [ref=e456]: Spatial Resolution
+      - generic [ref=e461]:
+        - generic [ref=e469]:
+          - generic [ref=e470]: "02"
+          - generic [ref=e471]: / 05
+        - heading "Spectral Band Decomposition" [level=3] [ref=e472]
+        - paragraph [ref=e473]: RGB · Red Edge · NIR · SWIR · Thermal
+        - paragraph [ref=e474]: Each pixel decomposes into 13 spectral bands. Custom NDVI / NDRE algorithms detect chlorophyll degradation 14 days before visible chlorosis.
+        - generic [ref=e475]:
+          - generic [ref=e476]: "13"
+          - generic [ref=e477]: Spectral Bands
+      - generic [ref=e482]:
+        - generic [ref=e493]:
+          - generic [ref=e494]: "03"
+          - generic [ref=e495]: / 05
+        - heading "Neural Network Inference" [level=3] [ref=e496]
+        - paragraph [ref=e497]: Vision Transformer · 98.7 % Crop Classification
+        - paragraph [ref=e498]: A fine-tuned ViT model processes spectral tensors through 12 attention layers, classifying crop health across 47 pathological categories.
+        - generic [ref=e499]:
+          - generic [ref=e500]: "98.7"
+          - generic [ref=e501]: "%"
+          - generic [ref=e502]: Accuracy
+      - generic [ref=e507]:
+        - generic [ref=e512]:
+          - generic [ref=e513]: "04"
+          - generic [ref=e514]: / 05
+        - heading "Digital Twin Simulation" [level=3] [ref=e515]
+        - paragraph [ref=e516]: DSSAT v4.8 · 10 000 Monte Carlo Runs
+        - paragraph [ref=e517]: Biophysical models simulate root water uptake, transpiration efficiency, and phenological development across 14-day yield projection horizons.
+        - generic [ref=e518]:
+          - generic [ref=e519]: "14"
+          - generic [ref=e520]: d
+          - generic [ref=e521]: Forecast Horizon
+      - generic [ref=e526]:
+        - generic [ref=e532]:
+          - generic [ref=e533]: "05"
+          - generic [ref=e534]: / 05
+        - heading "Actionable Farmer Advisory" [level=3] [ref=e535]
+        - paragraph [ref=e536]: Vernacular Voice · 22 Indian Languages · WhatsApp
+        - paragraph [ref=e537]: "The final output: a clear, actionable advisory delivered in the farmer's mother tongue via voice call, SMS, or WhatsApp — no smartphone required."
+        - generic [ref=e538]:
+          - generic [ref=e539]: "22"
+          - generic [ref=e540]: Languages
+  - generic [ref=e541]:
+    - generic [ref=e542]:
+      - generic [ref=e543]: 05 · Neural Architecture
+      - heading "Meet the Intelligence Behind theField." [level=2] [ref=e548]:
+        - generic [aria-hidden] [ref=e550]:
+          - generic [aria-hidden] [ref=e551]: Meet
+          - generic [aria-hidden] [ref=e552]: the
+          - generic [aria-hidden] [ref=e553]: Intelligence
+          - generic [aria-hidden] [ref=e554]: Behind
+          - generic [aria-hidden] [ref=e555]: the
+        - generic [aria-hidden] [ref=e558]: Field.
+      - paragraph [ref=e559]: How raw heterogeneous data from orbit, canopy, and soil transforms into life-saving agronomic decisions.
+    - generic [ref=e560]:
+      - generic [ref=e561] [cursor=pointer]:
+        - generic [ref=e562]:
+          - generic [ref=e563]: "01"
+          - generic [ref=e564]: Ingestion
+        - strong [ref=e565]: Raw Multi-Source Data
+        - paragraph [ref=e566]: High-resolution smartphone foliage photos, weather station DFI, soil texture, planting GDD.
+        - generic [ref=e567]: CameraX 5 FPS · IMD API · LoRaWAN
+      - generic [ref=e568] [cursor=pointer]:
+        - generic [ref=e569]:
+          - generic [ref=e570]: "02"
+          - generic [ref=e571]: Multi-Agent
+        - strong [ref=e572]: Agri-SAGE AI Core
+        - paragraph [ref=e573]: 14 specialized LangGraph agents evaluate symptom patterns, disease classification, and nutrient deficiencies.
+        - generic [ref=e574]: INT8 ONNX · Sub-4s Edge Inference
+      - generic [ref=e575] [cursor=pointer]:
+        - generic [ref=e576]:
+          - generic [ref=e577]: "03"
+          - generic [ref=e578]: Physics Engine
+        - strong [ref=e579]: DSSAT Simulation
+        - paragraph [ref=e580]: Physics-based mathematical crop growth models project daily yield loss curves under multiple treatment scenarios.
+        - generic [ref=e581]: DSSAT v4.8 · APSIM Causal Logic
+      - generic [ref=e582] [cursor=pointer]:
+        - generic [ref=e583]:
+          - generic [ref=e584]: "04"
+          - generic [ref=e585]: Empowerment
+        - strong [ref=e586]: Validated Action
+        - paragraph [ref=e587]: Every fungicide, dosage, and spray timing verified against CIB&RC registry in native mother-tongue audio.
+        - generic [ref=e588]: Zero Hallucination Filter · Malayalam Voice
+  - generic [ref=e589]:
+    - generic [ref=e590]:
+      - generic [ref=e591]: 06 · Multi-Agent Star Topology
+      - heading "One Intelligence Isn't Enough." [level=2] [ref=e599]
+      - paragraph [ref=e600]: Generic LLMs give dangerous, ungrounded advice. Agri-SAGE deploys 6 specialized autonomous agents coordinated by a central orchestrator that debate, cross-verify, and stress-test every decision.
+    - generic [ref=e601]:
+      - generic [ref=e603] [cursor=pointer]:
+        - generic [ref=e604]:
+          - strong [ref=e605]: Vision Diagnosis Agent
+          - generic [ref=e606]: ONNX INT8
+        - paragraph [ref=e607]: Identifies 21 regional crop diseases and nutritional deficiencies with attention saliency maps.
+        - generic [ref=e608]:
+          - generic [ref=e609]:
+            - text: "Model:"
+            - strong [ref=e610]: MobileNetV4 + YOLOv11 Edge
+          - generic [ref=e611]:
+            - text: "Latency:"
+            - strong [ref=e612]: 84ms
+      - generic [ref=e614] [cursor=pointer]:
+        - generic [ref=e615]:
+          - strong [ref=e616]: Microclimate Weather Agent
+          - generic [ref=e617]: Open-Meteo & IMD
+        - paragraph [ref=e618]: Calculates Disease Favorability Index (DFI) and computes 48-hour wind & precipitation spray windows.
+        - generic [ref=e619]:
+          - generic [ref=e620]:
+            - text: "Model:"
+            - strong [ref=e621]: HRRR Numerical + Local Sensors
+          - generic [ref=e622]:
+            - text: "Latency:"
+            - strong [ref=e623]: 110ms
+      - generic [ref=e625] [cursor=pointer]:
+        - generic [ref=e626]:
+          - strong [ref=e627]: Phenology & GDD Agent
+          - generic [ref=e628]: Thermal Time
+        - paragraph [ref=e629]: Tracks Growing Degree Day accumulation from sowing to flag leaf emergence and grain filling.
+        - generic [ref=e630]:
+          - generic [ref=e631]:
+            - text: "Model:"
+            - strong [ref=e632]: FAO-56 Dual Crop Coefficient
+          - generic [ref=e633]:
+            - text: "Latency:"
+            - strong [ref=e634]: 42ms
+      - generic [ref=e636] [cursor=pointer]:
+        - generic [ref=e637]:
+          - strong [ref=e638]: Biophysical Simulation Agent
+          - generic [ref=e639]: DSSAT v4.8
+        - paragraph [ref=e640]: Solves coupled differential equations for soil water, root nitrogen uptake, and biomass accumulation.
+        - generic [ref=e641]:
+          - generic [ref=e642]:
+            - text: "Model:"
+            - strong [ref=e643]: CERES-Rice & CROPGRO Dynamic
+          - generic [ref=e644]:
+            - text: "Latency:"
+            - strong [ref=e645]: 140ms
+      - generic [ref=e647] [cursor=pointer]:
+        - generic [ref=e648]:
+          - strong [ref=e649]: CIB&RC Critic Safety Agent
+          - generic [ref=e650]: Zero Hallucination
+        - paragraph [ref=e651]: Strict statutory gatekeeper. Rejects unauthorized agrochemicals and validates statutory wait periods.
+        - generic [ref=e652]:
+          - generic [ref=e653]:
+            - text: "Model:"
+            - strong [ref=e654]: Govt. Registry Rule Engine
+          - generic [ref=e655]:
+            - text: "Latency:"
+            - strong [ref=e656]: 62ms
+      - generic [ref=e658] [cursor=pointer]:
+        - generic [ref=e659]:
+          - strong [ref=e660]: Regional Vernacular Agent
+          - generic [ref=e661]: Bhashini Voice
+        - paragraph [ref=e662]: Translates high-dimensional biophysical findings into simple Malayalam and Tamil voice alerts.
+        - generic [ref=e663]:
+          - generic [ref=e664]:
+            - text: "Model:"
+            - strong [ref=e665]: AI4Bharat IndicTTS Pipeline
+          - generic [ref=e666]:
+            - text: "Latency:"
+            - strong [ref=e667]: 95ms
+  - generic [ref=e668]:
+    - generic [ref=e669]:
+      - generic [ref=e670]: 07 · Biophysical Digital Twin
+      - heading "Don't Just Predict Tomorrow. Simulate It." [level=2] [ref=e674]
+      - paragraph [ref=e675]: Agri-SAGE doesn't make guesses. Powered by the globally validated DSSAT engine, we simulate multiple futures across 1 to 14 days before the farmer spends a single rupee on intervention.
+    - generic [ref=e676]:
+      - generic [ref=e677]:
+        - generic [ref=e678]:
+          - heading "DSSAT Simulation Projection Horizon" [level=4] [ref=e679]
+          - text: Run daily time-step biomass, moisture, and spore multiplication equations
+        - generic [ref=e680]:
+          - button "+1 Days Horizon" [ref=e681]
+          - button "+3 Days Horizon" [ref=e682]
+          - button "+7 Days Horizon" [ref=e683]
+          - button "+14 Days Horizon" [ref=e684]
+      - generic [ref=e685]:
+        - generic [ref=e686] [cursor=pointer]:
+          - generic [ref=e687]:
+            - generic [ref=e688]: Scenario A
+            - generic [ref=e689]: Critical Danger
+          - heading "Delay Treatment (7d Horizon)" [level=5] [ref=e690]
+          - paragraph [ref=e691]: Fungal blast spores spread from tillers into panicle neck tissue, causing irreversible physiological choking.
+          - generic [ref=e692]:
+            - generic [ref=e693]:
+              - generic [ref=e694]: "Projected Yield:"
+              - strong [ref=e695]: 3,750 kg/ha*
+            - generic [ref=e696]:
+              - generic [ref=e697]: "Crop Damage Loss:"
+              - strong [ref=e698]: "-34%"
+        - generic [ref=e699] [cursor=pointer]:
+          - generic [ref=e700]:
+            - generic [ref=e701]: Scenario B
+            - generic [ref=e702]: Recommended Action
+          - heading "Organic Spray at 18:00 hrs" [level=5] [ref=e703]
+          - paragraph [ref=e704]: Targeted bio-fungicide halts spore replication within 36 hours before impending evening humidity spike.
+          - generic [ref=e705]:
+            - generic [ref=e706]:
+              - generic [ref=e707]: "Projected Yield:"
+              - strong [ref=e708]: 5,280 kg/ha*
+            - generic [ref=e709]:
+              - generic [ref=e710]: "Farmer Net Revenue:"
+              - strong [ref=e711]: ₹92,400 / ha
+        - generic [ref=e712] [cursor=pointer]:
+          - generic [ref=e713]:
+            - generic [ref=e714]: Scenario C
+            - generic [ref=e715]: Bio-Shield
+          - heading "Pseudomonas fluorescens" [level=5] [ref=e716]
+          - paragraph [ref=e717]: Rhizosphere inoculation creates competitive microbial exclusion with zero agrochemical chemical residue.
+          - generic [ref=e718]:
+            - generic [ref=e719]:
+              - generic [ref=e720]: "Projected Yield:"
+              - strong [ref=e721]: 4,850 kg/ha*
+            - generic [ref=e722]:
+              - generic [ref=e723]: "Soil Microbiome Health:"
+              - strong [ref=e724]: +28% Diversity
+      - generic [ref=e725]: "* Non-negotiable safety label: Modelled estimate from DSSAT v4.8 mathematical simulation. Verified against KVK Palakkad empirical field trials."
+  - generic [ref=e726]:
+    - generic [ref=e727]:
+      - generic [ref=e728]: 08 · Action Engine
+      - heading "Turn Prediction Into Action." [level=2] [ref=e733]
+      - paragraph [ref=e734]: Prediction is useless without decisive intervention. Watch how Agri-SAGE systematically crushes crop loss risk from 72% down to 10%.
+    - generic [ref=e735]:
+      - generic [ref=e736]:
+        - generic [ref=e737]:
+          - generic [ref=e738]: 72%
+          - generic [ref=e739]: Initial Crop Risk
+          - paragraph [ref=e740]: RH > 85% + Thermal spore signature
+        - generic [ref=e744]:
+          - generic [ref=e748]: Multi-Agent Synthesis
+          - paragraph [ref=e749]: DSSAT Simulation + CIB&RC Validation
+        - generic [ref=e750]:
+          - generic [ref=e751]: 10%
+          - generic [ref=e752]: Residual Risk
+          - paragraph [ref=e753]: Harvest Secured · 86% Hazard Neutralized
+      - generic [ref=e754]:
+        - generic [ref=e760]:
+          - strong [ref=e761]: Simulate Full Causal Action Loop
+          - text: Verify how targeted bio-fungicide reduces risk in real time
+        - button "Run Protection Simulation" [ref=e762] [cursor=pointer]
+  - generic [ref=e768]:
+    - generic [ref=e769]:
+      - generic [ref=e770]: 09 · The Human Ground Truth
+      - heading "Complex Intelligence. Simple Decisions." [level=2] [ref=e774]
+      - paragraph [ref=e775]: "Smallholder farmers don't need neural network loss curves. They need zero-jargon instructions delivered in their mother tongue: what to inspect, exactly when to spray, and how much water to dilute."
+      - generic [ref=e776]:
+        - generic [ref=e781]:
+          - strong [ref=e782]: Bhashini Voice Briefing in Malayalam & Tamil
+          - text: "\"കീടബാധ തടയാൻ വൈകുന്നേരം 6 മണിക്ക് ഓർഗാനിക് കുമിൾനാശിനി പ്രയോഗിക്കുക\""
+        - generic [ref=e787]:
+          - strong [ref=e788]: Precipitation Window Optimization
+          - text: Calculates exact 4-hour window before rain to avoid expensive chemical washouts
+        - generic [ref=e793]:
+          - strong [ref=e794]: Direct PMFBY & State Subsidy Matching
+          - text: Automatically generates insurance claim certificates for verified unpreventable damage
+      - generic [ref=e795]:
+        - button "Listen to Voice Advisory (മലയാളം)" [ref=e796] [cursor=pointer]
+        - button "WhatsApp Share" [ref=e800] [cursor=pointer]
+    - generic [ref=e805]:
+      - img "Farmer in Kerala paddy field inspecting advisory on digital tablet" [ref=e806]
+      - generic [ref=e807]:
+        - generic [ref=e808]:
+          - strong [ref=e811]: "Palakkad Farmer Advisory Card #402"
+          - generic [ref=e812]: Delivered via SMS/WhatsApp
+        - generic [ref=e813]:
+          - generic [ref=e814]:
+            - generic [ref=e815]: Crop Health
+            - strong [ref=e816]: Good
+          - generic [ref=e817]:
+            - generic [ref=e818]: Disease Risk
+            - strong [ref=e819]: Moderate
+          - generic [ref=e820]:
+            - generic [ref=e821]: Irrigation
+            - strong [ref=e822]: Recommended
+          - generic [ref=e823]:
+            - generic [ref=e824]: Next 24h
+            - strong [ref=e825]: RH 88%
+        - generic [ref=e826]:
+          - generic [ref=e827]:
+            - text: "Recommended:"
+            - strong [ref=e828]: Apply organic Trichoderma viride (2.5g/L)
+          - generic [ref=e829]: Safe Dosage
+  - generic [ref=e830]:
+    - generic [ref=e831]:
+      - generic [ref=e832]: 10 · Planetary Scale
+      - heading "One Intelligent Field Becomes a Connected World." [level=2] [ref=e837]
+      - paragraph [ref=e838]: Scalable from a single 1-hectare rice paddy in Palakkad to hundreds of thousands of smallholder holdings across India and global breadbaskets.
+    - generic [ref=e839]:
+      - img "Global Connected Farm Network Digital Twin" [ref=e840]
+      - generic [ref=e841]:
+        - button "Palakkad Paddy Belt (142 Farms)" [ref=e842]
+        - button "Punjab Wheat Plain (320 Farms)" [ref=e843]
+        - button "Vidarbha Cotton (210 Farms)" [ref=e844]
+        - button "Central Valley (85 Farms)" [ref=e845]
+        - button "Rift Valley Maize (240 Farms)" [ref=e846]
+      - generic [ref=e848]:
+        - generic [ref=e849] [cursor=pointer]:
+          - generic [ref=e850]: 1,000+
+          - generic [ref=e851]: Farms Onboarded
+        - generic [ref=e852] [cursor=pointer]:
+          - generic [ref=e853]: 50+
+          - generic [ref=e854]: Agro-Basins
+        - generic [ref=e855] [cursor=pointer]:
+          - generic [ref=e856]: "1"
+          - generic [ref=e857]: Global Digital Twin
+  - generic [ref=e858]:
+    - generic [ref=e859]:
+      - generic [ref=e860]: 11 · Full Intelligence Workstation
+      - heading "Everything in One Intelligence Layer." [level=2] [ref=e864]
+      - paragraph [ref=e865]: "Experience the complete expert workstation: Agronomist Triage Queue, Multi-Spectral Evidence Inspector, Outbreak Radar, and Farmer Advisory Generator."
+    - generic [ref=e866]:
+      - generic [ref=e867]:
+        - generic [ref=e868]:
+          - button "Triage Queue" [ref=e869]
+          - button "Multi-Spectral Inspector" [ref=e870]
+          - button "Outbreak Radar" [ref=e871]
+          - button "Mobile Viewfinder" [ref=e872]
+        - generic [ref=e873]: Frame 3 Live & Ready
+      - generic [ref=e876]:
+        - generic [ref=e877]:
+          - generic [ref=e878]:
+            - strong [ref=e879]: Agronomist Triage Console (Frame 3)
+            - generic [ref=e880]: 12 Pending Cases
+          - paragraph [ref=e881]: Real-time triage queue ranking agricultural incoming incident reports by risk severity, crop economic value, and epidemiological spread probability.
+        - button "Launch Full Frame 3 Workstation" [ref=e883] [cursor=pointer]
+  - generic [ref=e887]:
+    - generic [ref=e893]:
+      - generic [ref=e894]: 12 · From A Single Seed To A Smarter Tomorrow
+      - heading "The Future of AgricultureStarts WithUnderstanding." [level=2] [ref=e895]:
+        - generic [aria-hidden] [ref=e897]:
+          - generic [aria-hidden] [ref=e898]: The
+          - generic [aria-hidden] [ref=e899]: Future
+          - generic [aria-hidden] [ref=e900]: of
+          - generic [aria-hidden] [ref=e901]: Agriculture
+        - generic [aria-hidden] [ref=e903]:
+          - generic [aria-hidden] [ref=e904]: Starts
+          - generic [aria-hidden] [ref=e905]: With
+        - generic [aria-hidden] [ref=e908]: Understanding.
+      - paragraph [ref=e909]: Join thousands of smallholder farmers, agronomists, and institutions transforming agriculture through verifiable intelligence.
+    - generic [ref=e910]:
+      - button "Sign In to Agri-SAGE (Frame 2)" [ref=e911] [cursor=pointer]
+      - button "Direct Demo Access (Frame 3)" [ref=e915] [cursor=pointer]
+    - generic [ref=e917]:
+      - generic [ref=e918]: Production Engineering Architecture
+      - generic [ref=e919]:
+        - generic [ref=e920]: React 19 + TypeScript
+        - generic [ref=e921]: Three.js 3D WebGL
+        - generic [ref=e922]: DSSAT v4.8 Biophysical
+        - generic [ref=e923]: CIB&RC Registry Safety
+        - generic [ref=e924]: Offline-First IndexedDB
+        - generic [ref=e925]: Tailwind CSS v4
+    - generic [ref=e926]: Smarter Farms. Healthier Planet.
+  - contentinfo [ref=e927]:
+    - generic [ref=e928]:
+      - generic [ref=e929]:
+        - generic [ref=e930]:
+          - generic [ref=e931]: Agri-SAGE
+          - paragraph [ref=e937]: Scalable Agricultural Guidance Engine empowering smallholder farmers, agronomists, and institutions with verifiable biophysical AI intelligence.
+        - generic [ref=e938]:
+          - heading "Platform Architecture" [level=4] [ref=e939]
+          - list [ref=e940]:
+            - listitem [ref=e941]:
+              - link "Space to Soil Ingestion" [ref=e942] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e943]:
+              - link "Neural Core AI (DSSAT v4.8)" [ref=e944] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e945]:
+              - link "Multi-Agent Swarm" [ref=e946] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e947]:
+              - link "Outbreak Radar Sweep" [ref=e948] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=e949]:
+          - heading "Agronomic Safety" [level=4] [ref=e950]
+          - list [ref=e951]:
+            - listitem [ref=e952]:
+              - link "CIB&RC Regulatory Filter" [ref=e953] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e954]:
+              - link "Zero-Hallucination Gate" [ref=e955] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e956]:
+              - link "Malayalam Voice Advisory" [ref=e957] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=e958]:
+              - link "Live Telemetry Triage" [ref=e959] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=e961]:
+          - heading "Contact & Dispatch" [level=4] [ref=e962]
+          - list [ref=e963]:
+            - listitem [ref=e964]:
+              - link "advisory@agrisage.org" [ref=e968] [cursor=pointer]:
+                - /url: mailto:advisory@agrisage.org
+            - listitem [ref=e969]:
+              - link "+91 94000 12345 (Agri Hotline)" [ref=e972] [cursor=pointer]:
+                - /url: tel:+919400012345
+            - listitem [ref=e973]:
+              - generic [ref=e977]: Palakkad & Wayanad, Kerala, India
+      - separator [ref=e978]
+      - generic [ref=e979]:
+        - generic [ref=e980]:
+          - link "Global Network" [ref=e981] [cursor=pointer]:
+            - /url: "#"
+          - link "Share Platform" [ref=e985] [cursor=pointer]:
+            - /url: "#"
+          - link "Telemetry Stream" [ref=e992] [cursor=pointer]:
+            - /url: "#"
+          - link "Farmer Advisory" [ref=e999] [cursor=pointer]:
+            - /url: "#"
+          - link "Safety Registry" [ref=e1002] [cursor=pointer]:
+            - /url: "#"
+        - paragraph [ref=e1006]: © 2026 Agri-SAGE Intelligence System. All rights reserved.
+    - img [ref=e1008] [cursor=pointer]:
+      - generic [ref=e1009]: AGRI-SAGE
+      - generic [ref=e1010]: AGRI-SAGE
+      - generic [ref=e1011]: AGRI-SAGE

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">एग्री-सेज</string>
+    <string name="app_tagline">कृषि मार्गदर्शन इंजन</string>
+    <string name="nav_home">होम</string>
+    <string name="nav_advisor">सलाहकार</string>
+    <string name="nav_fields">खेत</string>
+    <string name="nav_weather">मौसम</string>
+    <string name="nav_alerts">अलर्ट</string>
+    <string name="nav_profile">प्रोफाइल</string>
+    <string name="ask_advisor">सलाह लें</string>
+    <string name="my_fields">मेरे खेत</string>
+    <string name="get_started">शुरू करें</string>
+    <string name="welcome">एग्री-सेज में आपका स्वागत है</string>
+</resources>

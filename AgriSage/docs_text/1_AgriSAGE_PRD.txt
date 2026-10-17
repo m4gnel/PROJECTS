@@ -1,0 +1,719 @@
+AGRI-SAGE
+PRODUCT REQUIREMENTS DOCUMENT (PRD)
+Version 1.0 — Production-Ready Specification
+Scalable Agricultural Guidance Engine
+Field
+Detail
+Document Type
+Product Requirements Document (PRD)
+Project
+Agri-SAGE — Scalable Agricultural Guidance Engine
+Version
+1.0
+Status
+Final — Implementation Ready
+Target Platform
+Android (Primary) + Web Dashboard
+Primary Market
+Smallholder Farmers, Kerala → Pan-India → Global
+Build Cost
+Zero — Fully free/open-source stack
+Revenue Model
+Freemium Subscription post-launch
+Architecture
+Offline-first, Multi-agent AI, Physics-based Simulation
+1. EXECUTIVE SUMMARY
+1.1 Product Vision
+Agri-SAGE is a farm decision intelligence platform — not a chatbot, not a disease detector, not a weather app. It is all of these working as one unified system: the first offline-first, simulation-grounded, evidence-transparent agricultural decision engine built for smallholder farmers in India.
+Every farmer in India who cannot afford an agronomist, who has no reliable internet, who communicates in Malayalam or Tamil or Telugu, who farms 1 hectare of paddy and needs to know if the yellowing on his lower leaves is blast disease or nitrogen deficiency — and what the rain forecast means for when to spray — and whether a government scheme covers the treatment — that farmer is our user.
+1.2 The Problem Being Solved
+A smallholder farmer today needs to answer 20+ interacting questions to make a single crop management decision. These questions are currently fragmented across agronomists, government helplines, weather apps, WhatsApp groups, YouTube, local shops, and personal experience. Each source gives partial, often conflicting information. No single system connects them.
+The cost of wrong decisions: crop loss, wasted inputs, delayed treatment, missed government support, unnecessary pesticide spend. For a family farming 2 hectares, one wrong decision in a season can mean 20-40% income loss.
+1.3 The Solution
+Agri-SAGE combines: multimodal input (image + voice + location + farm history) → multi-agent AI analysis (14 specialized agents) → physics-based crop simulation (DSSAT) → evidence-transparent advisory → proactive daily monitoring → government scheme matching → economic scenario comparison — delivered in regional language, offline-capable, on a Rs.8,000 Android phone.
+1.4 Key Success Metrics
+Metric
+Definition
+Year 1 Target
+Year 3 Target
+Monthly Active Farmers
+Farmers who generate ≥1 advisory per month
+10,000
+500,000
+Daily Active Rate
+MAF who open app daily
+30%
+55%
+Advisory Acceptance Rate
+Farmer marks 'I will try this'
+55%
+70%
+Outcome Verified Rate
+Farmer reports outcome after intervention
+25%
+45%
+Expert Agreement Rate
+Agronomist panel agrees with advisory
+80%
+90%
+Offline Usage Rate
+Sessions started without internet
+40%
+50%
+Subscription Conversion
+Free → paid after 60-day trial
+8%
+18%
+Farmer Retention (90-day)
+Active at day 90 after registration
+35%
+55%
+2. USERS & PERSONAS
+2.1 User Segmentation
+Segment
+Description
+Size Estimate
+Priority
+Primary: Smallholder Farmer
+0.5–5 ha, smartphone, intermittent connectivity, regional language
+100M+ India
+P0 — build everything for this user
+Secondary: Extension Worker
+Government krishi sevak, manages 200+ farmer relationships
+700,000 India
+P1 — expert dashboard
+Secondary: FPO Manager
+Manages 500–5000 farmer cooperative
+10,000+ India
+P1 — group advisory
+Tertiary: Agronomist
+Private or institutional agronomist
+200,000 India
+P2 — validation dashboard
+Tertiary: Agricultural Student
+College/university student
+2M+ India
+P2 — research/training
+Future: Insurer
+Crop insurance underwriter
+Small
+P3 — risk data API
+Future: Input Company
+Fertilizer/pesticide company
+Small
+P3 — demand signals
+2.2 Primary Persona — Rajan
+Attribute
+Detail
+Name
+Rajan (composite representative primary user)
+Age
+38
+Location
+Wayanad district, Kerala
+Farm size
+1.8 hectares
+Crops
+Paddy (kharif) + Banana (perennial)
+Device
+Redmi Note 12 — Android 13 — 4GB RAM — 64GB storage
+Connectivity
+Intermittent 4G daytime, 2G evenings, offline in field
+Language
+Malayalam primary — cannot read English fluently
+Digital literacy
+Uses WhatsApp, YouTube, basic Android apps — not technical
+Income
+Rs.2–3.5 lakh/year from agriculture
+Pain 1
+Cannot distinguish disease from nutrient deficiency from photo alone
+Pain 2
+Does not know if rain tomorrow will wash out pesticide applied today
+Pain 3
+Missed PMFBY enrollment deadline — did not know about it
+Pain 4
+Government helpline: 40-minute wait, generic advice, wrong for his district
+Pain 5
+Bought pesticide on shopkeeper's recommendation — wrong product, crop burned
+Goal
+Keep crop healthy with minimum spend — maximize net income per season
+Agri-SAGE Promise
+Morning briefing in Malayalam voice: what to check today based on his specific farm, crop stage, and yesterday's weather
+2.3 Secondary Persona — Meera (Extension Worker)
+Attribute
+Detail
+Name
+Meera (composite extension worker)
+Role
+Krishi Vigyan Kendra field worker, Palakkad district
+Manages
+220 farmers across 6 villages
+Need
+Tool that shows her all farmers' current risk levels at once — who needs a visit today
+Current pain
+Travels to every farm based on calls — no predictive view of who needs help
+Agri-SAGE Promise
+Extension dashboard: map view of all her farmers with risk levels, flagged low-confidence cases, pending expert review queue
+3. PRODUCT SCOPE
+3.1 In-Scope: MVP (Phase 1-2, Months 1-8)
+Android application (minimum Android 8.0 / API 26)
+Farmer registration via OTP (phone number only — no password)
+Farm profile: location, field, crop, cultivar, planting date
+Image capture with real-time quality check and retry guidance
+Vision-based disease/pest/deficiency detection (5 launch crops)
+Weather integration with agricultural indicator derivation
+Crop stage estimation via GDD (Growing Degree Days)
+Knowledge RAG: ICAR + KAU documents for 5 crops
+Critic agent: cross-validation and confidence calibration
+Advisory output: diagnosis + evidence + action + cost estimate + sources
+Advisory history and farm observation timeline
+Offline vision inference (ONNX on-device model)
+Offline knowledge cache for supported crops
+Malayalam language support (text + voice output)
+Morning briefing: daily farm status card
+Backend API (FastAPI + PostgreSQL + pgvector)
+3.2 In-Scope: V2 (Phase 3-4, Months 9-18)
+Government scheme matching (PMFBY, PM-KISAN, RKVY)
+Simulation engine: DSSAT scenarios for rice and maize
+A/B/C scenario comparison with economic analysis
+Voice input in Malayalam (Bhashini STT)
+Proactive risk alerts (push notifications)
+Intervention tracking and outcome recording
+Expert review dashboard (agronomist interface)
+Tamil, Telugu, Hindi language support
+Season summary report
+3.3 In-Scope: V3 (Phase 5-6, Months 19-30)
+Market price integration (e-NAM API)
+Economics agent: full cost-profit analysis
+Farmer constraint optimization (budget, labor, water)
+Digital farm twin (seasonal learning and memory)
+FPO / group advisory dashboard
+Web application for extension workers and agronomists
+Satellite imagery integration (NDVI alerts)
+Multi-crop expansion (target: 15 crops)
+3.4 Explicitly Out of Scope (Never Build)
+Social network or community feed (misinformation risk)
+Blockchain of any kind
+Drone integration
+Autonomous purchasing or chemical ordering
+Yield guarantees or financial return promises
+Custom foundation model training from scratch
+50+ crops at launch (quality > quantity)
+4. FUNCTIONAL REQUIREMENTS
+4.1 FR-001: Farmer Onboarding
+ID
+Requirement
+Priority
+Acceptance Criteria
+FR-001-01
+Phone OTP registration — no email, no password required
+P0
+Farmer registers with phone number + 6-digit OTP in under 90 seconds
+FR-001-02
+Language selection on first launch: Malayalam, Tamil, Telugu, Hindi, English
+P0
+All subsequent UI and voice in selected language
+FR-001-03
+Farm setup wizard: name, approximate location, field area, crop, planting date
+P0
+Setup completable in under 3 minutes without typing — use dropdowns and map pin
+FR-001-04
+Cultivar selection from regional list (pre-populated by state)
+P1
+Jyothi, Uma, Kanchana etc. shown for Kerala rice
+FR-001-05
+Guest mode: allow advisory without account (advisory not saved)
+P2
+Farmer can scan crop and get advisory without registering
+4.2 FR-002: Image Capture & Quality
+ID
+Requirement
+Priority
+Acceptance Criteria
+FR-002-01
+Real-time image quality indicator during camera preview
+P0
+Green/yellow/red indicator updates within 500ms as camera moves
+FR-002-02
+Blur detection before accepting image
+P0
+Laplacian variance < 100 → reject with message 'Photo is blurry — move closer'
+FR-002-03
+Lighting check before accepting image
+P0
+Too dark or too bright → reject with specific instruction
+FR-002-04
+Crop region visibility check
+P0
+< 30% crop in frame → 'Please fill the frame with the affected plant area'
+FR-002-05
+Multiple image capture (up to 5 per observation)
+P1
+Farmer can add multiple angles — improves diagnostic confidence
+FR-002-06
+Image compression before upload (max 800px longest edge)
+P0
+Reduces mobile data usage without losing diagnostic information
+FR-002-07
+Non-crop image rejection (OOD detection)
+P0
+Hand/wall/random object → 'This does not appear to be a crop — please retake'
+4.3 FR-003: Advisory Generation
+ID
+Requirement
+Priority
+Acceptance Criteria
+FR-003-01
+Advisory delivered within 8 seconds for standard path
+P0
+P95 latency < 8s for online mode; < 3s for offline vision-only
+FR-003-02
+Advisory must include: diagnosis, confidence state, risk level, recommended action, timing, cost estimate, evidence summary, sources
+P0
+All 8 fields present in every advisory response
+FR-003-03
+Confidence state must be one of 7 defined states — not a percentage alone
+P0
+CONFIRMED / LIKELY / POSSIBLE / UNCERTAIN / INSUFFICIENT_DATA / CONFLICTING_EVIDENCE / OUT_OF_SCOPE
+FR-003-04
+Evidence must list contributing factors visibly
+P0
+'Image matched blast pattern + humidity 3 consecutive wet days + tillering stage (susceptible)'
+FR-003-05
+'What would change this?' section required in every advisory
+P0
+At least 1 factor shown e.g. 'A soil test would help rule out nitrogen deficiency'
+FR-003-06
+Source citation with authority tier required
+P0
+'Based on: ICAR Rice Disease Advisory 2024 (Tier 1)'
+FR-003-07
+Chemical recommendations must trace to verified CIB&RC record
+P0
+Safety check blocks advisory if product not found in label database
+FR-003-08
+All simulation outputs labelled 'Modelled estimate'
+P0
+Never shown as guaranteed result
+4.4 FR-004: Offline Mode
+ID
+Requirement
+Priority
+Acceptance Criteria
+FR-004-01
+App opens and shows last farm state without internet
+P0
+Home screen loads in < 2 seconds offline using cached data
+FR-004-02
+Vision inference runs fully on-device without internet
+P0
+ONNX model inference completes in < 4 seconds on Snapdragon 665
+FR-004-03
+Cached knowledge used for advisory when offline
+P0
+Regional crop advisory shown with 'Cached — last updated [date]' label
+FR-004-04
+All farm actions queued locally when offline
+P0
+Observations, outcomes, feedback stored locally and synced on reconnect
+FR-004-05
+Offline mode clearly indicated to farmer
+P0
+Banner: 'Working offline — live weather unavailable. Saved data shown.'
+FR-004-06
+Stale data clearly labelled — never shown as current
+P0
+Weather cached > 6hrs shows 'Weather data from [time] — may not be current'
+4.5 FR-005: Daily Intelligence
+ID
+Requirement
+Priority
+Acceptance Criteria
+FR-005-01
+Morning briefing generated daily before 7am for each active farmer
+P1
+Briefing covers: crop stage, top risk today, weather summary, one recommended action
+FR-005-02
+Proactive risk alert when disease favorability index exceeds threshold
+P1
+Push notification with crop-specific context — not generic
+FR-005-03
+Spray window alert: 'Good spray conditions today 7-10am'
+P1
+Alert generated when rain prob < 20% for 4hr window AND wind < 15 km/h
+FR-005-04
+Crop stage milestone notification
+P1
+'Your paddy is entering flowering stage — elevated blast risk. What to check:'
+FR-005-05
+Market price alert when significant change (>10%)
+P2
+Notification includes current price, trend, nearest market
+4.6 FR-006: Government Scheme Matching
+ID
+Requirement
+Priority
+Acceptance Criteria
+FR-006-01
+PMFBY scheme matching based on farmer profile and crop
+P1
+Shows applicable insurance scheme with enrollment steps and deadline
+FR-006-02
+PM-KISAN eligibility check
+P1
+Shows eligibility criteria with farmer's matching status
+FR-006-03
+State-specific scheme database (Kerala Agriculture Department)
+P1
+At least 10 active schemes at launch with eligibility rules
+FR-006-04
+Scheme advisory always uses cautious language
+P0
+'You appear to meet these criteria — final eligibility determined by relevant authority'
+FR-006-05
+Scheme document freshness check — expired schemes flagged
+P0
+Schemes past valid_until date shown with 'Please verify with local authority'
+4.7 FR-007: Voice Interface
+ID
+Requirement
+Priority
+Acceptance Criteria
+FR-007-01
+Voice input for crop problem description in Malayalam
+P1
+Farmer can say 'എന്റെ നെല്ലിൽ ഇങ്ങനെ പാടുകൾ' and get advisory
+FR-007-02
+Voice output for all advisories (TTS)
+P1
+Any screen has 'Listen' button — full advisory read in selected language
+FR-007-03
+On-device STT fallback when internet unavailable
+P1
+Android SpeechRecognizer used when Bhashini API unreachable
+FR-007-04
+Voice input is parsed for structured intent — not passed raw to LLM
+P0
+Intent extraction layer processes transcript before any LLM call
+5. NON-FUNCTIONAL REQUIREMENTS
+5.1 Performance
+Requirement
+Target
+Measurement
+App cold start
+< 2.5 seconds on Tier 2 device
+Android profiler — Redmi 10A baseline
+Online advisory generation
+< 8 seconds P95
+Server-side timing from POST /diagnose
+Offline vision inference
+< 4 seconds on Snapdragon 665
+On-device benchmark
+Offline app home screen load
+< 2 seconds
+Cold start with cached data
+Image upload (800px, 4G)
+< 5 seconds
+Network timing test
+Weather data freshness
+< 30 minutes
+Cache TTL monitoring
+Knowledge cache update
+Background, non-blocking
+WorkManager job — never interrupts user
+Sync after reconnect
+< 60 seconds for queued observations
+Sync engine timing test
+5.2 Reliability
+Requirement
+Target
+API availability
+99.5% monthly uptime (free-tier infrastructure — honest target)
+Vision model accuracy (field)
+Macro-F1 > 0.82 on field test set — measured before every deployment
+Advisory safety check pass rate
+100% — zero unsafe recommendations reach farmer
+Data loss tolerance
+Zero — all observations persisted locally before API call
+Crash rate
+< 0.5% sessions on supported devices
+Offline functionality
+100% of core features work without internet
+5.3 Security & Privacy
+Requirement
+Implementation
+Authentication
+OTP only — no password storage — JWT 15min access + 7day refresh
+Data encryption at rest
+PostgreSQL column encryption for sensitive fields; SQLite encrypted on Android
+Data encryption in transit
+TLS 1.3 minimum — certificate pinning on Android
+Row-level security
+PostgreSQL RLS — users see only their own data — enforced at DB level
+Image privacy
+User can delete all images — storage purged within 24 hours
+Location precision
+Internal: GPS coordinates. External/analytics: district-level only
+Data export
+User can export all their data as JSON on request
+Account deletion
+Full data deletion within 30 days of request
+Audit trail
+All advisory generations, data exports, account changes — immutable log
+Minimum data collection
+Only what is strictly needed for stated feature — no passive tracking
+5.4 Accessibility & Localization
+Requirement
+Target
+Languages at launch
+Malayalam, English (Tamil, Telugu, Hindi in V2)
+Voice support
+All languages — input and output
+Minimum touch target
+48dp × 48dp per Material Design 3 guidelines
+Text size
+Minimum 16sp body text — farmer-friendly
+High contrast mode
+Supported — green brand palette maintains WCAG AA contrast
+Literacy accommodation
+Every text element has voice alternative — app usable by low-literacy users
+Screen reader
+TalkBack compatibility verified on all primary screens
+6. SUBSCRIPTION & MONETIZATION MODEL
+6.1 Pricing Tiers
+Tier
+Price
+Features
+Target User
+Free (Freemium)
+Rs.0 forever
+5 advisories/month, basic weather, crop stage, 1 farm, Malayalam only
+Evaluation — first 60 days unlimited
+Kisan Basic
+Rs.49/month or Rs.449/year
+Unlimited advisories, offline vision, morning briefing, alerts, 2 farms, all languages
+Individual smallholder farmer
+Kisan Pro
+Rs.149/month or Rs.1,299/year
+Everything in Basic + simulation scenarios, scheme matching, market prices, economic analysis, 5 farms, priority support
+Progressive farmer, FPO member
+Agronomist
+Rs.499/month
+Everything in Pro + expert dashboard, 500 farmer profiles, group advisory, API access
+Agricultural extension worker, agronomist
+FPO/Enterprise
+Custom pricing
+Unlimited farmers, white-label option, custom knowledge base, dedicated support, data export
+Farmer Producer Organizations, NGOs, Government
+6.2 Free-to-Paid Conversion Strategy
+60-day free trial with full Pro features — no credit card required
+Trial-end: soft paywall — advisory still shown but blurred until subscription
+First payment: UPI-native — no credit card needed (PhonePe, GPay, Paytm)
+Kisan Credit Card holders: special partnership pricing (Rs.29/month)
+FPO group plans: FPO pays for all member farmers — Rs.25/farmer/month at scale
+Government subsidy path: partner with state agriculture departments for subsidized access
+6.3 Revenue Projection (Conservative)
+Year
+MAF
+Paying Users
+ARPU/Year
+ARR
+Year 1
+10,000
+800 (8%)
+Rs.600
+Rs.4.8 lakh
+Year 2
+75,000
+9,000 (12%)
+Rs.750
+Rs.67.5 lakh
+Year 3
+500,000
+90,000 (18%)
+Rs.900
+Rs.8.1 crore
+Year 5
+3,000,000
+600,000 (20%)
+Rs.1,100
+Rs.66 crore
+⚠ These are projections for planning purposes only. Actual revenue depends on product-market fit, retention, and execution. Do not commit to these numbers with investors or partners.
+7. LAUNCH CROPS & KNOWLEDGE REQUIREMENTS
+7.1 Crop Launch Matrix
+Crop
+Primary State
+DSSAT Module
+Disease Dataset
+Scheme Coverage
+V1 or V2?
+Rice (paddy)
+Kerala, Karnataka, Tamil Nadu
+CERES-Rice
+PlantVillage + ICAR-CRRI field data
+PMFBY, PM-KISAN, state schemes
+V1
+Banana
+Kerala, Andhra Pradesh
+Rule-based (DSSAT limited)
+ICAR-NRC Banana + field collection
+State horticulture schemes
+V1
+Coconut
+Kerala
+Rule-based
+CPCRI (Kasaragod) dataset + field
+CPCRI schemes, RKVY
+V1
+Tomato
+Karnataka, Andhra Pradesh, Tamil Nadu
+CROPGRO-Tomato
+PlantVillage + field data
+State vegetable schemes
+V1
+Maize
+Karnataka, Andhra Pradesh
+CERES-Maize
+PlantVillage + base paper dataset
+PMFBY, state schemes
+V1 (simulation-validated)
+Pepper
+Kerala
+Rule-based
+IISR Kozhikode dataset
+State spice schemes
+V2
+Cassava
+Kerala, Tamil Nadu
+Rule-based
+CTCRI Thiruvananthapuram
+State schemes
+V2
+Groundnut
+Andhra Pradesh, Tamil Nadu
+CROPGRO-Peanut
+ICRISAT dataset
+PMFBY
+V2
+7.2 Knowledge Base Requirements per Crop (V1)
+Requirement
+Target
+Source
+Package of Practices document
+1 per crop per state minimum
+KAU, TNAU, UAS — publicly available
+Disease encyclopedia entries
+Top 10 diseases per crop
+ICAR bulletins
+Pesticide label data
+All CIB&RC registered products for each crop
+CIB&RC public database
+Government scheme entries
+All active schemes applicable per crop per state
+State agriculture department portals
+Field images with expert labels
+Minimum 500 per crop before V1 launch
+Collected from Kerala farms — KAU partnership
+Simulation calibration data
+DSSAT cultivar files for top 5 cultivars per supported crop
+DSSAT ICASA database + ICAR
+8. RISKS & MITIGATIONS
+Risk
+Probability
+Impact
+Mitigation
+Vision model performs poorly on field images (domain gap from lab datasets)
+HIGH
+HIGH
+Collect 500+ field images per crop BEFORE model deployment. Separate lab and field accuracy metrics. Never report lab accuracy as field accuracy.
+Open-Meteo API non-commercial restriction blocks commercial launch
+HIGH
+HIGH
+Build WeatherProvider abstraction from day 1. IMD commercial API as V2 replacement. Budget for commercial weather API before monetization.
+APSIM commercial license required for revenue deployment
+HIGH
+HIGH
+Use DSSAT (BSD-3-Clause) as primary simulation backend. APSIM used only for research/validation. Abstraction layer already designed.
+Bhashini API approval delay (4-6 weeks)
+MEDIUM
+MEDIUM
+Apply for access in Month 1. Build Android SpeechRecognizer fallback as default. Bhashini enables quality upgrade, not core dependency.
+Hallucination: LLM invents pesticide dosage
+LOW
+CRITICAL
+All chemical recommendations must trace to CIB&RC label database. LLM cannot output chemical name not in database. Critic agent blocks unsafe advisories.
+Free-tier infrastructure insufficient at scale
+MEDIUM
+MEDIUM
+Architecture designed on Oracle Always-Free during pilot. Migration path to VPS/cloud documented. Revenue model covers infrastructure at scale.
+Low farmer retention after 60-day trial
+MEDIUM
+HIGH
+Morning briefing and proactive alerts drive daily habit before paywall. Measure retention weekly from week 1.
+PMFBY/scheme data becomes stale
+MEDIUM
+HIGH
+Document freshness system with valid_until dates. Expired docs flagged — never served as current. Monthly automated refresh from official sources.
+Model drift: accuracy degrades as pests/diseases evolve
+LOW
+HIGH
+Monthly model evaluation on golden test set. Outcome data used to identify new patterns. Annual model retraining minimum.
+9. ACCEPTANCE CRITERIA & LAUNCH READINESS
+9.1 MVP Launch Checklist — All Must Pass
+Vision model: Macro-F1 > 0.82 on field test set (farmer-level split, not lab split)
+Vision model: ECE (Expected Calibration Error) < 0.12 after temperature scaling
+Advisory safety audit: 100 random advisories reviewed by 2 agronomists — zero unsafe recommendations
+Critic agent: All 8 safety checks verified with test cases
+Offline mode: Full advisory generated without internet on Tier 2 device
+Performance: Advisory P95 < 8 seconds on production server
+Performance: App cold start < 2.5 seconds on Redmi 10A (Tier 2 baseline)
+Security: OWASP Mobile Top 10 checklist completed
+Malayalam: All primary screens reviewed by native Malayalam speaker
+Government schemes: All scheme docs have valid_until dates and source URLs
+License registry: All dependencies verified — no unlicensed commercial use
+Closed beta: 50 farmers tested app for 2+ weeks with positive NPS
+9.2 Definition of Done per Feature
+A feature is DONE when:
+Unit tests pass (>80% coverage for business logic)
+Integration test with real API data passes
+Tested on Tier 1, Tier 2, and Tier 3 devices
+Tested in offline mode
+Malayalam text reviewed by native speaker
+Safety check (if applicable) passes agronomist review
+Performance target met
+Accessibility: minimum TalkBack navigation verified
+10. PRODUCT ROADMAP SUMMARY
+Phase
+Timeline
+Key Deliverables
+User Value
+Phase 0: Foundation
+Months 1-2
+Repo structure, DB schema, auth, farm CRUD, CI/CD
+No user value yet — internal infrastructure
+Phase 1: Vision MVP
+Months 2-4
+Vision model, image quality, basic advisory, offline inference
+Farmer can get disease diagnosis from photo — basic but real
+Phase 2: Context & Knowledge
+Months 4-8
+Weather agent, crop stage, RAG, Critic, full advisory, Malayalam
+Full multi-signal advisory in Malayalam — core product
+Phase 3: Intelligence
+Months 8-14
+Simulation, scenarios, schemes, voice input, morning briefing, alerts
+Proactive intelligence — daily use habit forms
+Phase 4: Economics
+Months 14-20
+Market prices, cost-profit analysis, farmer constraints, season report
+Full economic decision support — differentiated product
+Phase 5: Scale & Validation
+Months 20-30
+Expert network, field validation study, multi-state, web dashboard
+Scientific credibility + B2B opportunities
+Phase 6: Global
+Months 30+
+International localization, satellite integration, API marketplace
+Platform business — not just an app
+AGRI-SAGE PRD v1.0 — CONFIDENTIAL & IMPLEMENTATION-READY
+Recommend → Act → Observe → Learn → Improve

@@ -1,0 +1,144 @@
+/**
+ * Agri-SAGE Ultra-Premium Design Tokens
+ * Incorporates 4_AgriSAGE_UIUX_Spec + High-End Glassmorphic Visuals, Glowing Neons & Dark Mode
+ */
+
+:root,
+[data-theme='dark'],
+.dark {
+  /* Brand Signature Forest & Emeralds */
+  --color-primary: #10B981;
+  --color-primary-dark: #059669;
+  --color-primary-light: rgba(16, 185, 129, 0.12);
+  --color-primary-container: rgba(16, 185, 129, 0.2);
+  --color-on-primary: #FFFFFF;
+
+  --color-secondary: #34D399;
+  --color-secondary-light: rgba(52, 211, 153, 0.1);
+  --color-accent: #06B6D4;
+  --color-accent-glow: rgba(6, 182, 212, 0.4);
+
+  /* Semantic Risks with Glowing Tones */
+  --color-risk-critical: #EF4444;
+  --color-risk-critical-glow: rgba(239, 68, 68, 0.35);
+  --color-risk-critical-bg: rgba(239, 68, 68, 0.12);
+
+  --color-risk-high: #F97316;
+  --color-risk-high-glow: rgba(249, 115, 22, 0.35);
+  --color-risk-high-bg: rgba(249, 115, 22, 0.12);
+
+  --color-risk-medium: #FBBF24;
+  --color-risk-medium-glow: rgba(251, 191, 36, 0.35);
+  --color-risk-medium-bg: rgba(251, 191, 36, 0.12);
+
+  --color-risk-low: #10B981;
+  --color-risk-low-glow: rgba(16, 185, 129, 0.35);
+  --color-risk-low-bg: rgba(16, 185, 129, 0.12);
+
+  /* Calibrated Confidence Badges */
+  --color-confidence-confirmed: #059669;
+  --color-confidence-likely: #10B981;
+  --color-confidence-possible: #F59E0B;
+  --color-confidence-uncertain: #EA580C;
+  --color-confidence-insufficient: #64748B;
+  --color-confidence-conflicting: #EF4444;
+  --color-confidence-outofscope: #475569;
+
+  /* Surfaces & Glassmorphism Defaults (Obsidian Dark Mode) */
+  --color-bg-base: #0B0F12;
+  --color-bg-mesh: radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.18) 0px, transparent 60%),
+                    radial-gradient(at 100% 20%, rgba(6, 182, 212, 0.15) 0px, transparent 50%),
+                    radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 60%);
+  --color-surface: #11171D;
+  --color-surface-glass: rgba(17, 24, 32, 0.85);
+  --color-surface-glass-border: rgba(255, 255, 255, 0.1);
+  --color-surface-elevated: #18222C;
+  --color-surface-variant: #16202A;
+
+  --color-on-surface: #F8FAFC;
+  --color-on-surface-secondary: #94A3B8;
+  --color-on-surface-tertiary: #64748B;
+
+  --color-outline: #2A3644;
+  --color-outline-variant: #1E293B;
+
+  /* Government Scheme Purple */
+  --color-scheme-bg: rgba(139, 92, 246, 0.15);
+  --color-scheme-border: rgba(167, 139, 250, 0.3);
+  --color-scheme-text: #C4B5FD;
+
+  --color-info-bg: rgba(6, 182, 212, 0.08);
+  --color-info-text: #38BDF8;
+  --color-warning-bg: rgba(245, 158, 11, 0.08);
+  --color-warning-text: #FBBF24;
+  --color-offline-banner: rgba(249, 115, 22, 0.12);
+  --color-offline-text: #FB923C;
+
+  /* Typography */
+  --font-family-base: 'Noto Sans', 'Noto Sans Malayalam', system-ui, -apple-system, sans-serif;
+  --font-family-mono: 'Noto Sans Mono', monospace;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+
+  /* Corners */
+  --corner-sm: 8px;
+  --corner-md: 12px;
+  --corner-lg: 16px;
+  --corner-xl: 24px;
+
+  /* Shadow & Glow Presets */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.6);
+  --shadow-neon-green: 0 0 20px rgba(16, 185, 129, 0.35);
+  --shadow-neon-cyan: 0 0 20px rgba(6, 182, 212, 0.35);
+
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* LIGHT MODE OVERRIDE */
+[data-theme='light'],
+.light {
+  --color-primary: #10B981;
+  --color-primary-dark: #047857;
+  --color-primary-light: #ECFDF5;
+  --color-primary-container: #A7F3D0;
+  --color-on-primary: #042F2E;
+
+  --color-secondary: #059669;
+  --color-secondary-light: #D1FAE5;
+  --color-accent: #06B6D4;
+  --color-accent-glow: rgba(6, 182, 212, 0.4);
+
+  --color-bg-base: #F8FAFC;
+  --color-bg-mesh: radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.12) 0px, transparent 50%),
+                    radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.12) 0px, transparent 50%),
+                    radial-gradient(at 50% 100%, rgba(5, 150, 105, 0.08) 0px, transparent 50%);
+  --color-surface: #FFFFFF;
+  --color-surface-glass: rgba(255, 255, 255, 0.90);
+  --color-surface-glass-border: rgba(226, 232, 240, 0.8);
+  --color-surface-elevated: #FFFFFF;
+  --color-surface-variant: #F1F5F9;
+
+  --color-on-surface: #0F172A;
+  --color-on-surface-secondary: #475569;
+  --color-on-surface-tertiary: #94A3B8;
+
+  --color-outline: #CBD5E1;
+  --color-outline-variant: #E2E8F0;
+
+  --color-scheme-bg: rgba(139, 92, 246, 0.08);
+  --color-scheme-border: rgba(139, 92, 246, 0.25);
+  --color-scheme-text: #7C3AED;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 12px 24px -4px rgba(15, 23, 42, 0.12);
+}

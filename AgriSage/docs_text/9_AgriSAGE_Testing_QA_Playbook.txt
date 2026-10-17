@@ -1,0 +1,659 @@
+AGRI-SAGE
+TESTING & QA PLAYBOOK
+Complete Test Cases · Golden Dataset · Evaluation Scripts · CI Gates · Device Testing · Pre-Launch QA
+Field
+Detail
+Document
+Testing & QA Playbook v1.0
+Audience
+Developer, VSCode AI Agent, QA Reviewer
+Test Framework
+pytest (backend) · Espresso (Android) · locust (load) · pytest-asyncio
+CI Gate
+All tests must pass before any merge to main branch
+Golden Dataset
+Minimum 200 labelled images — stored in tests/golden/ with SHA-256 manifest
+1. TEST ARCHITECTURE
+1.1 Test Categories and Coverage Requirements
+Category
+Tool
+Coverage Target
+Block Merge if Failed?
+Unit — Business Logic
+pytest
+80% line coverage on backend/
+YES
+Unit — Pydantic Schemas
+pytest
+100% — all schemas tested
+YES
+Integration — API Endpoints
+pytest + httpx
+All endpoints — happy + error paths
+YES
+Integration — Agent Pipeline
+pytest + mocks
+Each agent isolated + full pipeline
+YES
+Vision Model — Golden Set
+pytest + ONNX
+Macro-F1 > 0.82 on field images
+YES — blocks model deployment
+RAG Retrieval — Benchmark
+pytest
+Recall@5 > 0.80 on 20 queries
+YES — blocks knowledge deploy
+Safety — Chemical Checks
+pytest
+100% of safety rules tested
+YES — CRITICAL
+Safety — Hallucination
+pytest
+LLM output schema validation
+YES — CRITICAL
+Performance — API
+locust
+P95 < 8s under 50 concurrent
+YES before launch
+Security — Auth
+pytest
+JWT edge cases covered
+YES
+Security — RLS
+pytest
+Cross-user data access blocked
+YES — CRITICAL
+Offline Mode
+Espresso (Android)
+Core features pass in airplane mode
+YES
+Accessibility
+Manual + axe-core
+WCAG AA on all primary screens
+YES before launch
+2. UNIT TESTS — COMPLETE TEST CASES
+2.1 GDD Crop Stage Calculation Tests
+# tests/unit/test_crop_stage.py
+import pytest
+from datetime import date
+from backend.agents.crop_stage import CropStageAgent, compute_gdd
+class TestGDDCalculation:
+    def test_rice_gdd_base_temperature(self):
+        # Rice base temp = 10°C
+        # Tmax=30, Tmin=22 → GDD = ((30+22)/2) - 10 = 16
+        gdd = compute_gdd(tmax=30.0, tmin=22.0, crop='rice')
+        assert gdd == pytest.approx(16.0, abs=0.1)
+    def test_gdd_below_base_temp_returns_zero(self):
+        # If mean temp < base temp, GDD = 0, not negative
+        gdd = compute_gdd(tmax=12.0, tmin=8.0, crop='rice')
+        assert gdd == 0.0
+    def test_maize_base_temperature_different(self):
+        # Maize base temp = 10°C — same for maize
+        gdd = compute_gdd(tmax=28.0, tmin=18.0, crop='maize')
+        assert gdd == pytest.approx(13.0, abs=0.1)
+    def test_rice_tillering_stage_at_expected_gdd(self):
+        # Rice reaches tillering at ~250 GDD after germination
+        agent = CropStageAgent()
+        result = agent.estimate_stage(
+            crop='rice', cultivar='Jyothi',
+            planting_date=date(2026, 6, 1),
+            cumulative_gdd=260.0
+        )
+        assert result.stage_code == 'tillering'
+        assert result.disease_vulnerability == 'high'
+    def test_stage_vulnerability_mapping_rice(self):
+        agent = CropStageAgent()
+        # Rice blast most dangerous at tillering and flowering
+        vuln = agent.get_disease_vulnerability('rice', 'tillering', 'rice_blast')
+        assert vuln == 'high'
+        vuln_low = agent.get_disease_vulnerability('rice', 'germination', 'rice_blast')
+        assert vuln_low == 'low'
+2.2 Disease Favorability Index Tests
+# tests/unit/test_weather_agent.py
+from backend.agents.weather import WeatherAgent, compute_dfi
+class TestDFI:
+    def test_high_humidity_wet_days_high_dfi(self):
+        dfi = compute_dfi(
+            humidity_pct=88.0, temperature_c=26.0,
+            consecutive_wet_days=4, crop='rice'
+        )
+        assert dfi > 0.7  # Should be HIGH
+    def test_dry_conditions_low_dfi(self):
+        dfi = compute_dfi(
+            humidity_pct=45.0, temperature_c=35.0,
+            consecutive_wet_days=0, crop='rice'
+        )
+        assert dfi < 0.3  # Should be LOW
+    def test_dfi_clamped_0_to_1(self):
+        dfi = compute_dfi(humidity_pct=100.0, temperature_c=25.0, consecutive_wet_days=14, crop='rice')
+        assert 0.0 <= dfi <= 1.0
+    def test_spray_window_no_rain(self):
+        from backend.agents.weather import compute_spray_window
+        window = compute_spray_window(
+            rain_probability_6h=[5, 8, 12, 15, 20, 25],  # hourly for 6 hours
+            wind_speed_kmh=10.0
+        )
+        assert window.available == True
+    def test_spray_window_rain_expected(self):
+        from backend.agents.weather import compute_spray_window
+        window = compute_spray_window(
+            rain_probability_6h=[40, 55, 70, 80, 85, 90],
+            wind_speed_kmh=8.0
+        )
+        assert window.available == False
+2.3 Critic Safety Check Tests — CRITICAL
+# tests/safety/test_critic_safety.py
+import pytest
+from backend.agents.critic import CriticAgent
+from backend.safety.chemical_check import ChemicalSafetyChecker
+class TestCriticSafetyBlocks:
+    @pytest.fixture
+    def critic(self):
+        return CriticAgent()
+    async def test_unknown_pesticide_blocked(self, critic):
+        # Product not in CIB&RC DB must be BLOCKED
+        recommendation = {
+            'product_name': 'FakeChemical_XYZ_9999',
+            'crop': 'rice',
+            'dosage': 1.0, 'unit': 'g/L'
+        }
+        safe, issues = await critic.safety_checker.run_all_checks(recommendation)
+        assert safe == False
+        assert any('BLOCK' in issue for issue in issues)
+    async def test_valid_pesticide_passes(self, critic):
+        # Tricyclazole 75 WP is registered for rice blast in India
+        recommendation = {
+            'product_name': 'Tricyclazole 75 WP',
+            'crop': 'rice',
+            'dosage': 0.6, 'unit': 'g/L'  # Within label range
+        }
+        safe, issues = await critic.safety_checker.run_all_checks(recommendation)
+        assert safe == True
+        assert len(issues) == 0
+    async def test_wrong_crop_registration_blocked(self, critic):
+        # A rice pesticide recommended for banana must be blocked
+        recommendation = {
+            'product_name': 'Tricyclazole 75 WP',
+            'crop': 'banana',  # Not registered for banana
+            'dosage': 0.6, 'unit': 'g/L'
+        }
+        safe, issues = await critic.safety_checker.run_all_checks(recommendation)
+        assert safe == False
+    async def test_conflicting_evidence_returns_correct_state(self, critic):
+        # Vision: fungal disease. Weather: DFI = 0.1 (dry, unfavorable)
+        from tests.fixtures.states import make_conflicting_state
+        state = make_conflicting_state(vision_label='rice_blast', dfi=0.1, wet_days=0)
+        result = await critic.run(state)
+        assert result.critic_result.confidence_state == 'CONFLICTING_EVIDENCE'
+        assert result.critic_result.safe_to_act == False
+    async def test_expired_scheme_not_returned(self, critic):
+        from tests.fixtures.states import make_state_with_expired_scheme
+        state = make_state_with_expired_scheme()
+        result = await critic.run(state)
+        # No expired schemes in output
+        scheme_names = [s['scheme_name'] for s in result.get('scheme_matches', [])]
+        assert 'ExpiredScheme2020' not in scheme_names
+2.4 LLM Output Validation Tests
+# tests/unit/test_llm_validation.py
+from backend.agents.explanation import ExplanationAgent
+class TestLLMOutputValidation:
+    def test_invalid_json_returns_fallback(self):
+        agent = ExplanationAgent()
+        # Simulate LLM returning invalid JSON twice
+        invalid_output = 'This is not JSON at all'
+        result = agent._parse_llm_output(invalid_output)
+        # Must return safe fallback — never raise exception to user
+        assert result is not None
+        assert 'recommended_action' in result
+        assert result.get('safe_to_act') == False  # Fallback defaults to unsafe
+    def test_llm_invented_product_detected(self):
+        agent = ExplanationAgent()
+        llm_output = {
+            'recommended_action': {
+                'what': 'Apply SuperBlast Pro 9000',  # Invented product
+                'when': 'Today'
+            }
+        }
+        known_products = ['Tricyclazole 75 WP', 'Carbendazim 50 WP']
+        is_safe = agent._check_no_invented_products(llm_output, known_products)
+        assert is_safe == False
+    def test_modelled_estimate_label_present_when_yield_shown(self):
+        agent = ExplanationAgent()
+        output = {'expected_yield': 4200, 'modelled_estimate_label': None}
+        validated = agent._ensure_modelled_labels(output)
+        assert validated['modelled_estimate_label'] is not None
+3. INTEGRATION TESTS — API ENDPOINTS
+3.1 Auth Endpoint Tests
+# tests/integration/test_auth_api.py
+import pytest
+from httpx import AsyncClient
+from backend.main import app
+@pytest.mark.asyncio
+class TestAuthAPI:
+    async def test_send_otp_valid_phone(self, client: AsyncClient):
+        response = await client.post('/api/v1/auth/send-otp', json={'phone': '+919876543210'})
+        assert response.status_code == 200
+        assert 'expires_in' in response.json()
+    async def test_send_otp_invalid_phone_rejected(self, client: AsyncClient):
+        response = await client.post('/api/v1/auth/send-otp', json={'phone': '123'})
+        assert response.status_code == 422
+    async def test_otp_rate_limit_enforced(self, client: AsyncClient):
+        # Send 6 OTPs to same phone in quick succession
+        for i in range(5):
+            await client.post('/api/v1/auth/send-otp', json={'phone': '+919876543211'})
+        response = await client.post('/api/v1/auth/send-otp', json={'phone': '+919876543211'})
+        assert response.status_code == 429
+    async def test_verify_wrong_otp_rejected(self, client: AsyncClient):
+        await client.post('/api/v1/auth/send-otp', json={'phone': '+919876543212'})
+        response = await client.post('/api/v1/auth/verify-otp',
+            json={'phone': '+919876543212', 'otp': '000000'})
+        assert response.status_code == 401
+    async def test_expired_jwt_rejected(self, client: AsyncClient):
+        expired_token = create_expired_test_token()
+        response = await client.get('/api/v1/farms',
+            headers={'Authorization': f'Bearer {expired_token}'})
+        assert response.status_code == 401
+3.2 RLS Cross-User Access Tests — CRITICAL
+# tests/security/test_rls.py
+@pytest.mark.asyncio
+class TestRowLevelSecurity:
+    async def test_user_cannot_read_other_users_farm(self):
+        # Create two users and farms
+        user_a_token = await create_test_user_token('+919000000001')
+        user_b_token = await create_test_user_token('+919000000002')
+        # User A creates a farm
+        farm_response = await client.post('/api/v1/farms',
+            json={'name': 'User A Farm', 'location_lat': 10.0, 'location_lon': 76.0},
+            headers={'Authorization': f'Bearer {user_a_token}'}
+        )
+        farm_id = farm_response.json()['id']
+        # User B tries to access User A's farm
+        response = await client.get(f'/api/v1/farms/{farm_id}',
+            headers={'Authorization': f'Bearer {user_b_token}'}
+        )
+        assert response.status_code == 404  # Must return 404, not 403 or 200
+        # 404 instead of 403 — does not reveal that farm exists
+    async def test_user_cannot_access_other_users_advisory(self):
+        # User B must not see User A's advisory
+        advisory_id = await create_test_advisory_for_user_a()
+        response = await client.get(f'/api/v1/advisories/{advisory_id}',
+            headers={'Authorization': f'Bearer {user_b_token}'}
+        )
+        assert response.status_code == 404
+4. VISION MODEL EVALUATION
+4.1 Golden Dataset Structure
+tests/golden/
+├── manifest.json              # SHA-256 hash of every image — frozen
+├── README.md                  # How to add new images to golden set
+├── rice/
+│   ├── blast/                 # Minimum 30 images
+│   │   ├── blast_001.jpg      # Filename: {disease}_{number}.jpg
+│   │   ├── blast_001.json     # Label: {label, severity, expert_name, date}
+│   ├── brown_spot/            # Minimum 20 images
+│   ├── bacterial_blight/      # Minimum 20 images
+│   ├── healthy/               # Minimum 30 images
+│   └── ood/                   # Out-of-distribution: minimum 20 images
+├── banana/
+│   ├── fusarium_wilt/
+│   ├── sigatoka/
+│   ├── healthy/
+│   └── ood/
+├── coconut/
+│   ├── wclwd/                 # Kerala wilt disease
+│   ├── bud_rot/
+│   └── healthy/
+├── tomato/
+│   ├── early_blight/
+│   ├── late_blight/
+│   ├── leaf_curl/
+│   └── healthy/
+└── maize/
+    ├── northern_leaf_blight/
+    ├── common_rust/
+    └── healthy/
+4.2 Label JSON Format
+# tests/golden/rice/blast/blast_001.json
+{
+  "image_file": "blast_001.jpg",
+  "label": "rice_blast",
+  "confidence": "high",
+  "severity": "medium",
+  "affected_area_pct": 15.0,
+  "growth_stage_visible": "tillering",
+  "collection_date": "2026-08-15",
+  "collection_location": "Wayanad, Kerala",
+  "expert_reviewer": "Dr. [Name], KAU",
+  "review_date": "2026-08-20",
+  "field_conditions": "After 3 wet days, 85% humidity",
+  "image_quality": "good",
+  "sha256": "abc123..."
+}
+4.3 Vision Model Evaluation Script
+# scripts/evaluate_vision_model.py
+import onnxruntime as ort
+import numpy as np
+from sklearn.metrics import f1_score, classification_report, confusion_matrix
+from sklearn.calibration import calibration_curve
+import json, os
+from pathlib import Path
+def run_evaluation(model_path: str, golden_dir: str) -> dict:
+    session = ort.InferenceSession(model_path)
+    y_true, y_pred, y_prob = [], [], []
+    for crop_dir in Path(golden_dir).iterdir():
+        for disease_dir in crop_dir.iterdir():
+            if disease_dir.name == 'ood':
+                continue  # Evaluate OOD separately
+            for img_file in disease_dir.glob('*.jpg'):
+                label_file = img_file.with_suffix('.json')
+                if not label_file.exists():
+                    continue
+                label = json.loads(label_file.read_text())['label']
+                img = preprocess_image(img_file)
+                logits = session.run(['logits'], {'image': img})[0]
+                probs = softmax(logits[0])
+                pred_idx = np.argmax(probs)
+                y_true.append(LABEL_TO_IDX[label])
+                y_pred.append(pred_idx)
+                y_prob.append(probs[pred_idx])
+    macro_f1 = f1_score(y_true, y_pred, average='macro')
+    ece = compute_ece(y_true, y_pred, y_prob)
+    results = {
+        'macro_f1': macro_f1,
+        'ece': ece,
+        'classification_report': classification_report(y_true, y_pred, target_names=ALL_LABELS),
+        'PASS': macro_f1 >= 0.82 and ece <= 0.12
+    }
+    if not results['PASS']:
+        print(f'FAIL: macro_F1={macro_f1:.3f} (need >=0.82), ECE={ece:.3f} (need <=0.12)')
+        exit(1)  # Fail CI if model does not meet bar
+    return results
+def compute_ece(y_true, y_pred, y_prob, n_bins=10):
+    # Expected Calibration Error — measures confidence reliability
+    from sklearn.calibration import calibration_curve
+    fraction_pos, mean_pred = calibration_curve(
+        [1 if t==p else 0 for t,p in zip(y_true,y_pred)], y_prob, n_bins=n_bins)
+    return np.mean(np.abs(fraction_pos - mean_pred))
+5. LOAD & PERFORMANCE TESTS
+5.1 Locust Load Test Configuration
+# tests/performance/locustfile.py
+from locust import HttpUser, task, between
+import json
+class AgriSAGEFarmerUser(HttpUser):
+    wait_time = between(2, 8)  # Realistic farmer usage pattern
+    token = None
+    def on_start(self):
+        # Get auth token
+        response = self.client.post('/api/v1/auth/verify-otp',
+            json={'phone': f'+9199{self.user_id:08d}', 'otp': '123456'},
+            name='auth')
+        if response.status_code == 200:
+            self.token = response.json()['access_token']
+            self.headers = {'Authorization': f'Bearer {self.token}'}
+    @task(3)
+    def get_home_data(self):
+        self.client.get('/api/v1/farms', headers=self.headers, name='get_farms')
+        self.client.get('/api/v1/weather/10.12/76.34', headers=self.headers, name='get_weather')
+    @task(2)
+    def get_risk(self):
+        self.client.get('/api/v1/risk/test-farm-id', headers=self.headers, name='get_risk')
+    @task(1)
+    def generate_advisory(self):
+        # Most expensive operation — lowest frequency
+        self.client.post('/api/v1/diagnose',
+            json={'observation_id': 'test-obs-id'},
+            headers=self.headers,
+            name='diagnose')
+# Run: locust -f locustfile.py --host=https://api.agrisage.in --users=50 --spawn-rate=5
+# Target: P95 advisory < 8s | P95 home data < 1s | Error rate < 1%
+5.2 Performance Targets
+Endpoint
+P50 Target
+P95 Target
+P99 Target
+Error Rate
+GET /health
+< 50ms
+< 100ms
+< 200ms
+0%
+GET /api/v1/farms
+< 100ms
+< 300ms
+< 500ms
+< 0.1%
+GET /api/v1/weather/{lat}/{lon}
+< 200ms
+< 500ms
+< 1000ms
+< 0.5%
+GET /api/v1/risk/{farm_id}
+< 300ms
+< 800ms
+< 1500ms
+< 0.5%
+POST /api/v1/observations (with image)
+< 2000ms
+< 4000ms
+< 6000ms
+< 1%
+POST /api/v1/diagnose
+< 4000ms
+< 8000ms
+< 12000ms
+< 2%
+GET /api/v1/schemes
+< 200ms
+< 500ms
+< 1000ms
+< 0.1%
+6. DEVICE TESTING MATRIX
+6.1 Required Test Devices
+Device
+Tier
+RAM
+Processor
+Android
+Test Focus
+Redmi 10A or equivalent
+Tier 3 (Baseline)
+2GB
+Helio A22
+Android 11
+Minimum viable experience — all core features must work
+Redmi Note 12 or equivalent
+Tier 2 (Standard)
+4GB
+Snapdragon 685
+Android 13
+Target device for most farmers — primary test device
+Samsung Galaxy A53 or equivalent
+Tier 1 (Good)
+6GB
+Exynos 1280
+Android 13
+Full feature experience — all animations smooth
+Android Emulator (AVD)
+Dev only
+4GB (configured)
+x86_64
+Android 13
+CI tests — not a substitute for real device testing
+6.2 Mandatory Device Tests Before Each Release
+Test
+Device
+Method
+Pass Criteria
+App cold start time
+Tier 3 baseline
+Android profiler — 3 cold starts, average
+< 2.5 seconds average
+Advisory generation — offline
+Tier 2
+Enable airplane mode, generate advisory
+< 4 seconds, offline banner shown
+ONNX vision inference
+Tier 3
+Capture leaf photo, time inference
+< 5 seconds on Tier 3
+Camera quality indicator
+Tier 2
+Test blurry photo, dark photo, OOD image
+Each rejected with correct specific message
+Voice input — Malayalam
+Tier 2
+Speak 'നെൽ ബ്ലാസ്റ്റ്' into microphone
+Correct intent extracted
+Sync queue — reconnect
+Tier 2
+Create observation offline, enable WiFi
+Syncs within 60 seconds of connection
+Memory — 1 hour session
+Tier 3
+Run app for 60 minutes with 10 advisories
+No OutOfMemoryError, heap stable
+Malayalam text rendering
+Tier 3
+View all primary screens
+All Malayalam text readable, no boxes
+Notification — morning briefing
+Any device
+Trigger test briefing from server
+Notification appears, tapping opens briefing screen
+Low storage warning
+Tier 3 (nearly full)
+Fill device to <200MB free, open app
+App shows storage warning, doesn't crash
+7. PRE-LAUNCH CHECKLIST
+7.1 Backend Checklist
+Check
+Method
+Owner
+Status
+All 18 database migrations run clean
+alembic upgrade head on fresh DB
+Dev
+[ ]
+All RLS policies active and tested
+Test cross-user data access
+Dev
+[ ]
+All environment variables documented in .env.example
+Diff .env vs .env.example
+Dev
+[ ]
+No secrets in git history
+git log --all -S 'password' -- '*.py'
+Dev
+[ ]
+pip-audit: zero CRITICAL CVEs
+pip-audit -r requirements.txt
+Dev
+[ ]
+Advisory P95 < 8s on production server
+locust 50 users 5 min
+Dev
+[ ]
+Health endpoint returns db_connected: true
+curl /health
+Dev
+[ ]
+Rate limiting verified on OTP and diagnose endpoints
+Manual test 429 responses
+Dev
+[ ]
+All knowledge documents have valid valid_until dates
+SQL: SELECT COUNT(*) WHERE valid_until IS NULL
+Dev
+[ ]
+Zero expired schemes in PUBLISHED status
+SQL: SELECT COUNT(*) WHERE valid_until < NOW()
+Dev
+[ ]
+7.2 Model & AI Checklist
+Check
+Method
+Owner
+Status
+Vision model Macro-F1 > 0.82 on field test set
+evaluate_vision_model.py
+Dev
+[ ]
+Vision model ECE < 0.12 after temperature scaling
+compute_ece() in eval script
+Dev
+[ ]
+ONNX INT8 accuracy loss < 2% vs FP32
+verify_quantized_accuracy()
+Dev
+[ ]
+100 random advisories reviewed by 2 agronomists
+Expert review session
+QA + Expert
+[ ]
+Zero unsafe recommendations in 100-advisory review
+Expert safety audit form
+Expert
+[ ]
+All LLM outputs validated against Pydantic schema
+Unit test — 0 validation failures in 500 test outputs
+Dev
+[ ]
+Hallucination check — 0 invented products in 50 advisory outputs
+Manual audit of LLM outputs
+Dev+Expert
+[ ]
+RAG retrieval recall@5 > 0.80 on 20-query benchmark
+evaluate_retrieval.py
+Dev
+[ ]
+Critic conflict detection: 10/10 test conflicts detected correctly
+Unit test suite — test_critic_safety.py
+Dev
+[ ]
+7.3 Android Checklist
+Check
+Method
+Owner
+Status
+All Malayalam strings reviewed by native speaker
+String file review session
+Malayalam reviewer
+[ ]
+No English text visible on Malayalam locale
+Screenshot review all screens
+Dev
+[ ]
+App works in airplane mode — all core features
+Device test — Tier 2 device
+Dev
+[ ]
+Camera quality indicator rejects blurry images
+Device test — intentional blurry photos
+Dev
+[ ]
+Voice input works in Malayalam
+Device test — 10 Malayalam sentences
+Dev
+[ ]
+Sync queue uploads all pending items on reconnect
+Device test — create 5 offline observations
+Dev
+[ ]
+ProGuard/R8 obfuscation enabled for release build
+Build release APK, verify obfuscation
+Dev
+[ ]
+Play Store internal test track install tested
+Download from Play Store internal testing
+Dev
+[ ]
+Privacy policy URL accessible
+curl https://yourdomain.in/privacy
+Dev
+[ ]
+All OWASP Mobile Top 10 items from Security doc addressed
+Security checklist review
+Dev
+[ ]
+AGRI-SAGE TESTING & QA PLAYBOOK v1.0
+Test everything. Trust nothing until measured. Ship only what passes.

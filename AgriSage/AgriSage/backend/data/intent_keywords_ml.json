@@ -1,0 +1,19 @@
+{
+  "നെൽ": {"field": "crop", "value": "rice"},
+  "നെല്ല്": {"field": "crop", "value": "rice"},
+  "വാഴ": {"field": "crop", "value": "banana"},
+  "തക്കാളി": {"field": "crop", "value": "tomato"},
+  "ചോളം": {"field": "crop", "value": "maize"},
+  "തെങ്ങ്": {"field": "crop", "value": "coconut"},
+  "ബ്ലാസ്റ്റ്": {"field": "problem", "value": "blast"},
+  "പുള്ളി": {"field": "symptom", "value": "spots"},
+  "ഇല": {"field": "body_part", "value": "leaf"},
+  "ചുരുളൽ": {"field": "symptom", "value": "curling"},
+  "മഞ്ഞ": {"field": "symptom", "value": "yellowing"},
+  "കരിച്ചിൽ": {"field": "symptom", "value": "burning"},
+  "ദ്രവം": {"field": "symptom", "value": "rot"},
+  "നനഞ്ഞ": {"field": "irrigation_status", "value": "irrigated"},
+  "വരൾ": {"field": "irrigation_status", "value": "dry"},
+  "ഗോതമ്പ്": {"field": "crop", "value": "wheat"},
+  "കൃഷി": {"field": "domain", "value": "agriculture"}
+}

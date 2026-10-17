@@ -1,0 +1,85 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, "dev/*"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: agrisage_test
+          POSTGRES_USER: agrisage
+          POSTGRES_PASSWORD: testpassword
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
+      - name: Run migrations
+        env:
+          DATABASE_URL: postgresql+asyncpg://agrisage:testpassword@localhost/agrisage_test
+          SECRET_KEY: test-secret-key-ci-only
+          ENVIRONMENT: test
+        run: alembic upgrade head
+      - name: Run tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://agrisage:testpassword@localhost/agrisage_test
+          SECRET_KEY: test-secret-key-ci-only
+          ENVIRONMENT: test
+        run: pytest tests/ -v --tb=short --asyncio-mode=auto
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install black ruff
+      - run: black --check backend/
+      - run: ruff check backend/
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check hardcoded secrets
+        run: |
+          if grep -rn --include="*.py" --include="*.kt" \
+             -E '(SECRET_KEY|API_KEY|PASSWORD)\s*=\s*"[a-zA-Z0-9+/]{20,}"' .; then
+            echo "FAIL: Hardcoded secret found"
+            exit 1
+          fi
+      - name: Verify .env not committed
+        run: |
+          if git ls-files --error-unmatch .env 2>/dev/null; then
+            echo "FAIL: .env is tracked by git"
+            exit 1
+          fi
+      - name: Dependency vulnerability scan
+        run: |
+          pip install pip-audit
+          pip-audit -r backend/requirements.txt --fail-on CRITICAL
+      - name: SAST scan
+        run: |
+          pip install bandit
+          bandit -r backend/ -lll

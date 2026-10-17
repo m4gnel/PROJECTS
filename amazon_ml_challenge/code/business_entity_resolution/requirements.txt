@@ -1,0 +1,15 @@
+pandas==2.2.2
+numpy==1.26.4
+scikit-learn==1.5.1
+sentence-transformers==3.0.1
+faiss-cpu==1.8.0
+rapidfuzz==3.9.6
+lightgbm==4.4.0
+transformers==4.42.4
+torch==2.3.1
+scipy==1.13.1
+joblib==1.4.2
+pyyaml==6.0.1
+pytest==8.2.2
+black==24.4.2
+tqdm==4.66.4

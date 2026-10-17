@@ -1,0 +1,30 @@
+# Environment & Secrets
+.env
+.env.*
+*.key
+*.pem
+
+# Python & Node
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+node_modules/
+.venv/
+venv/
+
+# Build & OS Artifacts
+build/
+dist/
+.gradle/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+*.tmp

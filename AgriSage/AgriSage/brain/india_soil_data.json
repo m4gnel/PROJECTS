@@ -1,0 +1,62 @@
+{
+  "Punjab_Ludhiana": {
+    "ph_min": 7.2, "ph_max": 8.4, "texture": "alluvial_loam",
+    "organic_carbon": "low", "n_status": "low", "p_status": "medium", "k_status": "high",
+    "suitable_crops": ["wheat", "paddy", "maize", "cotton", "mustard"]
+  },
+  "Haryana_Karnal": {
+    "ph_min": 7.5, "ph_max": 8.5, "texture": "sandy_loam",
+    "organic_carbon": "low", "n_status": "low", "p_status": "medium", "k_status": "high",
+    "suitable_crops": ["basmati_rice", "wheat", "sugarcane", "mustard"]
+  },
+  "UP_Varanasi": {
+    "ph_min": 6.8, "ph_max": 7.8, "texture": "gangetic_alluvial",
+    "organic_carbon": "medium", "n_status": "medium", "p_status": "medium", "k_status": "medium",
+    "suitable_crops": ["wheat", "paddy", "sugarcane", "pulses", "mustard", "potato"]
+  },
+  "Maharashtra_Nashik": {
+    "ph_min": 7.0, "ph_max": 8.2, "texture": "black_clay",
+    "organic_carbon": "medium", "n_status": "low", "p_status": "medium", "k_status": "high",
+    "suitable_crops": ["grapes", "onion", "pomegranate", "cotton", "soybean", "sugarcane"]
+  },
+  "Karnataka_Mandya": {
+    "ph_min": 6.2, "ph_max": 7.2, "texture": "red_loam",
+    "organic_carbon": "medium", "n_status": "medium", "p_status": "medium", "k_status": "medium",
+    "suitable_crops": ["sugarcane", "paddy", "ragi", "coconut", "arecanut"]
+  },
+  "TamilNadu_Thanjavur": {
+    "ph_min": 6.5, "ph_max": 7.5, "texture": "deltaic_alluvial",
+    "organic_carbon": "medium", "n_status": "medium", "p_status": "high", "k_status": "medium",
+    "suitable_crops": ["rice", "banana", "sugarcane", "pulses", "coconut"]
+  },
+  "Telangana_Warangal": {
+    "ph_min": 6.8, "ph_max": 7.8, "texture": "red_chalka",
+    "organic_carbon": "medium", "n_status": "low", "p_status": "medium", "k_status": "high",
+    "suitable_crops": ["cotton", "red_chili", "maize", "turmeric", "paddy"]
+  },
+  "Gujarat_Rajkot": {
+    "ph_min": 7.8, "ph_max": 8.6, "texture": "medium_black",
+    "organic_carbon": "low", "n_status": "low", "p_status": "medium", "k_status": "high",
+    "suitable_crops": ["groundnut", "cotton", "castor", "wheat", "cumin"]
+  },
+  "MadhyaPradesh_Indore": {
+    "ph_min": 7.2, "ph_max": 8.2, "texture": "deep_black",
+    "organic_carbon": "medium", "n_status": "medium", "p_status": "medium", "k_status": "high",
+    "suitable_crops": ["soybean", "wheat", "gram", "garlic", "cotton"]
+  },
+  "WestBengal_Burdwan": {
+    "ph_min": 5.8, "ph_max": 6.8, "texture": "alluvial_silt",
+    "organic_carbon": "high", "n_status": "medium", "p_status": "medium", "k_status": "medium",
+    "suitable_crops": ["rice", "jute", "potato", "mustard", "vegetables"]
+  },
+  "Bihar_Muzaffarpur": {
+    "ph_min": 6.5, "ph_max": 7.5, "texture": "calcareous_alluvial",
+    "organic_carbon": "medium", "n_status": "medium", "p_status": "low", "k_status": "medium",
+    "suitable_crops": ["litchi", "maize", "wheat", "paddy", "tobacco"]
+  },
+  "Kerala_Palakkad": {
+    "ph_min": 6.0, "ph_max": 7.5, "texture": "black_alluvial",
+    "organic_carbon": "medium", "n_status": "high", "p_status": "high", "k_status": "high",
+    "suitable_crops": ["rice", "cotton", "pulses", "groundnut", "sugarcane", "mango"]
+  }
+}

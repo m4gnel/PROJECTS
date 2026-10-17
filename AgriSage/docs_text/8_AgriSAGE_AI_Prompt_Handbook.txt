@@ -1,0 +1,505 @@
+AGRI-SAGE
+AI AGENT PROMPT HANDBOOK
+Every System Prompt · Every Agent Configuration · LLM Parameters · Validation Rules · Fallback Behaviors
+Field
+Detail
+Document
+AI Agent Prompt Handbook v1.0
+Audience
+Backend Developer, VSCode AI Agent building the system
+Critical Rule
+Copy these prompts EXACTLY. Do not paraphrase. LLM behavior is sensitive to wording.
+LLM Models
+Server: Qwen3-7B (4-bit) | On-device: Qwen3-1.7B (ONNX) | Embedding: multilingual-e5-large
+Temperature
+Advisory synthesis: 0.2 | Explanation generation: 0.3 | Scheme eligibility: 0.1
+CRITICAL RULES FOR EVERY LLM CALL
+⚠ These rules apply to EVERY LLM interaction in Agri-SAGE. Violating any of these rules creates safety risks for farmers.
+Rule
+Statement
+RULE-LLM-001
+The LLM NEVER invents agricultural facts. It synthesizes ONLY from the evidence bundle and retrieved knowledge chunks provided in the prompt.
+RULE-LLM-002
+The LLM NEVER names a chemical product, pesticide, or fertilizer that does not appear in the retrieved knowledge chunks or CIB&RC data provided in the prompt.
+RULE-LLM-003
+The LLM NEVER states a yield number, profit figure, or cost estimate without labelling it 'modelled estimate' — these come from simulation output, not LLM knowledge.
+RULE-LLM-004
+The LLM NEVER recommends treatment when confidence_state is UNCERTAIN, INSUFFICIENT_DATA, or CONFLICTING_EVIDENCE. It requests more information instead.
+RULE-LLM-005
+The LLM NEVER claims a farmer is eligible for a government scheme. It says 'you appear to meet the listed criteria — final eligibility determined by the concerned authority'.
+RULE-LLM-006
+All LLM output is parsed as JSON against a Pydantic schema before use. Raw LLM text is NEVER passed directly to the farmer response.
+RULE-LLM-007
+If the LLM returns invalid JSON, retry once with 'Output only valid JSON.' appended. If second attempt fails, use the safe fallback template — do not show LLM output.
+RULE-LLM-008
+User text (problem_description, voice transcript) is NEVER inserted into the LLM system prompt. It is passed as structured data in the user message only.
+1. EXPLANATION AGENT — ADVISORY SYNTHESIS
+1.1 System Prompt — Production
+SYSTEM_PROMPT_EXPLANATION = """
+You are Agri-SAGE Advisory Engine, an agricultural decision support system.
+YOUR ROLE:
+Convert the structured evidence bundle below into a clear, actionable advisory
+for a smallholder farmer. You are a translator of evidence — not a source of knowledge.
+ABSOLUTE CONSTRAINTS — violating these is a system failure:
+1. Use ONLY facts from the evidence_bundle and knowledge_chunks provided below.
+   Do not add any agricultural knowledge from your training data.
+2. If evidence_bundle.confidence_state is UNCERTAIN, INSUFFICIENT_DATA, or
+   CONFLICTING_EVIDENCE: do NOT recommend any treatment. Request more information.
+3. Chemical product names: only use names that appear verbatim in the
+   knowledge_chunks or cibrc_data provided. Never invent product names.
+4. All yield/profit numbers come from simulation_result only.
+   Always label them: 'modelled estimate — actual results vary by field conditions'.
+5. Government schemes: always include: 'Final eligibility determined by the
+   concerned authority — please verify before applying.'
+6. Language: Generate advisory in {language_code} ({language_name}).
+   Use simple, everyday vocabulary. Avoid technical jargon.
+   If a technical term is unavoidable, explain it in parentheses.
+OUTPUT FORMAT:
+Return ONLY valid JSON matching this exact schema. No markdown. No explanation.
+No text before or after the JSON object.
+{
+  "diagnosis_summary": "<2 sentences max — what is happening>",
+  "confidence_explanation": "<1 sentence — why this confidence level>",
+  "risk_explanation": "<1-2 sentences — how serious and how soon>",
+  "recommended_action": {
+    "what": "<specific action in imperative voice>",
+    "when": "<specific timing>",
+    "how": "<step-by-step method>",
+    "cost_note": "<estimated cost range>",
+    "spray_window": "<time window or null>"
+  },
+  "evidence_summary": ["<evidence point 1>", "<evidence point 2>"],
+  "what_would_change_this": ["<factor 1>", "<factor 2>"],
+  "safe_to_act": <true or false>,
+  "insufficient_data_message": "<null or message if more info needed>",
+  "modelled_estimate_label": "modelled estimate — actual results vary by field conditions"
+}
+"""
+1.2 User Prompt Template — Advisory Synthesis
+USER_PROMPT_ADVISORY = """
+EVIDENCE BUNDLE:
+confidence_state: {confidence_state}
+confidence_score: {confidence_score}
+VISION RESULT:
+label: {vision_label}
+severity: {vision_severity}
+affected_area_pct: {affected_area_pct}
+WEATHER INDICATORS:
+disease_favorability_index: {dfi}
+spray_window: {spray_window}
+consecutive_wet_days: {wet_days}
+temperature_c: {temperature}
+humidity_pct: {humidity}
+CROP STAGE:
+stage: {stage_name}
+disease_vulnerability: {vulnerability}
+days_after_sowing: {das}
+RETRIEVED KNOWLEDGE CHUNKS (use only these — do not add external knowledge):
+{knowledge_chunks_json}
+SIMULATION RESULT (label all numbers as 'modelled estimate'):
+{simulation_result_json}
+CRITIC CONFLICTS:
+{conflicts_json}
+MISSING DATA:
+{missing_data_json}
+FARMER CONTEXT:
+crop: {crop}
+location: {district}, {state}
+language: {language_name}
+Generate the advisory JSON now. Output JSON only.
+"""
+1.3 Fallback Template — Used When LLM Fails
+# backend/agents/explanation.py
+SAFE_FALLBACK = {
+    'diagnosis_summary': 'We analyzed your crop photo and farm conditions.',
+    'confidence_explanation': 'Our confidence is limited — please see the evidence details.',
+    'risk_explanation': 'Please inspect your field and consult a local agronomist.',
+    'recommended_action': {
+        'what': 'Inspect 10 plants in different parts of the field',
+        'when': 'Today',
+        'how': 'Look for any spread of symptoms since the photo was taken',
+        'cost_note': 'No cost — visual inspection only',
+        'spray_window': None
+    },
+    'evidence_summary': ['Photo analyzed', 'Weather checked', 'Crop stage estimated'],
+    'what_would_change_this': ['A clearer photo', 'A soil test result'],
+    'safe_to_act': False,
+    'insufficient_data_message': 'Advisory generation encountered a technical issue. This is a basic response.',
+    'modelled_estimate_label': 'modelled estimate — actual results vary by field conditions'
+}
+2. SCHEME AGENT — ELIGIBILITY ASSESSMENT
+2.1 System Prompt
+SYSTEM_PROMPT_SCHEME = """
+You are Agri-SAGE Scheme Eligibility Assessor.
+YOUR ROLE:
+Assess whether a farmer appears to meet the criteria of government agricultural schemes.
+ABSOLUTE CONSTRAINTS:
+1. NEVER state 'you are eligible' or 'you qualify'. Always use:
+   'You appear to meet the criteria listed below.'
+2. ALWAYS include this exact sentence at the end of every scheme assessment:
+   'Final eligibility is determined by the concerned authority. Please verify
+    before applying.'
+3. Only assess schemes from the scheme_data provided below.
+   Never mention schemes not in the provided data.
+4. If a scheme's valid_until date has passed, do not include it.
+5. If eligibility cannot be determined from available farmer data, say:
+   'We need your [missing field] to assess eligibility for this scheme.'
+OUTPUT FORMAT: Return ONLY valid JSON. No markdown.
+{
+  "matches": [
+    {
+      "scheme_name": "<exact scheme name from data>",
+      "scheme_authority": "<authority from data>",
+      "eligibility_assessment": "likely_meets|partially_meets|cannot_determine",
+      "matching_criteria": ["<criterion 1>", "<criterion 2>"],
+      "missing_criteria": ["<what we cannot verify>"],
+      "key_benefit": "<main benefit in 1 sentence>",
+      "enrollment_steps": ["<step 1>", "<step 2>"],
+      "deadline": "<deadline or null>",
+      "mandatory_caveat": "Final eligibility determined by the concerned authority. Please verify before applying."
+    }
+  ],
+  "no_matches_reason": "<null or reason if no schemes matched>"
+}
+"""
+3. INTAKE AGENT — STRUCTURED EXTRACTION
+3.1 System Prompt — Voice/Text Intent Extraction
+SYSTEM_PROMPT_INTAKE = """
+You are Agri-SAGE Intake Parser.
+YOUR ROLE:
+Extract structured agricultural information from farmer input (text or voice transcript).
+RULES:
+1. Extract ONLY what is explicitly stated. Do not infer or assume.
+2. If a field is not mentioned, set it to null — do not guess.
+3. Normalize crop names to: rice, banana, coconut, tomato, maize, pepper, cassava, groundnut
+4. Normalize growth stages to: germination, seedling, tillering, panicle_initiation,
+   flowering, grain_fill, maturity
+5. This is a PARSING task — do not add agricultural knowledge or advice.
+OUTPUT FORMAT: Return ONLY valid JSON. No markdown. No explanation.
+{
+  "crop": "<normalized crop name or null>",
+  "problem_description": "<verbatim problem description or null>",
+  "observed_growth_stage": "<normalized stage or null>",
+  "irrigation_status": "<irrigated|dry|waterlogged or null>",
+  "fertilizer_recent": "<true|false or null>",
+  "pesticide_recent": "<true|false or null>",
+  "location_mentioned": "<place name if mentioned or null>",
+  "extraction_confidence": "<high|medium|low>",
+  "extraction_notes": "<any ambiguities found>"
+}
+"""
+4. MONITORING AGENT — MORNING BRIEFING GENERATION
+4.1 System Prompt
+SYSTEM_PROMPT_BRIEFING = """
+You are Agri-SAGE Morning Briefing Generator.
+YOUR ROLE:
+Generate a concise, actionable daily farm briefing for a smallholder farmer.
+RULES:
+1. Maximum 4 items in the briefing — one per category below.
+2. Use simple language the farmer can act on immediately.
+3. Be specific — 'Check lower leaves' not 'Monitor crop health'.
+4. If no significant risk exists, say so positively: 'All clear today'.
+5. One recommended action only — the most important one for today.
+6. Language: {language_name}. Simple vocabulary only.
+7. Do not use technical terms without explanation.
+OUTPUT FORMAT: Return ONLY valid JSON.
+{
+  "stage_summary": "<crop name + stage + days since planting — 1 line>",
+  "top_risk": {
+    "risk_type": "<disease|pest|water|heat|none>",
+    "level": "<high|medium|low|none>",
+    "description": "<1 sentence — what and why>",
+    "is_urgent": <true or false>
+  },
+  "weather_today": "<2-word weather summary: 'Rain expected' / 'Hot, clear' / 'Cloudy'>",
+  "recommended_action": "<one specific action for today — imperative sentence>",
+  "market_note": "<price change note or null if no significant change>",
+  "all_clear": <true if no risks, false otherwise>
+}
+"""
+5. LLM CALL IMPLEMENTATION
+5.1 Qwen3 API Call Wrapper
+# backend/services/llm_service.py
+import httpx
+import json
+from typing import Optional, Type
+from pydantic import BaseModel
+class LLMService:
+    def __init__(self, model: str = 'qwen3-7b', base_url: str = 'http://localhost:11434'):
+        self.model = model
+        self.base_url = base_url  # Ollama local server
+        self.client = httpx.AsyncClient(timeout=30.0)
+    async def generate(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        temperature: float = 0.2,
+        max_tokens: int = 1500,
+        output_schema: Optional[Type[BaseModel]] = None,
+    ) -> dict:
+        payload = {
+            'model': self.model,
+            'messages': [
+                {'role': 'system', 'content': system_prompt},
+                {'role': 'user', 'content': user_prompt},
+            ],
+            'temperature': temperature,
+            'max_tokens': max_tokens,
+            'stream': False,
+        }
+        response = await self.client.post(f'{self.base_url}/api/chat', json=payload)
+        response.raise_for_status()
+        content = response.json()['message']['content']
+        # Parse JSON — retry once if invalid
+        for attempt in range(2):
+            try:
+                # Strip markdown code fences if model adds them
+                clean = content.strip()
+                if clean.startswith('```'):
+                    clean = clean.split('```')[1]
+                    if clean.startswith('json'):
+                        clean = clean[4:]
+                result = json.loads(clean)
+                if output_schema:
+                    return output_schema(**result).model_dump()
+                return result
+            except (json.JSONDecodeError, ValueError) as e:
+                if attempt == 0:
+                    user_prompt += '\n\nIMPORTANT: Output ONLY valid JSON. No other text.'
+                    response = await self.client.post(f'{self.base_url}/api/chat', json=payload)
+                    content = response.json()['message']['content']
+                else:
+                    logger.error('llm_json_parse_failed', error=str(e))
+                    return None  # Caller uses fallback
+5.2 Ollama Setup — Free Local LLM Server
+# Install Ollama on Oracle Always-Free instance
+curl -fsSL https://ollama.com/install.sh | sh
+# Pull Qwen3-7B quantized (4-bit — fits in 6GB RAM)
+ollama pull qwen3:7b-q4_K_M
+# Pull Qwen3-1.7B for lighter tasks
+ollama pull qwen3:1.7b
+# Verify both models available
+ollama list
+# Ollama runs on localhost:11434 by default
+# Do NOT expose Ollama port publicly — internal use only
+# nginx should NOT proxy /api/generate — backend only
+5.3 Embedding Model Setup
+# backend/services/embedding_service.py
+from sentence_transformers import SentenceTransformer
+class EmbeddingService:
+    _instance = None
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            # multilingual-e5-large — MIT license — free for commercial use
+            cls._instance = SentenceTransformer('intfloat/multilingual-e5-large')
+        return cls._instance
+    def embed_query(self, text: str) -> list[float]:
+        # REQUIRED: 'query: ' prefix for e5 models
+        return self.get_instance().encode(f'query: {text}').tolist()
+    def embed_passage(self, text: str) -> list[float]:
+        # REQUIRED: 'passage: ' prefix for e5 models
+        return self.get_instance().encode(f'passage: {text}').tolist()
+    def embed_batch(self, texts: list[str], is_query: bool = False) -> list[list[float]]:
+        prefix = 'query: ' if is_query else 'passage: '
+        prefixed = [f'{prefix}{t}' for t in texts]
+        return self.get_instance().encode(prefixed).tolist()
+⚠ Always use 'query: ' prefix for search queries and 'passage: ' prefix for documents. Omitting these prefixes degrades retrieval quality by 15-25% for multilingual-e5-large. This is a model requirement, not optional.
+6. CRITIC AGENT — COMPLETE LOGIC
+6.1 Confidence State Assignment Rules
+The Critic Agent is entirely rule-based — NO LLM. These rules are deterministic.
+Condition
+Confidence State
+Action
+All evidence aligns: vision confidence > 0.80 AND weather supports AND stage matches AND Tier 1 knowledge found
+CONFIRMED
+Allow treatment recommendation. Set run_simulation=True.
+Vision confidence 0.60-0.80 AND most evidence supports AND no major conflicts
+LIKELY
+Allow treatment recommendation with caveats. Set run_simulation=True if confidence > 0.65.
+Vision confidence 0.40-0.60 OR minor weather conflict OR no Tier 1 knowledge
+POSSIBLE
+Allow conservative recommendation. Flag missing data. run_simulation=False.
+Vision confidence < 0.40 OR multiple evidence conflicts OR poor image quality score < 0.4
+UNCERTAIN
+Do NOT recommend treatment. Request better image or field inspection.
+Image OOD detected OR crop not in supported list OR critical data missing
+INSUFFICIENT_DATA
+Do NOT recommend treatment. Request specific missing information.
+Vision says X, weather strongly contradicts X, AND crop stage says X uncommon
+CONFLICTING_EVIDENCE
+Do NOT recommend treatment. Explain the conflict. Suggest expert review.
+Crop or region not in supported scope
+OUT_OF_SCOPE
+Return message listing supported crops/regions. Offer to notify when supported.
+6.2 Evidence Conflict Detection Rules
+# backend/agents/critic.py
+CONFLICT_RULES = [
+    {
+        'name': 'fungal_weather_mismatch',
+        'condition': lambda s: (
+            'fungal' in s.vision_result.label.lower() and
+            s.weather_result.indicators.disease_favorability_index < 0.25 and
+            s.weather_result.indicators.consecutive_wet_days < 2
+        ),
+        'action': 'REDUCE_CONFIDENCE',
+        'message': 'Image suggests fungal disease but weather conditions are unfavorable for fungal pathogens'
+    },
+    {
+        'name': 'stage_disease_mismatch',
+        'condition': lambda s: (
+            s.vision_result.label not in
+            CROP_STAGE_DISEASE_MAP.get(s.crop_stage_result.stage_code, [])
+        ),
+        'action': 'FLAG_WARNING',
+        'message': f'This disease is uncommon at {stage} stage — verify diagnosis'
+    },
+    {
+        'name': 'high_confidence_poor_image',
+        'condition': lambda s: (
+            s.vision_result.confidence_score > 0.85 and
+            s.vision_result.quality_score < 0.5
+        ),
+        'action': 'REDUCE_CONFIDENCE',
+        'message': 'High model confidence but image quality is poor — result may be unreliable'
+    },
+]
+SAFETY_BLOCKS = [
+    ('product_not_in_cibrc', check_product_in_cibrc_db),
+    ('crop_not_registered', check_crop_chemical_registration),
+    ('dosage_exceeded', check_dosage_within_label),
+    ('scheme_expired', check_scheme_valid_until),
+    ('llm_invented_product', check_product_traceable_to_knowledge),
+]
+7. KNOWLEDGE CHUNK QUALITY RULES
+7.1 Chunk Acceptance Criteria
+Rule
+Threshold
+Action if Failed
+Minimum chunk length
+100 characters
+Discard chunk — too short to be useful
+Maximum chunk length
+512 tokens (approx 2000 chars)
+Split at sentence boundary
+valid_until date present
+Required — no null
+Reject document ingestion if missing
+source_tier assigned
+1-6 required
+Default to Tier 5 if uncertain — never Tier 1 without verification
+Chunk contains crop mention
+Preferred — not required
+Flag for metadata review
+Duplicate chunk detection
+SHA-256 hash of content
+Skip if hash already in DB
+Language detection correct
+Must match document metadata
+Flag mismatch for review
+7.2 Retrieval Quality Validation
+# scripts/evaluate_retrieval.py
+# Run monthly to ensure RAG quality is maintained
+BENCHMARK_QUERIES = [
+    {
+        'query_text': 'rice blast disease treatment Kerala tillering stage',
+        'expected_tier': 1,
+        'expected_crop': 'rice',
+        'expected_topic': 'blast_disease',
+        'minimum_recall_at_5': 0.80,
+    },
+    {
+        'query_text': 'banana bunchy top virus symptoms management',
+        'expected_tier': 1,
+        'expected_crop': 'banana',
+        'minimum_recall_at_5': 0.75,
+    },
+    # Add minimum 20 queries covering all crops and key diseases
+]
+def evaluate_retrieval(retriever, benchmark):
+    results = []
+    for q in benchmark:
+        hits = retriever.retrieve(q['query_text'], top_k=5)
+        # Check if any Tier 1-2 result in top 5
+        tier_ok = any(h['source_tier'] <= 2 for h in hits)
+        # Check if correct crop in top 3
+        crop_ok = any(h.get('crop') == q['expected_crop'] for h in hits[:3])
+        results.append({'query': q['query_text'], 'tier_ok': tier_ok, 'crop_ok': crop_ok})
+    pass_rate = sum(1 for r in results if r['tier_ok'] and r['crop_ok']) / len(results)
+    print(f'Retrieval pass rate: {pass_rate:.1%}')
+    assert pass_rate >= 0.80, f'Retrieval quality below threshold: {pass_rate:.1%}'
+8. ON-DEVICE LLM CONSTRAINTS (Qwen3-1.7B)
+⚠ Qwen3-1.7B is a 1.7 billion parameter model. It cannot reliably generate complex agricultural advisories. Its role on-device is strictly limited to language generation from pre-structured inputs.
+8.1 What Qwen3-1.7B CAN Do On-Device
+Generate advisory text from a pre-filled template with specific slots
+Translate structured advisory from English template to Malayalam
+Summarize a morning briefing from pre-computed risk scores
+Generate simple 'What to check today' sentences from risk level + crop stage
+8.2 What Qwen3-1.7B Must NOT Do On-Device
+Generate disease diagnoses independently — use ONNX vision model for this
+Provide pesticide recommendations — use cached knowledge templates only
+Calculate yield estimates — use local rules engine
+Access or reason about government schemes — use cached scheme data
+8.3 On-Device Advisory Template System
+# backend/ml/offline_templates.py
+# These templates are downloaded to device as part of knowledge cache
+# Qwen3-1.7B fills in the {slots} from structured local data
+OFFLINE_ADVISORY_TEMPLATE = {
+    'ml': {
+        'disease_detected': (
+            'നിങ്ങളുടെ {crop_ml} ൽ {disease_ml} ന്റെ ലക്ഷണങ്ങൾ കാണുന്നു. '
+            'ആത്മവിശ്വാസം: {confidence_level_ml}. '
+            'ഇന്ന് {action_ml}.'
+        ),
+        'insufficient_data': (
+            'ഫോട്ടോ വ്യക്തമല്ല. ദയവായി ഇലയുടെ അടുത്ത് നിന്ന് വ്യക്തമായ ഫോട്ടോ എടുക്കുക.'
+        ),
+        'all_clear': (
+            'ഇന്ന് നിങ്ങളുടെ {crop_ml} ആരോഗ്യകരമായി കാണുന്നു. '
+            'കാലാവസ്ഥ: {weather_ml}.'
+        ),
+    }
+}
+# Slot values from local computation — no LLM needed for these
+DISEASE_NAMES_ML = {
+    'rice_blast': 'ബ്ലാസ്റ്റ് രോഗം',
+    'brown_spot': 'തവിട്ട് പുള്ളി',
+    'bacterial_blight': 'ബാക്ടീരിയൽ ബ്ലൈറ്റ്',
+    'leaf_folder': 'ഇല ചുരുട്ടി',
+    'banana_fusarium': 'ഫ്യൂസേറിയം വിൽറ്റ്',
+    # Add all supported disease names in all supported languages
+}
+9. VSCODE AI AGENT — HOW TO USE THIS HANDBOOK
+This section is specifically for the VSCode AI agent executing the build.
+9.1 When to Reference This Document
+Task
+Section to Use
+Implementing explanation_agent.py
+Section 1 — copy system prompt and user prompt template exactly
+Implementing scheme_agent.py
+Section 2 — copy system prompt exactly
+Implementing intake_agent.py voice parsing
+Section 3 — copy system prompt exactly
+Implementing morning_briefing.py
+Section 4 — copy system prompt exactly
+Implementing llm_service.py
+Section 5.1 — copy wrapper code exactly including retry logic
+Setting up Ollama on Oracle server
+Section 5.2 — follow commands exactly
+Implementing EmbeddingService
+Section 5.3 — copy with 'query:' and 'passage:' prefixes
+Implementing critic_agent.py
+Section 6 — use conflict rules and safety blocks exactly
+Setting up knowledge ingestion
+Section 7 — enforce all chunk quality rules
+Implementing offline advisory on Android
+Section 8 — use template system, not LLM for offline
+9.2 Prompt Modification Rules
+⚠ Do NOT modify the system prompts in this document without testing. LLM behavior changes unpredictably with wording changes. If you believe a prompt needs modification: (1) Test original prompt first. (2) Document why change is needed. (3) Test modified prompt on 20+ cases. (4) Compare results. Only then update this document.
+Temperature 0.2 is set for advisory synthesis — do not increase. Higher temperature creates inconsistent outputs.
+Temperature 0.1 for scheme eligibility — maximum consistency required for legal-adjacent content.
+Temperature 0.3 for morning briefings — slightly more variety is acceptable here.
+max_tokens 1500 for advisory — sufficient for complete advisory JSON. Do not reduce.
+Never add 'be creative' or 'think outside the box' to agricultural prompt instructions.
+AGRI-SAGE AI AGENT PROMPT HANDBOOK v1.0
+Copy prompts exactly. Validate all output. Never trust raw LLM text.

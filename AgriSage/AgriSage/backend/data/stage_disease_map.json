@@ -1,0 +1,17 @@
+{
+  "rice_germination": {"expected": [], "unlikely": ["rice_blast", "rice_brown_spot"]},
+  "rice_seedling": {"expected": ["rice_leaf_folder"], "unlikely": ["rice_bacterial_blight"]},
+  "rice_tillering": {"expected": ["rice_blast", "rice_brown_spot", "rice_leaf_folder"], "unlikely": []},
+  "rice_panicle_initiation": {"expected": ["rice_blast", "rice_sheath_blight"], "unlikely": []},
+  "rice_flowering": {"expected": ["rice_blast", "rice_bacterial_blight"], "unlikely": ["rice_leaf_folder"]},
+  "rice_grain_fill": {"expected": ["rice_sheath_blight", "rice_brown_spot"], "unlikely": ["rice_blast"]},
+  "rice_maturity": {"expected": [], "unlikely": ["rice_blast"]},
+  "banana_vegetative": {"expected": ["banana_sigatoka"], "unlikely": ["banana_fusarium"]},
+  "banana_shooting": {"expected": ["banana_fusarium", "banana_sigatoka"], "unlikely": []},
+  "banana_flowering": {"expected": ["banana_fusarium", "banana_bbtv"], "unlikely": []},
+  "tomato_vegetative": {"expected": ["tomato_early_blight"], "unlikely": ["tomato_late_blight"]},
+  "tomato_flowering": {"expected": ["tomato_late_blight", "tomato_leaf_curl"], "unlikely": []},
+  "tomato_fruit_set": {"expected": ["tomato_late_blight"], "unlikely": []},
+  "maize_vegetative": {"expected": ["maize_northern_blight"], "unlikely": ["maize_common_rust"]},
+  "maize_tasseling": {"expected": ["maize_northern_blight", "maize_common_rust"], "unlikely": []}
+}

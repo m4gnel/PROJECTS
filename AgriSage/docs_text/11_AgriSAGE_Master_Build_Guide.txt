@@ -1,0 +1,537 @@
+AGRI-SAGE
+MASTER BUILD GUIDE
+Exact Prompts · Document Handoff Order · VSCode Setup · Phase-by-Phase Instructions · How to Handle AI Errors
+Field
+Detail
+Purpose
+Complete guide for using AI to build Agri-SAGE using all 10 documents
+AI Tools Covered
+Cursor IDE (recommended) · VSCode + GitHub Copilot · Claude Projects · ChatGPT Projects
+Document Set
+10 documents — PRD, TRD, App Flow, UI/UX, Schema, Impl Plan, Security, Prompts, QA, Validation
+Build Method
+Give documents to AI as context. Use exact prompts from this guide. Verify after each task.
+Critical Rule
+Never skip a task. Never proceed to next phase until exit criteria pass. Verify everything.
+PART 1: SETUP — BEFORE YOU GIVE ANYTHING TO AI
+1.1 Which AI Tool to Use
+Tool
+Best For
+Cost
+Recommendation
+Cursor IDE
+Full project build — reads entire codebase, writes files directly, understands project context
+$20/month (free tier available)
+BEST CHOICE — purpose-built for AI coding. Reads all your docs as context.
+VSCode + GitHub Copilot
+Writing code with AI assistance, good for experienced developers
+$10/month
+Good — but requires more manual context feeding per session.
+Claude Projects (claude.ai)
+Planning, architecture, writing complex code blocks, reviewing
+Included in Pro plan
+Use alongside Cursor for complex decisions. Not for direct file writing.
+ChatGPT Projects
+Similar to Claude Projects
+ChatGPT Plus
+Alternative to Claude Projects. Use for planning/review only.
+⚠ Do NOT try to build the entire project in one AI chat session. AI models have context limits. Build phase by phase, task by task. Each task is one AI session.
+1.2 Cursor IDE Setup — Recommended
+Cursor is the best tool for this project. Here is exact setup:
+Step 1: Download Cursor from cursor.sh — free to start
+Step 2: Install Cursor. Open it.
+Step 3: Create project folder: mkdir agrisage && cd agrisage
+Step 4: Open folder in Cursor: cursor .
+Step 5: In Cursor settings → Models → Select: claude-3.5-sonnet or gpt-4o
+Step 6: Add all 10 documents to project folder as /docs/
+  - docs/01_PRD.docx
+  - docs/02_TRD.docx
+  - docs/03_AppFlow.docx
+  - docs/04_UIUX.docx
+  - docs/05_BackendSchema.docx
+  - docs/06_ImplementationPlan.docx
+  - docs/07_Security.docx
+  - docs/08_AIPromptHandbook.docx
+  - docs/09_TestingQA.docx
+  - docs/10_ValidationReport.docx
+Step 7: In Cursor Chat (Cmd+L) → @ mention docs → '@docs/06_ImplementationPlan.docx'
+Step 8: Now give the prompts from Part 2 of this guide
+1.3 How to Give Documents to AI
+Scenario
+How to Provide Documents
+What to Say
+Cursor IDE
+@ mention specific doc in chat
+@docs/06_ImplementationPlan.docx — execute Phase 0 Task 0.1
+VSCode + Copilot
+Open relevant doc file, use #file in chat
+#file:docs/05_BackendSchema.docx create the users table migration
+Claude Projects
+Upload all 10 docs to Project knowledge base once — AI reads them every session
+[No need to re-upload] — just give the task prompt directly
+ChatGPT Projects
+Upload all 10 docs to Project — AI remembers them
+[No need to re-upload] — just give the task prompt directly
+✓ Claude Projects is the most reliable for complex tasks. Upload all 10 documents once to a Claude Project named 'Agri-SAGE Build'. Every new chat in that project has all documents as context automatically.
+1.4 The Golden Rule of AI-Assisted Building
+▶ ONE TASK PER AI SESSION. Give one task. Verify the output. Then give the next task. Never give 5 tasks at once.
+▶ ALWAYS VERIFY before moving on. Run the code. Check it works. Fix errors before next task.
+▶ WHEN AI MAKES AN ERROR — do not start over. Give a correction prompt. See Part 4.
+▶ NEVER let AI skip exit criteria. If Phase 1 exit criteria are not all passing, fix them before Phase 2.
+▶ COPY PROMPTS EXACTLY from this guide. These prompts are tested and precise.
+PART 2: EXACT PROMPTS — PHASE BY PHASE
+These are the exact prompts to give to the AI for each task. Copy them exactly. Do not paraphrase.
+PHASE 0: FOUNDATION — Weeks 1-2
+Prompt P0.1 — Project Structure
+Give this prompt FIRST in a new session with Implementation Plan + TRD attached:
+You are building Agri-SAGE, a professional agricultural AI platform for smallholder farmers in India. I have 10 specification documents that define every detail of this project.
+TASK: Execute Phase 0 Task 0.1 from the Implementation Plan.
+Create the complete Agri-SAGE project directory structure exactly as defined in the TRD Document Section 2.2. Rules:
+1. Create every folder listed in TRD Section 2.2
+2. Add .gitkeep to every empty leaf folder
+3. Create .gitignore covering: Python, Android, Node, .env, __pycache__, *.pyc, .DS_Store, *.onnx, *.pt
+4. Create .env.example with ALL variables from TRD Section 8.3 — empty values, with comments explaining each
+5. Create LICENSE_REGISTRY.md with the table from Validation Report Section 4 and all entries from Master Blueprint Section 19.2
+6. Create README.md: project name, one-paragraph description, link to docs folder
+Output: Show me the directory tree after creation. Confirm .gitignore includes .env.
+Prompt P0.2 — Docker Environment
+New session. Attach: TRD + Implementation Plan.
+Agri-SAGE project — execute Phase 0 Task 0.2.
+Create these files exactly:
+1. docker-compose.yml: Two services — 'db' using pgvector/pgvector:pg16 image with POSTGRES_DB=agrisage_dev POSTGRES_USER=agrisage POSTGRES_PASSWORD=${DB_PASSWORD} port 5432 named volume postgres_data. 'backend' service built from ./Dockerfile port 8000 all env vars from .env file depends_on db with condition service_healthy. Add healthcheck to db: test pg_isready -U agrisage.
+2. Dockerfile: FROM python:3.11-slim. Install: build-essential libpq-dev libmagic1 libgdal-dev. COPY requirements.txt. RUN pip install --no-cache-dir -r requirements.txt. COPY . /app. WORKDIR /app. CMD uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload.
+3. backend/requirements.txt with EXACT versions: fastapi==0.110.0 uvicorn[standard]==0.27.0 sqlalchemy[asyncio]==2.0.28 asyncpg==0.29.0 alembic==1.13.1 pydantic==2.6.3 pydantic-settings==2.2.1 pgvector==0.2.5 httpx==0.27.0 python-jose[cryptography]==3.3.0 passlib[bcrypt]==1.7.4 python-multipart==0.0.9 structlog==24.1.0 pytest==8.1.0 pytest-asyncio==0.23.5 python-magic==0.4.27 Pillow==10.2.0 sentence-transformers==2.6.1 onnxruntime==1.17.1 langgraph==0.2.0 torch==2.2.1 boto3==1.34.0 bandit==1.7.7 pip-audit==2.7.2
+After creating files, show docker-compose.yml content in full.
+Prompt P0.3 — FastAPI Application
+New session. Attach: TRD + Security doc.
+Agri-SAGE — execute Phase 0 Task 0.3 and 0.4.
+Create backend/main.py: FastAPI app factory with:
+- CORSMiddleware: origins from settings.CORS_ORIGINS (list), allow_credentials=True, allow_methods=['*'], allow_headers=['*']
+- Structlog middleware that logs: method, path, status_code, process_time_ms, user_id (from JWT if present) — NEVER log Authorization headers or request bodies containing passwords
+- Include routers: auth, farms, observations, diagnose, weather, risk, schemes, markets, simulate, notifications, sync — all with prefix /api/v1
+- GET /health: async, returns {status: ok, version: settings.MODEL_VERSION, environment: settings.ENVIRONMENT, db_connected: bool} — check DB with SELECT 1
+- Global exception handler: all 500 errors return {detail: 'Internal server error'} — never expose stack traces
+Create backend/config.py: pydantic-settings BaseSettings with ALL fields from TRD Section 8.3. Add CORS_ORIGINS as list field. Export settings = Settings().
+Create backend/database.py: async SQLAlchemy engine, AsyncSessionLocal, Base = declarative_base(), async get_db() dependency, async check_db_connection() function.
+Show all 3 files in full.
+Prompt P0.4 — Database Migrations
+New session. Attach: Backend Schema doc.
+Agri-SAGE — execute Phase 0 Task 0.5 and 0.6.
+Set up Alembic and create migrations 001 through 017 using the EXACT SQL DDL from the Backend Schema document.
+Steps:
+1. Run: alembic init alembic
+2. Configure alembic/env.py to use our async SQLAlchemy engine from backend/database.py
+3. Create migration file 001_extensions.py: CREATE EXTENSION IF NOT EXISTS uuid-ossp; CREATE EXTENSION IF NOT EXISTS vector; CREATE EXTENSION IF NOT EXISTS postgis;
+4. Create migrations 002 through 016 — each migration in a separate file — using EXACTLY the SQL from Backend Schema Sections 1.2 through 1.10. Preserve all CHECK constraints, all indexes, all UNIQUE constraints exactly as written.
+5. Create migration 017_rls.py as the FINAL migration: all RLS policies from Backend Schema Section 1.11.
+CRITICAL: Do not modify any column names, types, or constraints from the Backend Schema document. Copy them exactly.
+After creating all files, show me the list of migration files in order.
+Prompt P0.5 — GitHub Actions CI/CD
+New session. Attach: Implementation Plan + Security doc.
+Agri-SAGE — execute Phase 0 Task 0.7.
+Create .github/workflows/ci.yml with these jobs:
+1. test: ubuntu-latest, PostgreSQL 16 service with pgvector extension enabled (use pgvector/pgvector:pg16), runs pip install, alembic upgrade head, pytest tests/ -v --tb=short --asyncio-mode=auto
+2. lint: black --check backend/ and ruff check backend/
+3. security: three steps — (a) pip-audit -r backend/requirements.txt --fail-on CRITICAL (b) bandit -r backend/ -lll — fail on HIGH severity (c) grep check for hardcoded secrets pattern
+4. verify-rls: custom step that connects to test DB and runs: SELECT tablename FROM pg_tables WHERE rowsecurity=true — assert farms, fields, observations, advisories, notifications are all in results
+Create .github/workflows/security.yml from Security document Section 10.1 exactly as written.
+Show both workflow files in full.
+Phase 0 Verification Prompt
+After completing all Phase 0 tasks, give this:
+Agri-SAGE Phase 0 verification. Run these checks and report pass/fail for each:
+1. docker compose up -d — both services start without errors
+2. curl http://localhost:8000/health — returns {status: ok, db_connected: true}
+3. docker exec agrisage-db-1 psql -U agrisage -d agrisage_dev -c '\dt' — shows all 20 tables
+4. cat .gitignore | grep '.env' — .env is listed
+5. cat LICENSE_REGISTRY.md | grep 'APSIM' — shows commercial license warning
+6. ls .github/workflows/ — shows ci.yml and security.yml
+Fix anything that fails before we proceed to Phase 1.
+PHASE 1: VISION MVP — Weeks 3-8
+Prompt P1.1 — Auth Endpoints
+New session. Attach: TRD + Security doc + Backend Schema.
+Agri-SAGE Phase 1 — create the complete authentication system.
+Create backend/api/v1/auth.py with these 4 endpoints following Security document Section 2 exactly:
+POST /api/v1/auth/send-otp: accept {phone: str}, validate E.164 format (+91XXXXXXXXXX), generate 6-digit OTP using secrets.randbelow(1000000) zero-padded, hash with bcrypt rounds=10, store in otp_sessions table with expires_at=now+300s, check rate limit (max 5 per phone per 10 minutes — query otp_sessions count), in DEVELOPMENT environment print OTP to console and return {message: OTP sent, expires_in: 300}. In production call MSG91 API.
+POST /api/v1/auth/verify-otp: accept {phone, otp}, find most recent unused unexpired otp_session for phone, check attempts<5, verify bcrypt hash, mark used=True, create or get user record, generate JWT access token (15min HS256) and refresh token (SHA256 hash stored, 7 days), return {access_token, refresh_token, user: {id, phone, name, language, subscription_tier}}.
+POST /api/v1/auth/refresh: accept {refresh_token}, hash it, find in refresh_tokens not revoked not expired, revoke old, issue new pair.
+POST /api/v1/auth/logout: accept {refresh_token}, mark revoked=True.
+Create backend/dependencies.py: require_auth dependency that decodes JWT, validates, sets PostgreSQL session variable SET LOCAL app.current_user_id = user_id for RLS, returns payload dict.
+Create backend/services/jwt_service.py from Security document Section 2.1 exactly.
+Show all files in full.
+Prompt P1.2 — Farm CRUD
+New session. Attach: Backend Schema + TRD.
+Agri-SAGE Phase 1 — create Farm, Field, SoilProfile, CropCycle CRUD endpoints.
+Create backend/models/db/farms.py: SQLAlchemy ORM models for farms, fields, soil_profiles, crop_cycles — matching EXACTLY the columns, types, and constraints from Backend Schema Section 1.3 and 1.4.
+Create backend/models/schemas/farms.py: Pydantic v2 request and response schemas for each model. FarmCreate, FarmResponse, FieldCreate, FieldResponse, CropCycleCreate, CropCycleResponse. Add field validators to sanitize string inputs (strip HTML, control chars) as shown in Security document Section 3.1.
+Create backend/api/v1/farms.py: POST /api/v1/farms, GET /api/v1/farms, GET /api/v1/farms/{id}, PUT /api/v1/farms/{id}, DELETE /api/v1/farms/{id} (soft delete — set is_active=False). Same pattern for /fields and /crop-cycles. ALL endpoints require require_auth dependency. Set app.current_user_id session variable before every DB query. Return 404 if resource not found OR not owned by user (RLS returns nothing — treat same as not found).
+Show all files in full.
+Prompt P1.3 — Image Upload
+New session. Attach: Security doc + Backend Schema.
+Agri-SAGE Phase 1 — create the observation and image upload system.
+Create backend/services/image_security.py: the complete process_uploaded_image function from Security document Section 4.1 EXACTLY as written. Do not modify it.
+Create backend/services/storage.py: R2StorageService class using boto3 with endpoint_url=f'https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestorage.com'. Methods: async upload_image(file_bytes: bytes, object_key: str) -> str (returns public URL), async delete_image(object_key: str), async generate_signed_url(object_key: str, expires_seconds=3600) -> str.
+Create backend/models/db/observations.py: SQLAlchemy models for observations and images matching Backend Schema Section 1.4 exactly.
+Create backend/api/v1/observations.py: POST /api/v1/observations accepting multipart/form-data with crop_cycle_id, description (optional, max 2000 chars, apply injection logging from Security doc 3.1), images (List[UploadFile], max 5 files). For each image: call process_uploaded_image, generate UUID key, upload to R2, store image record. Create observation record. Return {observation_id, image_ids: []}.
+Show all files in full.
+Prompt P1.4 — Vision Model Training Script
+New session. Attach: TRD + Implementation Plan + Validation Report.
+Agri-SAGE Phase 1 — create the vision model training pipeline.
+Create backend/ml/vision/train.py:
+- Model: torchvision.models.efficientnet_b3(weights=EfficientNet_B3_Weights.IMAGENET1K_V1). Replace classifier: nn.Sequential(nn.Dropout(0.3), nn.Linear(1536, 22)) — 22 classes as listed in Validation Report Section 5.2.
+- Save class names from Validation Report Section 5.2 as backend/data/disease_classes.json in index order.
+- Dataset: ImageFolder. FARMER-LEVEL split: group images by farmer subdirectory. 70% train / 15% val / 15% test — split at farmer level not image level.
+- Training: Adam lr=1e-4, CosineAnnealingLR T_max=50, CrossEntropyLoss with class_weight computed from training set counts, 50 epochs, early stopping patience=7.
+- Augmentation exactly as TRD Section 6.1.
+- After training: temperature scaling calibration from TRD Section 6.1 — scale temperature on validation set targeting ECE < 0.10.
+- Save: best_model.pt (raw), calibrated_model.pt (with temperature), training_metrics.json (macro_f1, ece, per_class_f1, confusion_matrix).
+- Print final macro_f1 and ECE. Assert macro_f1 >= 0.82 and ECE <= 0.12 before saving.
+Create backend/ml/vision/export.py: export_to_onnx and quantize_int8 functions from TRD Section 6.2 exactly.
+Show both files in full.
+Prompt P1.5 — All 6 MVP Agents
+New session. Attach: AI Prompt Handbook + Backend Schema + TRD.
+Agri-SAGE Phase 1 — create all 6 MVP agents using the specifications from the AI Prompt Handbook and Backend Schema.
+Create these files one by one. After each file, confirm it is complete:
+1. backend/agents/intake.py: IntakeAgent.run(state) — parse FarmStateSchema from raw observation data + stored farm profile. Compute days_after_sowing from planting_date. Flag missing required fields. Return updated state. NO LLM call.
+2. backend/agents/vision.py: VisionAgent.run(state) — load ONNX session singleton, run process_uploaded_image quality check first (reject if quality_score < 0.4 with INSUFFICIENT_DATA), run inference, apply softmax, pick top-5, return VisionResult with all fields from Backend Schema Section 2.2. Load class names from backend/data/disease_classes.json.
+3. backend/agents/weather.py: WeatherAgent.run(state) — call Open-Meteo API for current conditions and 7-day forecast (development). Compute ALL indicators from TRD Section 15: DFI formula exactly, spray window, irrigation recommendation, heat stress. Cache by rounded lat/lon 30 minutes in-memory dict. Return WeatherResult. NO LLM call.
+4. backend/agents/crop_stage.py: CropStageAgent.run(state) — compute cumulative GDD from planting_date using weather history. Load GDD thresholds from backend/data/gdd_thresholds.json (create this file from Validation Report Section 5.1). Load stage-disease vulnerability from backend/data/stage_disease_map.json (from Validation Report Section 5.3). Return CropStageResult. NO LLM call.
+5. backend/agents/knowledge.py: KnowledgeAgent.run(state) — implement HybridRetriever from Implementation Plan Task 2.4: dense (pgvector cosine similarity) + sparse (PostgreSQL full-text search) + RRF merge + cross-encoder reranking + authority boost. Filter: valid_until > today AND status=PUBLISHED. Return KnowledgeResult. NO LLM call.
+6. backend/agents/critic.py: CriticAgent.run(state) — implement ALL rules from AI Prompt Handbook Section 6: all 3 CONFLICT_RULES, all 5 SAFETY_BLOCKS. Assign confidence_state per rules in Prompt Handbook Section 6.1. Set run_simulation=True only if confidence_score > 0.65 AND no conflicts AND state in [CONFIRMED, LIKELY]. Return CriticResult. NO LLM call.
+Create backend/data/gdd_thresholds.json and backend/data/stage_disease_map.json from Validation Report Section 5.1 and 5.3 exactly.
+Prompt P1.6 — Decision + Explanation Agents + LangGraph
+New session. Attach: AI Prompt Handbook + Backend Schema.
+Agri-SAGE Phase 1 — create the Decision Agent, Explanation Agent, and LangGraph orchestrator.
+1. Create backend/services/llm_service.py: the complete LLMService class from AI Prompt Handbook Section 5.1 EXACTLY as written including retry logic and fallback return None.
+2. Create backend/agents/explanation.py: ExplanationAgent.run(state) — build system prompt and user prompt from AI Prompt Handbook Section 1.1 and 1.2 EXACTLY (copy the prompts verbatim). Call LLMService.generate with temperature=0.2, max_tokens=1500. Parse JSON output. Validate against AdvisoryTextSchema Pydantic model. If LLM returns None (failed after retry), use SAFE_FALLBACK from Prompt Handbook Section 1.3. Always check: if confidence_state in [UNCERTAIN, INSUFFICIENT_DATA, CONFLICTING_EVIDENCE] — override recommended_action with request-more-info message. Check for invented product names against knowledge chunks. Return ExplanationResult.
+3. Create backend/agents/decision.py: DecisionAgent.run(state) — score scenarios A/B/C using formula from Implementation Plan Task 4.4. If farm_state.farmer_budget_inr set, flag over-budget scenarios. Return DecisionResult with all 3 scored scenarios and recommended_scenario.
+4. Create backend/agents/orchestrator.py: LangGraph graph from Backend Schema Section 3 EXACTLY. Intake→parallel[Vision,Weather,CropStage,Knowledge]→Critic→parallel[Scheme]→conditional[Simulation]→Decision→Explanation. Add 10-second total timeout. Store langgraph_trace_id.
+5. Create backend/api/v1/diagnose.py: POST /api/v1/diagnose accepts {observation_id}. Load observation+images. Run advisory_graph. Record timing. Save advisory to DB. Return full AdvisoryResponse from Backend Schema Section 2.2.
+Show all 5 files in full.
+Prompt P1.7 — Android Project Foundation
+New session. Attach: TRD + UI/UX Spec + Implementation Plan.
+Agri-SAGE Android — execute Implementation Plan Tasks 1.11, 1.12, 1.13.
+1. Create Android project structure in mobile/android/ with package com.agrisage.app, minSdk 26, targetSdk 34.
+2. Create mobile/android/app/build.gradle.kts with ALL dependencies from Implementation Plan Task 1.11 with exact versions.
+3. Create ui/theme/Color.kt: define ALL 30 color tokens from UI/UX Spec Section 1.1 as Color constants with exact hex values. Name them exactly: ColorPrimary, ColorPrimaryDark, ColorPrimaryLight, ColorRiskCritical, ColorRiskHigh, ColorRiskMedium, ColorRiskLow, ColorConfidenceConfirmed, etc.
+4. Create ui/theme/Typography.kt: ALL text styles from UI/UX Spec Section 2. Use Noto Sans font. All size and weight values exactly as spec. Import Noto Sans from Google Fonts in the font resource folder.
+5. Create ui/theme/Shape.kt: ALL corner radius tokens from UI/UX Spec Section 3 as RoundedCornerShape values.
+6. Create ui/theme/Theme.kt: AgriSAGETheme composable using MaterialTheme with our ColorScheme, Typography, and Shapes.
+7. Create ALL Room entities from Implementation Plan Task 1.13: FarmerEntity, FarmEntity, FieldEntity, CropCycleEntity, ObservationEntity, CachedAdvisoryEntity, WeatherCacheEntity, SyncQueueEntity. Each with @Entity, @PrimaryKey, all fields matching column names in backend schema. Create DAOs. Create AgriSAGEDatabase.
+Show all files in full.
+Prompt P1.8 — Android Camera + Advisory Screens
+New session. Attach: UI/UX Spec + App Flow + Implementation Plan.
+Agri-SAGE Android — create Camera screen and Advisory Result screen.
+1. Create CameraScreen.kt matching UI/UX Spec Section 5.6 EXACTLY:
+- Full-screen CameraX preview using PreviewView in AndroidView
+- ImageAnalysis use case running every 500ms: compute Laplacian variance for blur, mean brightness for exposure, crop region coverage — return QualityLevel: GOOD/OKAY/POOR
+- QualityIndicatorBar composable: full-width 8dp bar, color animation 200ms, GREEN (#4CAF50) GOOD / AMBER (#FF9800) OKAY / RED (#F44336) POOR
+- Quality message text below bar changes per level: 'Good — tap to capture' / 'Try to improve — hold steady' / specific rejection message
+- Capture button: 80dp circular white, centered bottom 48dp from edge, haptic feedback on tap
+- On capture: run final quality check. If POOR: show rejection overlay with specific message and retry button. If GOOD/OKAY: save image, navigate to ContextFormScreen.
+- CropChip top-right showing current crop name, tappable to change
+2. Create AdvisoryResultScreen.kt matching UI/UX Spec Section 5.7 EXACTLY:
+- ConfidenceBadge composable: pill shape, icon + text, colors per ConfidenceState enum: CONFIRMED=#1B5E20, LIKELY=#2E7D32, POSSIBLE=#F57F17, UNCERTAIN=#BF360C, INSUFFICIENT_DATA=#757575, CONFLICTING_EVIDENCE=#BF360C, OUT_OF_SCOPE=#757575
+- RiskLevelBadge: CRITICAL=#C62828, HIGH=#E65100, MEDIUM=#F57F17, LOW=#2E7D32
+- EvidenceCard: bg #E3F2FD, left border 2dp #2D7D2D, expandable, expanded by default
+- ActionCard: bg #E8F5E8, 2dp border #2D7D2D, all action fields with icons
+- ModelledEstimate label: italic bodySmall #9E9E9E on EVERY yield/return number — mandatory
+- Feedback row: thumbs up/down 48dp each
+Show both files in full.
+PHASE 2: CONTEXT & KNOWLEDGE — Weeks 9-16
+By Phase 2, backend is running. Focus on completing all agents and Android core screens.
+Prompt P2.1 — Knowledge Ingestion
+New session. Attach: Implementation Plan Task 2.3 + TRD.
+Agri-SAGE Phase 2 — create the complete knowledge ingestion pipeline.
+Create backend/knowledge/ingestion.py: DocumentIngestionPipeline class from Implementation Plan Task 2.3 exactly: fetch_document, parse_pdf (using PyMuPDF/fitz), parse_html (BeautifulSoup), extract_metadata, extract_chunks (hierarchical — headings first then paragraphs, max 512 tokens, min 100), embed_chunks (using multilingual-e5-large with 'passage: ' prefix — mandatory), store_chunks (bulk insert to knowledge_chunks).
+Create backend/knowledge/retrieval.py: HybridRetriever class from Implementation Plan Task 2.4 exactly: dense_search (pgvector with metadata filters crop+state+valid_until>today), sparse_search (PostgreSQL FTS), reciprocal_rank_fusion (k=60 formula), rerank (cross-encoder MiniLM), apply_authority_boost (Tier 1 × 1.3). embed_query always uses 'query: ' prefix.
+Create scripts/seed_knowledge.py: reads a seed_urls.json file (create it with 5 placeholder ICAR URLs and 5 KAU URLs), runs DocumentIngestionPipeline for each, prints progress.
+Create backend/data/seed_urls.json with actual ICAR URLs: https://www.icar.org.in/content/diseases-rice, add 4 more real ICAR/KAU document URLs for rice, banana, maize.
+Show ingestion.py and retrieval.py in full.
+Prompt P2.2 — LangGraph Full Pipeline Test
+New session. Attach: Backend Schema + AI Prompt Handbook.
+Agri-SAGE Phase 2 — integrate all agents into the complete LangGraph pipeline and test end-to-end.
+1. Ensure orchestrator.py has all agents wired: Intake→parallel[Vision+Weather+CropStage+Knowledge]→Critic→[Scheme parallel, Simulation conditional]→Decision→Explanation. All asyncio.gather for parallel nodes.
+2. Create tests/integration/test_full_pipeline.py: test_full_advisory_pipeline function that:
+   - Creates a test farm, field, crop cycle in test DB
+   - Creates a test observation with a rice leaf image (use a real test image from tests/fixtures/)
+   - Calls POST /api/v1/diagnose with the observation_id
+   - Asserts: response.status_code == 200
+   - Asserts: all 8 required AdvisoryResponse fields are present
+   - Asserts: confidence_state is one of the 7 valid states
+   - Asserts: safe_to_act is boolean
+   - Asserts: every scenario with yield estimate has modelled_estimate_label set
+   - Asserts: generation_ms < 15000 (15 seconds max in test environment)
+   - Asserts: if confidence_state is UNCERTAIN — recommended_action does not contain any chemical product name
+3. Run the test. Fix any failures. Show test output.
+Prompt P2.3 — Android Home + Offline
+New session. Attach: UI/UX Spec + App Flow + Implementation Plan.
+Agri-SAGE Phase 2 — create HomeScreen, offline mode, and WorkManager sync.
+1. Create HomeScreen.kt from UI/UX Spec Section 5.5 exactly: TopAppBar with farm name + sync icon, AlertBanner for offline/limited state, MorningBriefingCard with all 5 rows (crop+stage, risk, weather, action, voice button), 2x2 ActionTile grid (Check Crop, Farm Weather, View Risks, My Schemes), BottomNavBar with 5 items.
+2. Create HomeViewModel.kt: loads farm data from LocalFarmRepository, observes connectivity via ConnectivityManager network callback, exposes StateFlow<HomeUiState>, loads cached morning briefing from Room, refreshes if >12 hours old and connected.
+3. Create SyncWorker.kt from Implementation Plan Task 2.9 exactly: CoroutineWorker, check connectivity, upload sync_queue items ordered by priority ASC retryCount ASC, on success delete from queue, on failure increment retryCount skip if >5. After upload: download weather+risk delta. Check knowledge cache version. Schedule with exponential backoff.
+4. Create OfflineAdvisoryEngine.kt: runs local ONNX vision + local GDD crop stage + cached knowledge templates → returns offline advisory using Malayalam templates from Validation Report Section 5.4. Clearly marks result as offline.
+Show HomeScreen.kt and SyncWorker.kt in full.
+PHASE 3: INTELLIGENCE — Weeks 17-26
+Prompt P3.1 — Simulation + Scheme + Notifications
+New session. Attach: Implementation Plan Tasks 3.1-3.4 + AI Prompt Handbook.
+Agri-SAGE Phase 3 — create DSSAT adapter, scheme agent, and notification system.
+1. Create backend/simulation/interface.py: SimulationEngine ABC from Backend Schema Section 4.2.
+2. Create backend/simulation/dssat.py: DSSATEngine from Implementation Plan Task 3.1. DSSAT_BIN_PATH from environment variable. Write temp input files, subprocess.run with 60s timeout, parse Summary.OUT for HWAM yield. Handle null soil params with DSSAT crop defaults. Return SimulationResult.
+3. Create backend/simulation/rules.py: LocalRulesEngine for offline. Pure Python rule-based yield estimation: base_yield_kgha[crop] adjusted by: weather_stress_factor (from DFI), stage_factor (yield potential by stage), intervention_factor (disease treatment adds 20-40% yield recovery estimate). Label all as modelled_estimate.
+4. Create backend/agents/scheme.py: SchemeAgent from Implementation Plan Task 3.3 exactly. Use system prompt from AI Prompt Handbook Section 2.1 VERBATIM. Always include mandatory caveat. Filter expired schemes.
+5. Create backend/services/morning_briefing.py and backend/services/notifications.py from Implementation Plan Tasks 3.4. APScheduler job at 05:30 UTC daily.
+Show dssat.py and scheme.py in full.
+Prompt P3.2 — Voice + Android Notifications
+New session. Attach: Implementation Plan Tasks 3.6-3.7 + TRD.
+Agri-SAGE Phase 3 — voice integration and push notifications for Android.
+1. Create backend/services/speech_provider.py: SpeechProvider ABC + BhashiniProvider from Implementation Plan Task 2.8. If BHASHINI_API_KEY is empty, raise ServiceUnavailableError — Android falls back to on-device STT.
+2. Create POST /api/v1/voice/transcribe: accepts audio file upload, calls BhashiniProvider.transcribe, extracts structured intent using keyword matching (NOT LLM) — map Malayalam words to crop names and problem types using backend/data/intent_keywords_ml.json, return {transcript, structured_intent}.
+3. Create backend/data/intent_keywords_ml.json: mapping of Malayalam words to structured fields. Examples: 'നെൽ' → crop:rice, 'ബ്ലാസ്റ്റ്' → problem:blast, 'വാഴ' → crop:banana, 'ഇല' → body_part:leaf, 'പുള്ളി' → symptom:spots.
+4. Create VoiceInputManager.kt and VoiceOutputManager.kt from Implementation Plan Task 3.6.
+5. Create AgriSAGEFirebaseService.kt from Implementation Plan Task 3.7 exactly: all 3 notification types with correct channels and priorities.
+Show intent_keywords_ml.json and AgriSAGEFirebaseService.kt in full.
+PHASES 4-6 — Economics, Validation, Launch
+Prompt P4 — Market + Economics
+New session. Attach: Implementation Plan Tasks 4.1-4.4.
+Agri-SAGE Phase 4 — market agent, economics agent, and farmer constraints.
+Execute Implementation Plan Tasks 4.1, 4.2, 4.3, 4.4 in sequence.
+Task 4.1: Create backend/agents/market.py fetching e-NAM API dataset 9ef84268-d588-465a-a308-a864a43d0070 from data.gov.in. Filter by state+district. Haversine distance for nearest market. Cache 30 minutes. Return MarketResult.
+Task 4.2: Create backend/agents/economics.py with exact formula from Implementation Plan Task 4.2. All values labelled 'estimated'. Flag BUDGET_EXCEEDED if farmer_budget_inr is set and scenario cost exceeds it.
+Task 4.3: Create GET /api/v1/farms/{id}/season-summary endpoint with all fields from Implementation Plan Task 4.3.
+Task 4.4: Add farmer constraints to farm table (constraints_json column via new migration), POST /api/v1/farms/{id}/constraints endpoint, update DecisionAgent to apply constraints.
+Show market.py and economics.py in full.
+Prompt P5 — Expert Dashboard + Security Audit
+New session. Attach: Implementation Plan Tasks 5.1, 5.3.
+Agri-SAGE Phase 5 — expert web dashboard and automated security audit.
+Task 5.1: Create React web app in apps/web-expert/ using Vite + React 18 + TailwindCSS. Pages: Login (POST to /api/v1/auth/verify-otp), Dashboard (GET /api/v1/expert/queue — list advisories needing review ordered by created_at), ReviewDetail (full advisory + evidence + verdict form). Restrict to users with subscription_tier='expert'. Build output deployable to Cloudflare Pages.
+Task 5.3: Create scripts/security_audit.py with all 6 automated checks from Implementation Plan Task 5.3. Run it and show output.
+Also create GET /api/v1/expert/queue and POST /api/v1/expert/reviews/{advisory_id} backend endpoints.
+Prompt P6 — Subscription + Play Store
+New session. Attach: Implementation Plan Tasks 6.1-6.3 + PRD Section 6.
+Agri-SAGE Phase 6 — Razorpay subscription integration and Play Store preparation.
+Task 6.1: Create POST /api/v1/subscriptions/create-order (Razorpay Orders API call), POST /api/v1/subscriptions/verify-payment (HMAC-SHA256 signature validation from Razorpay docs), POST /api/v1/subscriptions/webhook (Razorpay webhook with signature verification). Update user.subscription_tier and subscription_expires on payment success. Create Android SubscriptionScreen.kt using Razorpay Android SDK with UPI options prominent.
+Task 6.2: Create advisory limit enforcement middleware: check user.advisories_this_month against tier limits (free=5, basic=unlimited, pro=unlimited) before running advisory pipeline. Reset counter monthly.
+Task 6.3: Create a Cloudflare Pages privacy policy site in apps/privacy-policy/index.html using the template from Security document Section 5.4. Replace all placeholders: [YOUR NAME/COMPANY] and [yourdomain] with actual values I will provide.
+Show create-order endpoint and verify-payment endpoint in full.
+PART 3: HOW TO HANDLE ERRORS
+3.1 When AI Produces Wrong Code
+Do NOT start over. Give a targeted correction prompt:
+[Context: Building Agri-SAGE. Previous task: [describe task]. Problem: [describe exactly what is wrong].
+Fix ONLY this specific issue: [describe issue].
+Do not change anything else. Show only the changed section of the file.
+Example:
+Context: Building Agri-SAGE vision agent. Problem: The VisionAgent is calling the LLM to get disease names instead of using disease_classes.json.
+Fix ONLY this: Replace the LLM call with loading class names from backend/data/disease_classes.json at initialization. Do not change anything else in vision.py.
+3.2 When AI Forgets Context
+AI models sometimes forget earlier decisions. Use this reset prompt:
+Agri-SAGE context refresh:
+- Stack: FastAPI + PostgreSQL + pgvector + LangGraph + Pydantic v2 + ONNX Runtime
+- Python 3.11, SQLAlchemy 2.0 async
+- Android: Kotlin + Jetpack Compose + Room + WorkManager
+- Primary language: Malayalam for farmers
+- CRITICAL: LLM only synthesizes — never invents facts, chemicals, or scheme eligibility
+- All simulation outputs labelled 'modelled estimate'
+- Confidence states: CONFIRMED/LIKELY/POSSIBLE/UNCERTAIN/INSUFFICIENT_DATA/CONFLICTING_EVIDENCE/OUT_OF_SCOPE
+Now: [your task]
+3.3 When AI Adds Unwanted Features
+STOP. You are adding [feature name] which is NOT in scope for this phase.
+Agri-SAGE out-of-scope items: social network, blockchain, drone, 50+ crops, autonomous purchasing, yield guarantees.
+Remove [feature name] and implement only what was asked: [restate original task].
+3.4 When Tests Fail
+Agri-SAGE test failure. Test: [test name]. Error: [paste exact error message].
+Do not change the test — the tests are correct. Fix the implementation.
+The test is checking: [explain what test checks].
+The expected behavior per the specification is: [describe expected behavior].
+Fix only the implementation code to make this test pass.
+3.5 When AI Suggests Using a Paid API
+STOP. Agri-SAGE must be built at zero cost. [API name] is not in our approved free stack.
+Our approved stack: FastAPI, PostgreSQL, pgvector, LangGraph, PyTorch, ONNX Runtime, Qwen3 via Ollama, multilingual-e5-large, DSSAT, Open-Meteo (dev), Cloudflare R2, Oracle Always-Free, Firebase FCM free tier, Razorpay (2% per transaction only on revenue).
+Implement this using only the approved stack. Alternative approach: [suggest alternative if you know one].
+PART 4: DAILY BUILD WORKFLOW
+4.1 Your Daily Routine While Building
+Step
+Action
+Time
+1. Morning check
+Run: docker compose up -d && curl localhost:8000/health — confirm backend healthy
+2 min
+2. Run tests
+pytest tests/ -v --tb=short — fix any regressions before new work
+10 min
+3. Pick ONE task
+Open Implementation Plan — find the next uncompleted task
+2 min
+4. Open AI session
+Start fresh session. Load relevant documents. Give exact prompt from this guide.
+5 min
+5. Review AI output
+Read every line of code AI produces. Do not blindly accept.
+15 min
+6. Test the output
+Run the feature. Check it works. Run relevant tests.
+15 min
+7. Fix errors
+If tests fail, use error correction prompts from Part 3.
+Variable
+8. Commit
+git add -A && git commit -m 'Phase X Task Y: description'
+2 min
+9. Mark task done
+Check off task in Implementation Plan. Verify exit criteria if phase complete.
+2 min
+4.2 Exit Criteria Verification Prompts
+At end of each phase, verify exit criteria with these prompts:
+Agri-SAGE Phase [N] exit criteria check. Verify each item and report PASS or FAIL:
+[Paste the exit criteria list from Implementation Plan for that phase]
+For any FAIL: explain what is wrong and how to fix it. Do not proceed to Phase [N+1] until all pass.
+4.3 Weekly Review Prompt
+Agri-SAGE weekly review.
+Current phase: [Phase number and name]
+Tasks completed this week: [list]
+Tasks remaining in this phase: [list]
+Review question: Are there any inconsistencies between what I have built and the specifications in the documents? Check: API response schemas match Backend Schema. Agent outputs match Pydantic schemas. Screen layouts match UI/UX spec. Security rules are all applied.
+Report any inconsistencies found and how to fix them.
+PART 5: DOCUMENT QUICK REFERENCE
+5.1 Which Document to Attach for Each Task
+Task Type
+Primary Doc
+Secondary Doc
+Creating DB migrations
+Doc 5 Backend Schema
+Doc 7 Security (RLS)
+Creating API endpoints
+Doc 5 Backend Schema
+Doc 7 Security (auth)
+Creating agents
+Doc 8 AI Prompt Handbook
+Doc 2 TRD (contracts)
+Creating Android screens
+Doc 4 UI/UX Spec
+Doc 3 App Flow
+Creating tests
+Doc 9 QA Playbook
+Doc 5 Backend Schema
+Setting up security
+Doc 7 Security
+Doc 2 TRD
+Creating LLM prompts
+Doc 8 AI Prompt Handbook
+None — use verbatim
+Implementing simulation
+Doc 6 Impl Plan Task 3.1
+Doc 5 Schema (SimulationParams)
+Phase planning
+Doc 6 Impl Plan
+Doc 1 PRD (scope check)
+GDD / disease data
+Doc 10 Validation Section 5
+Doc 2 TRD
+Malayalam strings
+Doc 4 UI/UX Section 8
+Doc 10 Validation Section 5.4
+Image upload
+Doc 7 Security Section 4
+Doc 5 Schema (images table)
+Subscription/payment
+Doc 1 PRD Section 6
+Doc 6 Impl Plan Task 6.1
+5.2 Critical Values Quick Reference
+Parameter
+Value
+Source
+JWT access token expiry
+15 minutes
+Security doc Section 2.1
+JWT algorithm
+HS256
+Security doc Section 2.1
+Refresh token expiry
+7 days
+Security doc Section 2.1
+OTP expiry
+5 minutes (300 seconds)
+Security doc Section 2.2
+OTP max attempts
+5 per phone per 10 minutes
+Security doc Section 2.2
+Image max size
+5MB
+Security doc Section 4.1
+Image max dimension
+1200px longest edge
+Security doc Section 4.1
+Allowed image MIME types
+image/jpeg, image/png, image/webp
+Security doc Section 4.1
+Image quality blur threshold
+Laplacian variance < 100 = reject
+UI/UX Spec Section 5.6
+Advisory generation timeout
+10 seconds total pipeline
+Backend Schema Section 3.2
+Vision model inference timeout
+4 seconds on Snapdragon 665
+TRD Section 7
+LLM temperature — advisory
+0.2
+AI Prompt Handbook Section 5
+LLM temperature — scheme
+0.1
+AI Prompt Handbook Section 5
+LLM max_tokens
+1500
+AI Prompt Handbook Section 5
+GDD base temp — rice
+10°C
+Validation Report Section 5.1
+GDD base temp — banana
+15°C
+Validation Report Section 5.1
+Simulation labelling
+Always: 'modelled estimate'
+PRD FR-003-08, Prompt Handbook Rule 3
+Minimum Macro-F1 for model
+0.82 on FIELD test set
+PRD Section 9.1
+Minimum ECE after calibration
+0.12
+QA Playbook Section 4.3
+Free tier advisory limit
+5 per month
+PRD Section 6.1
+pgvector embedding dimension
+1024 (multilingual-e5-large)
+Backend Schema Section 1.8
+IVFFlat index lists
+100
+Backend Schema Section 1.8
+Knowledge chunk min length
+100 characters
+AI Prompt Handbook Section 7.1
+Knowledge chunk max length
+512 tokens
+AI Prompt Handbook Section 7.1
+RAG authority boost — Tier 1
+× 1.3 multiplier
+Implementation Plan Task 2.4
+RRF k parameter
+60
+Implementation Plan Task 2.4
+Weather cache TTL
+30 minutes
+Implementation Plan Task 2.1
+Morning briefing schedule
+05:30 UTC (11:00 IST)
+Implementation Plan Task 3.4
+Oracle Always-Free RAM
+24GB total (2 AMD instances)
+Implementation Plan Section 18.2
+Cloudflare R2 free storage
+10GB
+Implementation Plan Section 18.3
+Play Store one-time fee
+$25 USD (~Rs.2,060)
+Implementation Plan Section 18.3
+AGRI-SAGE MASTER BUILD GUIDE v1.0
+One task per session · Verify before proceeding · Copy prompts exactly · Never skip exit criteria
+Build sequence: Phase 0 → 1 → 2 → 3 → 4 → 5 → 6 · Total 10 documents · 151+ pages of specification

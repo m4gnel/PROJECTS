@@ -1,0 +1,863 @@
+AGRI-SAGE
+TEAM SPRINT PLAN & GITHUB GUIDE
+5 Beginners · Free Tools · GitHub Architecture · October 1st Demo · Step-by-Step for Every Member
+Field
+Detail
+Team
+5 members — all beginners — parallel work — one project
+HR Demo Deadline
+October 1st — 50% implementation required with working demo
+Today's Date
+September 9, 2026
+Days Until Demo
+22 days
+Build Tools
+VSCode Copilot (free) · Cline + Gemini API (free) · GitHub Copilot free tier
+Zero Cost
+All tools, AI, infrastructure, hosting — free of cost
+SECTION 1: OCTOBER 1st DEMO — THE PLAN
+🎯 22 DAYS TO DEMO. 50% implementation required. This section defines exactly what must be working by October 1st.
+1.1 What '50% Implementation' Means for This Project
+The HR demo must show a WORKING app — not slides, not mockups. A real Android app on a real phone doing real things. Here is exactly what must work by October 1st:
+Feature
+Demo Ready?
+Who Builds It
+Status
+Android app installs and opens on phone
+MUST HAVE
+Member 3
+Not started
+Farmer registers with phone OTP
+MUST HAVE
+Member 1
+Not started
+Farm and crop setup wizard
+MUST HAVE
+Member 3
+Not started
+Take crop photo with quality indicator
+MUST HAVE
+Member 3
+Not started
+Disease detection from photo (offline ONNX)
+MUST HAVE
+Member 4
+Not started
+Advisory result screen with evidence
+MUST HAVE
+Member 2+3
+Not started
+Weather integration and indicators
+MUST HAVE
+Member 2
+Not started
+Home screen with morning briefing card
+MUST HAVE
+Member 3
+Not started
+Malayalam language throughout
+MUST HAVE
+Member 3
+Not started
+Offline mode — app works without internet
+MUST HAVE
+Member 3+4
+Not started
+Backend API running on server
+MUST HAVE
+Member 1
+Not started
+Government scheme matching (basic)
+NICE TO HAVE
+Member 2
+Secondary
+Voice input/output
+NICE TO HAVE
+Member 3
+Secondary
+Simulation scenarios
+NOT NEEDED for demo
+Member 2
+Phase 3
+Market prices
+NOT NEEDED for demo
+Member 4
+Phase 4
+⚠ Focus ALL energy on MUST HAVE items first. Do not start NICE TO HAVE until all MUST HAVE items work. The HR expects to see a farmer take a photo and get an advisory in Malayalam — that is the core demo.
+1.2 The 22-Day Sprint Schedule
+Days
+Dates
+Focus
+Goal by End of Period
+Days 1-3
+Sep 10-12
+Setup: GitHub, tools, environment, all members onboarded
+Every member has VSCode + Cline + Gemini API working. Repo created. Everyone has cloned it.
+Days 4-7
+Sep 13-16
+Foundation: Backend running, Android project created, data files done
+Backend /health endpoint returns 200. Android app opens on emulator. All JSON data files created.
+Days 8-11
+Sep 17-20
+Core Build: Auth, farm CRUD, camera, vision model ONNX
+Farmer can register, create farm, take photo. Vision ONNX runs on Android device.
+Days 12-15
+Sep 21-24
+Intelligence: 6 agents, full advisory pipeline, advisory screen
+POST /diagnose returns full advisory. Advisory screen shows on Android with confidence badge.
+Days 16-18
+Sep 25-27
+Polish: Malayalam, home screen, offline mode, error handling
+App works fully in Malayalam. Works offline. All error states handled gracefully.
+Days 19-20
+Sep 28-29
+Integration: Connect Android to backend, end-to-end test
+Full flow: photo → backend → advisory → screen. Works on real Android phone.
+Days 21-22
+Sep 30 - Oct 1
+Demo prep: Fix bugs, prepare demo script, practice
+App working smoothly. Demo script practiced. Every member knows their part of demo.
+1.3 Demo Script — What to Show HR
+Practice this exact sequence 3 times before October 1st:
+1. Open Agri-SAGE on Android phone. Show home screen in Malayalam. (30 seconds)
+2. Explain: 'This is the farmer's daily view — morning briefing, quick actions, offline indicator.' (30 seconds)
+3. Tap 'Check Crop'. Camera opens. Show quality indicator turning green. (30 seconds)
+4. Take photo of a leaf (real plant). Show advisory loading screen with progress steps. (30 seconds)
+5. Show advisory result: confidence badge, evidence section, recommended action, modelled estimate label. (60 seconds)
+6. Tap voice button — advisory reads aloud in Malayalam. (20 seconds)
+7. Show offline mode: turn on airplane mode, take another photo — advisory still works. (30 seconds)
+8. Show government scheme card: 'PMFBY scheme available for this farmer.' (20 seconds)
+9. Close with: 'This is Agri-SAGE — agricultural decision intelligence for Kerala farmers, built entirely free, offline-capable, in their language.' (30 seconds)
+Total demo time: approximately 5 minutes. Practice until it is smooth with no hesitation.
+SECTION 2: GITHUB REPOSITORY SETUP
+2.1 One-Time Setup — Member 1 Does This on Day 1
+Member 1 (Team Lead) sets up the GitHub repository. All others clone it.
+# MEMBER 1 ONLY — Do this first before anything else
+# Step 1: Create repository on GitHub
+# Go to github.com → Sign in → Click '+' top right → New repository
+# Repository name: agrisage
+# Description: Scalable Agricultural Guidance Engine - AI-powered farm advisory platform
+# Visibility: Private (keep code private)
+# Initialize: Add README ✓ | Add .gitignore: Python ✓ | License: MIT ✓
+# Click: Create repository
+# Step 2: Clone to your computer
+git clone https://github.com/YOUR_USERNAME/agrisage.git
+cd agrisage
+# Step 3: Create the folder structure
+mkdir -p docs backend/api/v1 backend/agents backend/models/db backend/models/schemas
+mkdir -p backend/services backend/simulation backend/knowledge backend/ml/vision
+mkdir -p backend/data backend/safety backend/tests/unit backend/tests/integration
+mkdir -p backend/tests/safety backend/tests/performance backend/tests/golden
+mkdir -p mobile/android scripts .github/workflows apps/web-expert
+# Step 4: Copy ALL 11 documents into docs/ folder
+# (copy the .docx files from wherever you saved them)
+# Step 5: Create .gitignore
+# (Cline will generate this — see build guide prompt P0.1)
+# Step 6: First commit
+git add -A
+git commit -m 'Initial project structure and all specification documents'
+git push origin main
+# Step 7: Invite all team members
+# GitHub repo page → Settings → Collaborators → Add people
+# Add each member's GitHub username
+# They get an email invite — they must accept it
+2.2 All Other Members — Join on Day 1
+# ALL OTHER MEMBERS — Do this after Member 1 sends invite
+# Step 1: Accept GitHub invite
+# Check your email → Click 'Accept invitation'
+# Step 2: Clone the repository
+# Open terminal (Mac/Linux) or Git Bash (Windows)
+git clone https://github.com/MEMBER1_USERNAME/agrisage.git
+cd agrisage
+# Step 3: Verify you can see the docs/ folder
+ls docs/
+# Should show all 11 .docx files
+# Step 4: Open in VSCode
+code .
+# This opens the entire project in VSCode
+2.3 Complete Repository Architecture
+This is the full folder structure. Every folder has a purpose.
+agrisage/                          ← Root of entire project
+│
+├── docs/                          ← ALL 11 specification documents
+│   ├── 01_PRD.docx
+│   ├── 02_TRD.docx
+│   ├── 03_AppFlow.docx
+│   ├── 04_UIUX_Spec.docx
+│   ├── 05_BackendSchema.docx
+│   ├── 06_ImplementationPlan.docx
+│   ├── 07_Security_Compliance.docx
+│   ├── 08_AI_Prompt_Handbook.docx
+│   ├── 09_Testing_QA_Playbook.docx
+│   ├── 10_Validation_Report.docx
+│   └── 11_Master_Build_Guide.docx
+│
+├── backend/                       ← Python FastAPI server (Member 1 + 2)
+│   ├── main.py                    ← FastAPI app entry point
+│   ├── config.py                  ← All settings from environment
+│   ├── database.py                ← PostgreSQL connection
+│   ├── dependencies.py            ← JWT auth dependency
+│   │
+│   ├── api/v1/                    ← All REST endpoints
+│   │   ├── auth.py                ← OTP, login, logout
+│   │   ├── farms.py               ← Farm/field/crop CRUD
+│   │   ├── observations.py        ← Photo upload
+│   │   ├── diagnose.py            ← Advisory generation
+│   │   ├── weather.py             ← Weather data
+│   │   ├── risk.py                ← Risk scores
+│   │   ├── schemes.py             ← Government schemes
+│   │   ├── markets.py             ← Market prices
+│   │   ├── simulate.py            ← Simulation
+│   │   ├── notifications.py       ← Alerts
+│   │   └── sync.py                ← Mobile sync
+│   │
+│   ├── agents/                    ← 14 AI agents (Member 2)
+│   │   ├── orchestrator.py        ← LangGraph graph
+│   │   ├── intake.py
+│   │   ├── vision.py
+│   │   ├── weather.py
+│   │   ├── crop_stage.py
+│   │   ├── knowledge.py
+│   │   ├── critic.py
+│   │   ├── scheme.py
+│   │   ├── soil.py
+│   │   ├── decision.py
+│   │   ├── explanation.py
+│   │   ├── simulation.py
+│   │   ├── market.py
+│   │   ├── economics.py
+│   │   └── monitoring.py
+│   │
+│   ├── models/                    ← Database and API schemas
+│   │   ├── db/                    ← SQLAlchemy ORM models
+│   │   └── schemas/               ← Pydantic request/response
+│   │
+│   ├── services/                  ← Business logic services
+│   │   ├── jwt_service.py
+│   │   ├── image_security.py
+│   │   ├── storage.py             ← Cloudflare R2
+│   │   ├── llm_service.py         ← Ollama/Gemini wrapper
+│   │   ├── embedding_service.py   ← multilingual-e5-large
+│   │   ├── speech_provider.py     ← Bhashini/Android STT
+│   │   ├── notifications.py       ← Firebase FCM
+│   │   └── morning_briefing.py    ← Daily briefing generator
+│   │
+│   ├── simulation/                ← Crop simulation
+│   │   ├── interface.py           ← Abstract SimulationEngine
+│   │   ├── dssat.py               ← DSSAT adapter
+│   │   ├── rules.py               ← Offline rule-based
+│   │   └── scenarios.py           ← A/B/C scenario builder
+│   │
+│   ├── knowledge/                 ← RAG knowledge base
+│   │   ├── ingestion.py           ← Document pipeline
+│   │   ├── retrieval.py           ← Hybrid search
+│   │   └── freshness.py           ← Expiry monitoring
+│   │
+│   ├── ml/vision/                 ← Vision model
+│   │   ├── train.py               ← EfficientNet-B3 training
+│   │   ├── export.py              ← ONNX export
+│   │   └── evaluate.py            ← Metrics and calibration
+│   │
+│   ├── safety/                    ← Safety checks
+│   │   ├── chemical_check.py      ← CIB&RC validation
+│   │   └── hallucination_check.py ← LLM output validation
+│   │
+│   └── data/                      ← Critical JSON data files (Member 4)
+│       ├── disease_classes.json   ← 22 ONNX model output classes
+│       ├── gdd_thresholds.json    ← Crop stage GDD values
+│       ├── stage_disease_map.json ← Stage vulnerability mapping
+│       ├── offline_templates_ml.json ← Malayalam offline templates
+│       ├── disease_names_ml.json  ← Disease names in Malayalam
+│       └── intent_keywords_ml.json   ← Voice intent keywords
+│
+├── mobile/android/                ← Kotlin Android app (Member 3)
+│   └── app/src/main/
+│       ├── java/com/agrisage/app/
+│       │   ├── ui/
+│       │   │   ├── screens/       ← All Compose screens
+│       │   │   ├── components/    ← Reusable composables
+│       │   │   ├── theme/         ← Colors, typography, shapes
+│       │   │   └── navigation/    ← NavGraph
+│       │   ├── data/
+│       │   │   ├── local/         ← Room entities and DAOs
+│       │   │   └── remote/        ← Retrofit API service
+│       │   ├── domain/usecases/   ← Business logic
+│       │   ├── di/                ← Hilt modules
+│       │   └── ml/                ← ONNX inference
+│       └── assets/                ← vision_int8.onnx, templates
+│
+├── alembic/                       ← Database migrations
+│   └── versions/                  ← 001 through 017 migration files
+│
+├── tests/                         ← All tests (Member 5)
+│   ├── unit/
+│   ├── integration/
+│   ├── safety/
+│   ├── performance/
+│   └── golden/                    ← Labelled disease images
+│
+├── scripts/                       ← Utility scripts
+│   ├── seed_knowledge.py
+│   ├── seed_schemes.py
+│   ├── evaluate_vision_model.py
+│   ├── security_audit.py
+│   ├── smoke_tests.py
+│   └── deploy.sh
+│
+├── apps/web-expert/               ← Expert review web dashboard
+│
+├── .github/workflows/             ← CI/CD pipelines
+│   ├── ci.yml
+│   └── security.yml
+│
+├── docker-compose.yml             ← Local development
+├── docker-compose.prod.yml        ← Production
+├── Dockerfile
+├── requirements.txt
+├── .env.example
+├── .gitignore
+├── LICENSE_REGISTRY.md
+└── README.md
+SECTION 3: GIT WORKFLOW FOR 5 MEMBERS
+3.1 Branch Strategy — Simple and Safe
+Every member works on their own branch. Never commit directly to main. Team Lead merges everything.
+Branch Name
+Owner
+What Gets Committed Here
+main
+Member 1 merges here
+Only tested, working code. Never commit directly.
+dev/m1-backend
+Member 1
+Database, auth, farm CRUD, deployment
+dev/m2-agents
+Member 2
+All AI agents, LangGraph, LLM service
+dev/m3-android
+Member 3
+All Android screens, Room DB, WorkManager
+dev/m4-data
+Member 4
+JSON data files, vision model, knowledge ingestion
+dev/m5-tests
+Member 5
+All test files, CI/CD, security audit scripts
+3.2 Daily Git Commands — What Every Member Does
+Morning — start of every work day:
+# Get latest changes from main
+git checkout main
+git pull origin main
+git checkout dev/YOUR-BRANCH
+git merge main
+# This keeps your branch up to date with others' merged work
+During the day — after completing each task:
+# See what you changed
+git status
+# Stage your changes
+git add -A
+# Commit with clear message
+git commit -m 'M2: implement critic agent conflict detection rules'
+# Format: M[your number]: [what you built]
+# Examples:
+# M1: add JWT auth endpoints with bcrypt OTP hashing
+# M3: create camera screen with quality indicator
+# M4: create disease_classes.json with all 22 ONNX classes
+# M5: add critic safety unit tests
+# Push to your branch
+git push origin dev/YOUR-BRANCH
+When a task is complete and you want it merged to main:
+# 1. Push your branch
+git push origin dev/YOUR-BRANCH
+# 2. Go to GitHub website → Your repo
+# 3. You will see a yellow banner: 'dev/YOUR-BRANCH had recent pushes'
+# 4. Click: 'Compare & pull request'
+# 5. Title: 'M[number]: [what you built]'
+# 6. Description: list what files you created/changed
+# 7. Click: 'Create pull request'
+# 8. Message Member 1 on WhatsApp: 'PR ready for review'
+# Member 1 reviews, runs tests, and merges if everything passes
+3.3 What Member 1 Does to Merge
+# Member 1 — reviewing and merging a PR
+# 1. Go to GitHub → Pull Requests → click the PR
+# 2. Look at 'Files changed' tab — read through the code
+# 3. Check: does this match the specification document?
+# 4. On your computer:
+git checkout main
+git pull origin main
+git checkout dev/THEIR-BRANCH
+git pull origin dev/THEIR-BRANCH
+# 5. Run tests
+cd agrisage
+docker compose up -d
+pytest tests/ -v --tb=short
+# 6. If tests pass: go back to GitHub PR → 'Merge pull request' → Confirm
+# 7. If tests fail: comment on PR with exact error. Do not merge.
+3.4 Handling Merge Conflicts
+A merge conflict happens when two members edit the same file. Here is how to fix it:
+# Git will show: CONFLICT (content): Merge conflict in backend/main.py
+# Open the conflicted file in VSCode
+# You will see markers like this:
+<<<<<<< HEAD
+your version of the code
+=======
+their version of the code
+>>>>>>> dev/m1-backend
+# In VSCode: click 'Accept Current Change' or 'Accept Incoming Change'
+# OR manually edit to keep the correct version
+# Then:
+git add backend/main.py
+git commit -m 'Resolve merge conflict in main.py'
+⚠ If you are unsure which version to keep in a conflict — do NOT guess. Message the other person on WhatsApp and resolve together. A wrong merge can break the project for everyone.
+SECTION 4: FREE AI TOOL SETUP — EVERY MEMBER
+4.1 Complete Setup Guide — Day 1 for Every Member
+Every member follows ALL these steps on Day 1. Takes about 1.5 hours total.
+Step
+Action
+Time
+Verify It Worked
+1
+Download VSCode from code.visualstudio.com. Install it.
+10 min
+VSCode opens on your computer
+2
+In VSCode → Extensions (Ctrl+Shift+X) → Search 'GitHub Copilot' → Install
+5 min
+Copilot icon appears in sidebar
+3
+In VSCode → Extensions → Search 'Cline' by saoudrizwan → Install
+3 min
+Robot icon appears in sidebar
+4
+In VSCode → Extensions → Search 'Python' by Microsoft → Install
+3 min
+Python extension shows installed
+5
+Go to aistudio.google.com → Sign in with Google → Get API key → Copy it
+10 min
+You have a long API key starting with 'AIza...'
+6
+In VSCode → Click Cline robot icon → Settings gear → API Provider: Google Gemini → Paste API key → Model: gemini-1.5-pro → Save
+5 min
+Cline shows 'Connected to Gemini'
+7
+In VSCode → Click Copilot icon → Sign in with GitHub free account
+5 min
+Copilot chat tab opens
+8
+Install Git from git-scm.com. Install with all defaults.
+10 min
+Open terminal, type 'git --version', see a version number
+9
+Configure Git: git config --global user.name 'YourName' and git config --global user.email 'you@email.com'
+2 min
+git config --list shows your name and email
+10
+Accept GitHub repo invite from Member 1. Clone repo: git clone [url]. cd agrisage. code .
+15 min
+VSCode opens with agrisage folder, docs/ folder visible
+11
+Verify Cline works: Click Cline icon → Type 'Hello, list the files in my project' → Cline should respond
+5 min
+Cline responds and lists your project files
+4.2 How to Use Cline Effectively — For Beginners
+Cline is your main coding tool. Here is how to use it step by step:
+Step 1: Click the Cline robot icon in the left sidebar of VSCode
+Step 2: A chat panel opens on the right side
+Step 3: At the top of the chat, type @ to attach documents
+         Example: @docs/05_BackendSchema.docx
+         This tells Cline to read that document before answering
+Step 4: After the @ mention, paste your prompt from the build guide
+Step 5: Press Enter — Cline reads the document and writes code
+Step 6: Cline will ask 'Do you want to create this file?' → Click Yes
+Step 7: The file appears in your project automatically
+Step 8: Review what Cline created — read through it
+Step 9: If something looks wrong, use the correction prompt from build guide Part 9
+✓ Cline with Gemini 1.5 Pro has a 1 million token context window. This means it can read MULTIPLE documents at once. For complex tasks, attach 2-3 documents. For simple tasks, attach just 1.
+⚠ Never blindly run code you have not read. Even if Cline writes it, you must read it. If you do not understand something, ask Cline: 'Explain what this function does in simple terms.'
+4.3 When You Hit Free Tier Limits
+Tool
+Daily Limit
+What To Do When Limit Hit
+Gemini API via Cline
+1,500 requests/day free tier
+Switch to Claude at claude.ai for that day. Same prompts work. Tomorrow reset continues.
+GitHub Copilot free
+2,000 completions/month
+Use Cline for file generation. Copilot is for inline suggestions only.
+Claude.ai free
+~30 messages/day
+Switch to Gemini via Cline. They alternate well.
+Google AI Studio direct
+Very generous — rarely hit
+If hit: wait a few hours, usually resets
+SECTION 5: MEMBER-BY-MEMBER STEP-BY-STEP GUIDE
+5.1 MEMBER 1 — Team Lead & Backend — Day-by-Day
+You start first. Everyone waits for you to finish Days 1-3 before they can connect to the backend.
+Day
+Your Task
+Prompt to Use
+Verify With
+Day 1
+Create GitHub repo, invite team, create folder structure
+Build Guide Part 3 — Prompt P0.1
+ls shows all folders. Team members can clone.
+Day 2
+Docker + database + requirements.txt
+Build Guide Part 3 — Prompt P0.2
+docker compose up -d shows both services running
+Day 3
+FastAPI app + config + database connection
+Build Guide Part 3 — Prompt P0.3
+curl localhost:8000/health returns {status:ok,db_connected:true}
+Day 4
+All 17 Alembic migrations
+Build Guide Part 3 — Prompt P0.4
+docker exec db psql -U agrisage -c '\dt' shows 20 tables
+Day 5
+Auth endpoints (OTP, JWT, refresh, logout)
+Build Guide Part 3 — Prompt P1.1
+POST /auth/send-otp prints OTP in console. POST /auth/verify-otp returns JWT.
+Day 6
+Farm + field + crop cycle CRUD
+Build Guide Part 3 — Prompt P1.2
+POST /farms creates farm. GET /farms returns it. GET /farms/{other_user_id_farm} returns 404.
+Day 7
+Image upload to Cloudflare R2
+Build Guide Part 3 — Prompt P1.3
+POST /observations with image → image appears in R2 bucket
+Day 8
+Diagnose endpoint shell (before agents ready)
+Build Guide Part 3 — Prompt P1.6 step 3
+POST /diagnose returns 200 with placeholder advisory
+Days 9-11
+Weather endpoint, risk endpoint, scheme endpoint
+Build Guide Part 3 — Prompts P2.x
+All 3 endpoints return 200 with correct data shapes
+Days 12-14
+CI/CD GitHub Actions pipeline
+Build Guide Part 3 — Prompt P0.5
+GitHub Actions runs green on push
+Days 15-22
+Support team, fix backend bugs, review PRs
+Daily: check GitHub PRs, merge when tests pass
+All team members' code merged to main
+5.2 MEMBER 2 — AI Agent Developer — Day-by-Day
+You need Member 1's database to be running before Day 6. Days 1-5 you work on agent skeleton and prompts without a running backend.
+Day
+Your Task
+Prompt to Use
+Verify With
+Day 1-2
+Set up your environment, read Doc 8 (AI Prompt Handbook) fully
+Setup guide Section 4.1
+VSCode + Cline working
+Day 3
+LangGraph skeleton + all 14 agent stub files
+Build Guide Part 4 — Prompt M2 Task 1
+orchestrator.py exists, all 14 agent files exist
+Day 4
+Install Ollama on your computer + pull Qwen3-1.7B
+ollama pull qwen3:1.7b (free local LLM)
+ollama list shows qwen3:1.7b
+Day 5
+LLM service wrapper with retry + fallback
+Build Guide Part 4 — Prompt M2 Task 1 step 3
+llm_service.py exists with retry logic
+Day 6
+Intake agent + Vision agent (needs Member 4's disease_classes.json)
+Build Guide Part 4 — Prompt M2 Task 2
+pytest tests/unit/test_vision.py passes
+Day 7
+Critic agent — ALL safety rules
+Build Guide Part 4 — Prompt M2 Task 2 step 3
+pytest tests/safety/test_critic_safety.py — all 5 tests pass
+Day 8
+Weather agent with DFI calculation
+Build Guide Part 4 — Prompt M2 Task 3
+DFI test cases pass: high humidity→>0.7, dry→<0.3
+Day 9
+Crop stage GDD agent
+Build Guide Part 4 — Prompt M2 Task 3 step 2
+GDD tests pass: rice at 260 GDD = tillering stage
+Day 10
+Knowledge RAG agent (needs Member 1's knowledge table)
+Build Guide Part 4 — Prompt M2 Task 3 step 3
+Query returns Tier 1 sources for rice blast
+Day 11
+Decision agent + Explanation agent with correct system prompts
+Build Guide Part 4 — Prompt M2 Task 4
+Explanation uses verbatim prompt from Doc 8. Output is valid JSON.
+Day 12-13
+Connect all agents in LangGraph — test full pipeline
+Build Guide Part 4 — Prompt P2.2
+POST /diagnose returns full AdvisoryResponse with all 8 required fields
+Day 14
+Scheme agent with mandatory eligibility caveat
+Build Guide Part 4 — Prompt M2 Task 5
+Scheme output always includes mandatory caveat text
+Days 15-22
+Monitoring agent, morning briefing, fix agent bugs
+Daily fixes as integration issues found
+All agents running in pipeline. Advisory in < 8 seconds.
+5.3 MEMBER 3 — Android Developer — Day-by-Day
+You can start building screens on Day 2 with mock data. You do NOT need the backend running to build the UI.
+Day
+Your Task
+Prompt to Use
+Verify With
+Day 1-2
+Set up environment, read Doc 4 (UI/UX Spec) fully, install Android Studio
+Setup guide + Build Guide Part 5 — Prompt M3 Task 1
+Android emulator opens and runs 'Hello World'
+Day 3
+Android project + all dependencies + Design System (colors, typography, shapes)
+Build Guide Part 5 — Prompt M3 Task 1
+AgriSAGETheme compiles. All 30 color tokens defined.
+Day 4
+All Room database entities + DAOs + Database class
+Build Guide Part 5 — Prompt M3 Task 2
+Room compiles without errors. All 9 entities created.
+Day 5
+Camera screen with quality indicator
+Build Guide Part 5 — Prompt M3 Task 3
+Camera opens on emulator. Quality bar turns green/red.
+Day 6
+Advisory result screen with all composables
+Build Guide Part 5 — Prompt M3 Task 4
+Advisory screen shows with ConfidenceBadge, EvidenceCard, ActionCard.
+Day 7
+Home screen with morning briefing card and action tiles
+Build Guide Part 5 — Prompt M3 Task 5
+Home screen shows in Malayalam. 4 tiles visible.
+Day 8
+Onboarding screens: language selection, phone registration, OTP, farm setup
+New Cline prompt: 'Create onboarding flow from App Flow doc Section 1'
+Full onboarding flow navigates correctly on emulator
+Day 9
+Retrofit API service + interceptors + response models
+New Cline prompt: 'Create Retrofit service for all endpoints in TRD Section 4.2'
+API service compiles. Auth interceptor adds JWT header.
+Day 10
+Connect home screen to real API (needs Member 1's endpoints)
+New Cline prompt: 'Connect HomeViewModel to real backend API'
+Home screen loads real farm data from backend
+Day 11
+Connect camera → diagnose endpoint → advisory screen
+New Cline prompt: 'Connect camera capture to POST /diagnose and show result'
+Take photo → real advisory appears on screen
+Day 12
+WorkManager sync for offline
+Build Guide Part 5 — Prompt M3 Task 6
+Create farm offline → sync queue shows item → reconnect → item syncs
+Day 13
+Offline ONNX inference
+Build Guide Part 5 — Prompt M3 Task 6 OfflineAdvisoryEngine
+Airplane mode → take photo → offline advisory shows in Malayalam
+Day 14
+Risk dashboard screen, farm timeline screen, scheme screen
+New Cline prompts per screen from UI/UX Spec
+All 3 screens navigate correctly and display data
+Day 15
+Push notifications setup (Firebase)
+Build Guide Part 5 — Task from Phase 3
+Test notification received on device
+Days 16-22
+Fix UI bugs, Malayalam review, demo preparation
+Daily polish
+App looks professional, all text in Malayalam, smooth animations
+5.4 MEMBER 4 — Data & Knowledge Engineer — Day-by-Day
+Your work on Day 1-3 unblocks everyone else. Member 2 needs your JSON files. The model training runs in background.
+Day
+Your Task
+Prompt to Use
+Verify With
+Day 1-2
+Set up environment, read Doc 10 (Validation Report) Section 5 fully
+Setup guide Section 4.1
+VSCode + Cline working, Python installed
+Day 3
+Create ALL 6 JSON data files from Validation Report Section 5
+Build Guide Part 6 — Prompt M4 Task 1
+All 6 JSON files exist. gdd_thresholds.json has all crops. disease_classes.json has 22 entries.
+Day 4
+Install PyTorch, torchvision, scikit-learn, pandas
+pip install torch torchvision scikit-learn pandas matplotlib
+python -c 'import torch; print(torch.__version__)' works
+Day 5
+Download PlantVillage dataset, organize into training_images/ folder
+Search Kaggle for 'PlantVillage dataset' — free download
+ls training_images/ shows crop folders with disease subfolders
+Day 6
+Create vision model training script
+Build Guide Part 6 — Prompt M4 Task 2
+train.py runs without error on first 2 epochs
+Days 7-9
+Train vision model (this takes time — runs in background)
+python backend/ml/vision/train.py
+After training: training_metrics.json shows macro_f1 > 0.82
+Day 10
+Export ONNX model and quantize to INT8
+python backend/ml/vision/export.py
+vision_int8.onnx file created. Size < 50MB.
+Day 11
+Copy vision_int8.onnx to Android assets folder
+cp checkpoints/vision_int8.onnx mobile/android/app/src/main/assets/
+File exists in Android assets
+Day 12
+Knowledge ingestion pipeline + seed_urls.json
+Build Guide Part 6 — Prompt M4 Task 3
+ingestion.py runs on first URL. Chunks appear in knowledge_chunks table.
+Day 13
+Seed 20+ knowledge documents
+python scripts/seed_knowledge.py
+SELECT COUNT(*) FROM knowledge_chunks shows > 100 rows
+Day 14
+Seed government schemes database
+Build Guide Part 6 — Prompt M4 Task 4
+SELECT * FROM schemes shows PMFBY, PM-KISAN, Kerala schemes
+Days 15-22
+Collect 100+ field images for golden dataset, label them
+Partner with local farmer or use leaf images from Google
+tests/golden/ has images with matching .json label files
+5.5 MEMBER 5 — QA & DevOps — Day-by-Day
+You start writing tests on Day 1 — even before the code exists. Tests define correct behavior.
+Day
+Your Task
+Prompt to Use
+Verify With
+Day 1-2
+Set up environment, read Doc 9 (QA Playbook) fully
+Setup guide Section 4.1
+VSCode + Cline working
+Day 3
+Test infrastructure: conftest.py, fixtures, pytest.ini
+Build Guide Part 7 — Prompt M5 Task 1
+pytest tests/ runs (0 tests collected is fine — no errors)
+Day 4
+ALL unit tests from QA Playbook Sections 2.1, 2.2
+Build Guide Part 7 — Prompt M5 Task 2
+pytest tests/unit/ — tests exist. Some may fail until implementation done.
+Day 5
+ALL safety tests from QA Playbook Section 2.3
+Build Guide Part 7 — Prompt M5 Task 2 step 3
+tests/safety/test_critic_safety.py exists with 5 test methods
+Day 6
+ALL integration tests from QA Playbook Sections 3.1, 3.2
+Build Guide Part 7 — Prompt M5 Task 3
+test_auth_api.py and test_rls.py exist
+Day 7
+GitHub Actions CI/CD pipeline
+Build Guide Part 7 — Prompt M5 Task 1 step 5
+Pushing to GitHub triggers CI workflow. See it running in GitHub Actions tab.
+Day 8
+Run all tests against Member 1's backend
+pytest tests/ -v
+Report which tests pass and which fail to Member 1 and 2
+Days 9-14
+Fix test failures by reporting to relevant member, rerun until all pass
+Daily: pytest tests/ -v --tb=short
+All unit + safety tests passing. Integration tests passing.
+Day 15
+Performance test: locust against backend
+Build Guide Part 7 — Prompt M5 Task 3 step 3
+locust runs. Report P95 latency to team lead.
+Day 16
+Security audit script
+Build Guide Part 7 — Prompt M5 Task 3 step 4
+scripts/security_audit.py runs 6 checks. All pass.
+Days 17-20
+End-to-end testing: full farmer journey on real Android device
+Manual testing with script from Section 1.3
+Full demo flow works. No crashes. All error states handled.
+Days 21-22
+Demo preparation: device setup, demo script practice, bug reporting
+Manual
+Device charged, app installed, demo script memorized
+SECTION 6: DEMO DAY PREPARATION
+6.1 What to Prepare Before October 1st
+Item
+Who Prepares
+Done By
+Android phone with Agri-SAGE installed
+Member 3
+September 29
+Backend running on Oracle Always-Free server
+Member 1
+September 28
+Test farm and farmer account created on server
+Member 1
+September 30
+20+ disease knowledge documents ingested
+Member 4
+September 27
+PMFBY and PM-KISAN schemes in database
+Member 4
+September 27
+Vision ONNX model giving correct diagnoses
+Member 4
+September 28
+Full demo flow tested end-to-end 3 times
+All members
+September 30
+Backup plan: offline demo if internet fails
+Member 3
+September 30
+Demo script printed and practiced
+All members
+September 30
+Slide deck (3 slides): what is Agri-SAGE, architecture diagram, demo
+Member 1
+September 30
+6.2 The 3-Slide Presentation
+Before the live demo, show 3 slides. Keep it under 3 minutes.
+Slide 1: What is Agri-SAGE? — One sentence description. Show the problem (farmer without agronomist). Show the solution (Agri-SAGE). List 3 key features.
+Slide 2: Architecture — Simple diagram showing: Farmer Phone → AI Agents → Knowledge Base + Simulation → Advisory. Show it is offline-capable. Show Malayalam support.
+Slide 3: Progress by October 1st — Checklist of what is working. Roadmap of what comes next. Launch plan.
+⚠ Do not show code to HR. Do not show technical architecture details. Show the app working. Show a farmer getting an advisory. That is what matters to HR.
+6.3 If Something Breaks During Demo
+Problem
+Backup Plan
+Internet goes down
+Turn on airplane mode — show offline advisory still works. This is actually a feature demonstration.
+Backend server is down
+Use offline mode exclusively. Show all offline features. Explain server will be fixed after demo.
+Vision model gives wrong result
+Show the confidence indicator is low. Explain the system says 'insufficient data' — this is correct behavior, not a bug.
+Android app crashes
+Have a second phone ready with app installed. Or show screenshots of working app.
+Team member absent
+Each member must brief one other member on their part. No single point of failure.
+SECTION 7: TEAM COMMUNICATION PLAN
+7.1 Daily Standup — 15 Minutes Every Day
+Every day at a fixed time (suggest 9:00 AM), all 5 members answer 3 questions in WhatsApp group:
+1. What did I complete yesterday?
+2. What will I do today?
+3. Is anything blocking me?
+If blocked: Tag the specific member who can unblock you. Do not wait silently.
+7.2 WhatsApp Group Rules
+Group name: Agri-SAGE Team
+Share every commit message in group: 'M2: Critic agent safety checks complete — PR raised'
+Share every blocker immediately — do not wait for standup
+Share test results daily: 'Tests passing: 23/28. Failing: 5 — see PR comment for details'
+No off-topic messages in work hours — keeps focus
+Member 1 has final decision on all merge conflicts and architectural questions
+7.3 When to Ask for Help
+Situation
+Who to Ask
+AI Cline gives wrong code
+First: try correction prompt from Build Guide Part 9. If still wrong: ask team in WhatsApp.
+Test is failing and you don't know why
+Post exact error message in WhatsApp. Tag Member 5 (QA).
+Backend endpoint not working
+Tag Member 1 in WhatsApp with exact error and curl command used.
+Android screen not looking right
+Tag Member 3. Share screenshot.
+Confused about specification document
+Tag Team Lead. They will find the right section.
+Git conflict you can't resolve
+STOP. Tag Member 1 immediately. Do not force-merge.
+Free AI limit reached
+Announce in WhatsApp: 'M3 hit Gemini limit for today — switching to Claude'. Others know your progress.
+AGRI-SAGE TEAM SPRINT PLAN v1.0
+October 1st Demo · 22 Days · 5 Members · All Free Tools · Work Parallel
+One task per session · Commit daily · Communicate blockers immediately · Verify before merging

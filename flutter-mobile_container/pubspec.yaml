@@ -1,0 +1,21 @@
+name: mobile_container
+description: A minimal Flutter WebView mobile container for Device Test Suite.
+publish_to: 'none'
+version: 1.0.0+1
+environment:
+  sdk: '>=2.18.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  webview_flutter: ^4.2.1
+  # removed package_info_plus to avoid Android build namespace issues; use AppConfig.appVersion
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true

@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+.env/
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Model files (large - don't push to GitHub)
+models/
+*.pkl
+*.joblib
+
+# Dataset files (large - don't push to GitHub, against competition rules)
+dataset/
+
+# Mac junk
+__MACOSX/
+.DS_Store
+._*
+
+# Windows junk
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+pipeline.log
+
+# Output files (regenerate from pipeline)
+output/matching_results.tsv
+output/candidate_pairs.tsv
+
+# IDE
+.vscode/settings.json
+.idea/
+*.suo
+*.user
+
+# Temp
+*.tmp
+*.bak

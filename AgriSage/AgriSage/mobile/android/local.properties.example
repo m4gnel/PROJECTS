@@ -1,0 +1,4 @@
+# Agri-SAGE Android local properties template
+# Copy this file to local.properties in android/ root and set your API base URL
+
+API_BASE_URL=http://10.0.2.2:8000/

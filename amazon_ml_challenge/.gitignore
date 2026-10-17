@@ -1,0 +1,69 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+.env/
+.venv/
+ENV/
+
+# Secrets & Local Configs
+.env
+.env.*
+*.key
+*.token
+
+# Jupyter Notebooks & Checkpoints
+.ipynb_checkpoints/
+*.ipynb
+
+# Model files (large binary artifacts - keep local)
+models/
+*.pkl
+*.joblib
+*.pt
+*.pth
+*.onnx
+*.bin
+
+# Dataset files (large data files & competition raw data)
+dataset/
+*.tsv
+*.csv
+!code/**/sample*.tsv
+!code/**/sample*.csv
+
+# OS metadata
+__MACOSX/
+.DS_Store
+._*
+Thumbs.db
+desktop.ini
+
+# Pipeline Logs & Diagnostics
+*.log
+pipeline.log
+
+# Generated Pipeline Outputs (reproducible via pipeline run)
+output/
+output/matching_results.tsv
+output/candidate_pairs.tsv
+
+# IDEs
+.vscode/settings.json
+.idea/
+*.suo
+*.user
+
+# Temporary files
+*.tmp
+*.bak

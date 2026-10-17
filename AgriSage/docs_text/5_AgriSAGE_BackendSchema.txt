@@ -1,0 +1,757 @@
+AGRI-SAGE
+BACKEND SCHEMA DOCUMENT
+Complete SQL DDL · Pydantic Schemas · Agent I/O Contracts · LangGraph Definition · API Contracts · Migration Order
+Field
+Detail
+Document
+Backend Schema v1.0
+Audience
+Backend Developer, VSCode AI Agent
+Database
+PostgreSQL 16 + pgvector 0.6+
+ORM
+SQLAlchemy 2.0 async + Alembic migrations
+Validation
+Pydantic v2 throughout — no dict passing between agents
+1. DATABASE SCHEMA — COMPLETE SQL DDL
+1.1 Extensions & Initial Setup
+-- Run once as superuser before any migrations
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";      -- UUID generation
+CREATE EXTENSION IF NOT EXISTS vector;             -- pgvector
+CREATE EXTENSION IF NOT EXISTS postgis;            -- Geographic queries
+-- Performance tuning for Oracle Always-Free 1GB RAM instance
+-- Add to postgresql.conf:
+-- shared_buffers = 256MB
+-- effective_cache_size = 768MB
+-- work_mem = 4MB
+-- maintenance_work_mem = 64MB
+-- max_connections = 100
+-- checkpoint_completion_target = 0.9
+1.2 Users & Authentication Tables
+CREATE TABLE users (
+    id                    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    phone                 VARCHAR(15) UNIQUE NOT NULL,
+    name                  VARCHAR(100),
+    language              VARCHAR(10) NOT NULL DEFAULT 'ml',
+    location_lat          DECIMAL(9,6),
+    location_lon          DECIMAL(9,6),
+    district              VARCHAR(100),
+    state                 VARCHAR(100) DEFAULT 'Kerala',
+    subscription_tier     VARCHAR(20) NOT NULL DEFAULT 'free',
+    subscription_expires  TIMESTAMPTZ,
+    trial_started_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    advisories_this_month INT NOT NULL DEFAULT 0,
+    advisories_reset_at   DATE NOT NULL DEFAULT CURRENT_DATE,
+    is_active             BOOLEAN NOT NULL DEFAULT true,
+    created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_active_at        TIMESTAMPTZ
+);
+CREATE TABLE otp_sessions (
+    id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    phone       VARCHAR(15) NOT NULL,
+    otp_hash    VARCHAR(255) NOT NULL,
+    attempts    INT NOT NULL DEFAULT 0,
+    expires_at  TIMESTAMPTZ NOT NULL,
+    used        BOOLEAN NOT NULL DEFAULT false,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_otp_phone ON otp_sessions(phone, expires_at);
+CREATE TABLE refresh_tokens (
+    id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash  VARCHAR(255) NOT NULL UNIQUE,
+    expires_at  TIMESTAMPTZ NOT NULL,
+    revoked     BOOLEAN NOT NULL DEFAULT false,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_refresh_user ON refresh_tokens(user_id) WHERE NOT revoked;
+1.3 Farm, Field & Soil Tables
+CREATE TABLE farms (
+    id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name        VARCHAR(200) NOT NULL,
+    location    GEOMETRY(POINT, 4326),
+    district    VARCHAR(100),
+    state       VARCHAR(100),
+    area_ha     DECIMAL(8,2),
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_farms_user ON farms(user_id);
+CREATE TABLE fields (
+    id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    farm_id     UUID NOT NULL REFERENCES farms(id) ON DELETE CASCADE,
+    name        VARCHAR(100),
+    boundaries  GEOMETRY(POLYGON, 4326),
+    area_ha     DECIMAL(8,2),
+    slope       VARCHAR(20) CHECK (slope IN ('flat','gentle','moderate','steep')),
+    irrigation  VARCHAR(30),
+    soil_type   VARCHAR(50),
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_fields_farm ON fields(farm_id);
+CREATE TABLE soil_profiles (
+    id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    field_id         UUID NOT NULL REFERENCES fields(id) ON DELETE CASCADE,
+    pH               DECIMAL(4,2) CHECK (pH BETWEEN 0 AND 14),
+    nitrogen_kgha    DECIMAL(8,2),
+    phosphorus_kgha  DECIMAL(8,2),
+    potassium_kgha   DECIMAL(8,2),
+    organic_carbon   DECIMAL(5,2),
+    texture          VARCHAR(30),
+    field_capacity   DECIMAL(5,2),
+    wilting_point    DECIMAL(5,2),
+    source           VARCHAR(50) DEFAULT 'estimated',
+    measured_at      DATE,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+1.4 Crop Cycles & Observations
+CREATE TABLE crop_cycles (
+    id                    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    field_id              UUID NOT NULL REFERENCES fields(id) ON DELETE CASCADE,
+    crop                  VARCHAR(50) NOT NULL,
+    cultivar              VARCHAR(100),
+    season                VARCHAR(20),
+    planting_date         DATE NOT NULL,
+    expected_harvest      DATE,
+    actual_harvest        DATE,
+    status                VARCHAR(20) NOT NULL DEFAULT 'active'
+                          CHECK (status IN ('active','harvested','abandoned')),
+    notes                 TEXT,
+    created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_cycles_field ON crop_cycles(field_id);
+CREATE INDEX idx_cycles_active ON crop_cycles(status) WHERE status = 'active';
+CREATE TABLE observations (
+    id                    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    crop_cycle_id         UUID NOT NULL REFERENCES crop_cycles(id) ON DELETE CASCADE,
+    location              GEOMETRY(POINT, 4326),
+    problem_description   TEXT,
+    voice_note_key        VARCHAR(500),
+    irrigation_status     VARCHAR(20),
+    fertilizer_recent     BOOLEAN,
+    pesticide_recent      BOOLEAN,
+    observed_growth_stage VARCHAR(50),
+    observed_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_obs_cycle ON observations(crop_cycle_id);
+CREATE INDEX idx_obs_time ON observations(observed_at DESC);
+CREATE TABLE images (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    observation_id  UUID NOT NULL REFERENCES observations(id) ON DELETE CASCADE,
+    r2_key          VARCHAR(500) NOT NULL UNIQUE,
+    mime_type       VARCHAR(50) NOT NULL,
+    file_size_bytes INTEGER,
+    width_px        INTEGER,
+    height_px       INTEGER,
+    quality_score   DECIMAL(4,2) CHECK (quality_score BETWEEN 0 AND 1),
+    blur_score      DECIMAL(8,2),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_images_obs ON images(observation_id);
+1.5 Diagnoses & Advisories
+CREATE TABLE diagnoses (
+    id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    observation_id    UUID NOT NULL REFERENCES observations(id) ON DELETE CASCADE,
+    model_version     VARCHAR(50) NOT NULL,
+    label             VARCHAR(200) NOT NULL,
+    confidence_score  DECIMAL(4,3) NOT NULL CHECK (confidence_score BETWEEN 0 AND 1),
+    confidence_state  VARCHAR(30) NOT NULL,
+    severity          VARCHAR(20) CHECK (severity IN ('low','medium','high','critical')),
+    affected_area_pct DECIMAL(5,2),
+    top_predictions   JSONB,
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE weather_snapshots (
+    id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    observation_id   UUID REFERENCES observations(id),
+    lat              DECIMAL(9,6) NOT NULL,
+    lon              DECIMAL(9,6) NOT NULL,
+    temperature_c    DECIMAL(5,2),
+    humidity_pct     DECIMAL(5,2),
+    rainfall_24h_mm  DECIMAL(8,2),
+    wind_speed_kmh   DECIMAL(6,2),
+    dew_point_c      DECIMAL(5,2),
+    solar_rad_wm2    DECIMAL(8,2),
+    consecutive_wet  INTEGER,
+    forecast_json    JSONB,
+    indicators_json  JSONB,
+    provider         VARCHAR(50),
+    snapshot_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_weather_obs ON weather_snapshots(observation_id);
+CREATE INDEX idx_weather_loc ON weather_snapshots(lat, lon, snapshot_at DESC);
+CREATE TABLE advisories (
+    id                      UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    observation_id          UUID NOT NULL REFERENCES observations(id) ON DELETE CASCADE,
+    confidence_state        VARCHAR(30) NOT NULL,
+    recommended_scenario    VARCHAR(5),
+    scenarios_json          JSONB NOT NULL,
+    evidence_bundle_json    JSONB NOT NULL,
+    recommended_action_json JSONB NOT NULL,
+    what_would_change_json  JSONB,
+    safe_to_act             BOOLEAN NOT NULL DEFAULT true,
+    sources_json            JSONB,
+    scheme_matches_json     JSONB,
+    model_version           VARCHAR(50),
+    knowledge_version       VARCHAR(50),
+    generation_ms           INTEGER,
+    langgraph_trace_id      VARCHAR(100),
+    created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_adv_obs ON advisories(observation_id);
+CREATE INDEX idx_adv_created ON advisories(created_at DESC);
+1.6 Interventions & Outcomes
+CREATE TABLE interventions (
+    id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    crop_cycle_id UUID NOT NULL REFERENCES crop_cycles(id) ON DELETE CASCADE,
+    advisory_id   UUID REFERENCES advisories(id),
+    action_type   VARCHAR(50) NOT NULL,
+    description   TEXT,
+    product_used  VARCHAR(200),
+    quantity      DECIMAL(10,3),
+    quantity_unit VARCHAR(20),
+    cost_inr      DECIMAL(10,2),
+    performed_at  DATE NOT NULL,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE outcomes (
+    id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    intervention_id   UUID NOT NULL REFERENCES interventions(id) ON DELETE CASCADE,
+    observed_at       DATE,
+    improved          VARCHAR(10) CHECK (improved IN ('yes','no','partial','unsure')),
+    notes             TEXT,
+    follow_up_image   UUID REFERENCES images(id),
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+1.7 Simulation
+CREATE TABLE simulation_runs (
+    id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    advisory_id   UUID REFERENCES advisories(id),
+    simulator     VARCHAR(20) NOT NULL CHECK (simulator IN ('dssat','apsim','rules')),
+    crop          VARCHAR(50),
+    input_json    JSONB NOT NULL,
+    output_json   JSONB,
+    error_message TEXT,
+    runtime_ms    INTEGER,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+1.8 Knowledge Base Tables
+CREATE TABLE knowledge_documents (
+    id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title            VARCHAR(500),
+    crop             VARCHAR(50),
+    state            VARCHAR(100),
+    district         VARCHAR(100),
+    topic            VARCHAR(100),
+    growth_stage     VARCHAR(50),
+    source_tier      INTEGER NOT NULL CHECK (source_tier BETWEEN 1 AND 6),
+    source_authority VARCHAR(200),
+    source_url       VARCHAR(1000),
+    language         VARCHAR(10) NOT NULL DEFAULT 'en',
+    published_at     DATE,
+    valid_until      DATE NOT NULL,
+    status           VARCHAR(20) NOT NULL DEFAULT 'PUBLISHED'
+                     CHECK (status IN ('DISCOVERED','PARSED','VALIDATED','APPROVED','PUBLISHED','SUPERSEDED','ARCHIVED')),
+    content_hash     CHAR(64),
+    version          INTEGER NOT NULL DEFAULT 1,
+    license          VARCHAR(100),
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE knowledge_chunks (
+    id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    document_id  UUID NOT NULL REFERENCES knowledge_documents(id) ON DELETE CASCADE,
+    chunk_index  INTEGER NOT NULL,
+    content      TEXT NOT NULL,
+    embedding    vector(1024),
+    metadata     JSONB,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(document_id, chunk_index)
+);
+-- IVFFlat ANN index — rebuild after major bulk loads
+CREATE INDEX idx_chunks_embedding ON knowledge_chunks
+    USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+CREATE INDEX idx_chunks_doc ON knowledge_chunks(document_id);
+-- Filter index for freshness checks
+CREATE INDEX idx_docs_valid ON knowledge_documents(valid_until, status)
+    WHERE status = 'PUBLISHED';
+1.9 Schemes & Market
+CREATE TABLE schemes (
+    id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name              VARCHAR(300) NOT NULL,
+    short_name        VARCHAR(50),
+    authority         VARCHAR(200),
+    authority_level   VARCHAR(20) CHECK (authority_level IN ('central','state','district')),
+    state             VARCHAR(100),
+    crops_applicable  JSONB,
+    eligibility_rules JSONB NOT NULL,
+    benefits_json     JSONB,
+    enrollment_url    VARCHAR(500),
+    helpline          VARCHAR(50),
+    valid_from        DATE,
+    valid_until       DATE NOT NULL,
+    status            VARCHAR(20) NOT NULL DEFAULT 'active',
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_schemes_valid ON schemes(valid_until, status) WHERE status='active';
+CREATE TABLE market_prices (
+    id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    crop         VARCHAR(50) NOT NULL,
+    market_name  VARCHAR(200) NOT NULL,
+    district     VARCHAR(100),
+    state        VARCHAR(100),
+    price_date   DATE NOT NULL,
+    min_price    DECIMAL(10,2),
+    modal_price  DECIMAL(10,2),
+    max_price    DECIMAL(10,2),
+    unit         VARCHAR(20) NOT NULL DEFAULT 'quintal',
+    source       VARCHAR(50) NOT NULL DEFAULT 'enam',
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(crop, market_name, price_date)
+);
+CREATE INDEX idx_market_crop_date ON market_prices(crop, price_date DESC);
+1.10 Notifications, Expert Reviews & Audit
+CREATE TABLE notifications (
+    id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id        UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    farm_id        UUID REFERENCES farms(id),
+    type           VARCHAR(50) NOT NULL,
+    severity       VARCHAR(20) CHECK (severity IN ('info','watch','attention','action','urgent')),
+    title          VARCHAR(300) NOT NULL,
+    body           TEXT,
+    data_json      JSONB,
+    fcm_message_id VARCHAR(200),
+    delivered_at   TIMESTAMPTZ,
+    opened_at      TIMESTAMPTZ,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_notif_user ON notifications(user_id, created_at DESC);
+CREATE TABLE expert_reviews (
+    id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    advisory_id  UUID NOT NULL REFERENCES advisories(id),
+    expert_id    UUID NOT NULL REFERENCES users(id),
+    verdict      VARCHAR(20) CHECK (verdict IN ('agree','disagree','partial')),
+    safety_ok    BOOLEAN,
+    notes        TEXT,
+    corrections  JSONB,
+    reviewed_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE audit_logs (
+    id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id      UUID REFERENCES users(id),
+    entity_type  VARCHAR(50),
+    entity_id    UUID,
+    action       VARCHAR(50) NOT NULL,
+    ip_address   INET,
+    user_agent   TEXT,
+    details_json JSONB,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_audit_user ON audit_logs(user_id, created_at DESC);
+CREATE INDEX idx_audit_entity ON audit_logs(entity_type, entity_id, created_at DESC);
+1.11 Row-Level Security Policies
+-- Enable RLS
+ALTER TABLE farms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fields ENABLE ROW LEVEL SECURITY;
+ALTER TABLE crop_cycles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE observations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE images ENABLE ROW LEVEL SECURITY;
+ALTER TABLE advisories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE interventions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE outcomes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+-- Users see only their own farms
+CREATE POLICY farms_owner ON farms
+    USING (user_id = current_setting('app.current_user_id')::UUID);
+-- Fields inherit farm ownership
+CREATE POLICY fields_owner ON fields
+    USING (farm_id IN (
+        SELECT id FROM farms WHERE user_id = current_setting('app.current_user_id')::UUID
+    ));
+-- Notifications visible to owner
+CREATE POLICY notifications_owner ON notifications
+    USING (user_id = current_setting('app.current_user_id')::UUID);
+-- Service role bypasses RLS (for background workers)
+-- Set via: SET ROLE agrisage_service;
+2. PYDANTIC SCHEMAS — ALL AGENT I/O
+2.1 Farm State Schema (Agent Input)
+from pydantic import BaseModel, Field
+from typing import Optional, List
+from datetime import date, datetime
+from enum import Enum
+class CropEnum(str, Enum):
+    RICE = 'rice'
+    BANANA = 'banana'
+    COCONUT = 'coconut'
+    TOMATO = 'tomato'
+    MAIZE = 'maize'
+class ConfidenceState(str, Enum):
+    CONFIRMED = 'CONFIRMED'
+    LIKELY = 'LIKELY'
+    POSSIBLE = 'POSSIBLE'
+    UNCERTAIN = 'UNCERTAIN'
+    INSUFFICIENT_DATA = 'INSUFFICIENT_DATA'
+    CONFLICTING_EVIDENCE = 'CONFLICTING_EVIDENCE'
+    OUT_OF_SCOPE = 'OUT_OF_SCOPE'
+class LocationSchema(BaseModel):
+    lat: float = Field(..., ge=-90, le=90)
+    lon: float = Field(..., ge=-180, le=180)
+    district: Optional[str] = None
+    state: str = 'Kerala'
+class FarmStateSchema(BaseModel):
+    observation_id: str
+    crop: CropEnum
+    cultivar: Optional[str] = None
+    location: LocationSchema
+    planting_date: date
+    days_after_sowing: int
+    observed_growth_stage: Optional[str] = None
+    irrigation_status: Optional[str] = None
+    fertilizer_recent: Optional[bool] = None
+    pesticide_recent: Optional[bool] = None
+    problem_description: Optional[str] = None
+    image_ids: List[str] = []
+    language: str = 'ml'
+    farmer_budget_inr: Optional[float] = None
+    timestamp: datetime
+2.2 Agent Output Schemas
+class VisionResult(BaseModel):
+    label: str
+    confidence_score: float = Field(..., ge=0, le=1)
+    severity: Optional[str] = None
+    affected_area_pct: Optional[float] = None
+    top_predictions: List[dict]  # [{label, score}]
+    quality_score: float
+    out_of_distribution: bool
+    model_version: str
+class WeatherIndicators(BaseModel):
+    disease_favorability_index: float  # 0.0-1.0
+    spray_window_available: bool
+    spray_window_time: Optional[str] = None  # e.g. '07:00-10:00'
+    irrigation_recommendation: str  # skip/delay/proceed
+    heat_stress_risk: str  # low/medium/high/critical
+    flood_risk: str
+    consecutive_wet_days: int
+class WeatherResult(BaseModel):
+    temperature_c: float
+    humidity_pct: float
+    rainfall_24h_mm: float
+    wind_speed_kmh: float
+    forecast_7day: List[dict]
+    indicators: WeatherIndicators
+    provider: str
+    snapshot_at: datetime
+    is_cached: bool
+    cache_age_minutes: Optional[int] = None
+class CropStageResult(BaseModel):
+    stage_name: str
+    stage_code: str
+    days_after_sowing: int
+    gdd_accumulated: float
+    gdd_total_required: float
+    disease_vulnerability: str  # low/medium/high
+    upcoming_windows: List[str]  # e.g. ['Flowering in 8-12 days']
+    confidence: float
+class EvidenceItem(BaseModel):
+    type: str  # vision/weather/crop_stage/knowledge/simulation
+    label: str
+    value: Optional[str] = None
+    supports_diagnosis: bool
+    confidence: Optional[float] = None
+    source_tier: Optional[int] = None
+class KnowledgeResult(BaseModel):
+    chunks: List[dict]  # retrieved chunks
+    sources: List[dict]  # [{title, authority, url, tier}]
+    highest_tier: int
+    retrieval_score: float
+class CriticResult(BaseModel):
+    confidence_state: ConfidenceState
+    confidence_score: float
+    conflicts: List[str]
+    missing_data: List[dict]  # [{field, impact}]
+    safe_to_act: bool
+    run_simulation: bool
+    safety_blocks: List[str]  # blocked recommendations
+class ScenarioResult(BaseModel):
+    id: str  # A/B/C
+    label: str
+    action: str
+    timing: str
+    expected_yield_kgha: Optional[float] = None  # MODELLED
+    expected_cost_inr: Optional[float] = None
+    expected_net_return_inr: Optional[float] = None
+    risk_level: str
+    confidence: float
+class AdvisoryResponse(BaseModel):
+    advisory_id: str
+    observation_id: str
+    confidence_state: ConfidenceState
+    diagnosis_label: str
+    diagnosis_label_local: dict  # {ml, ta, en}
+    confidence_score: float
+    severity: Optional[str] = None
+    affected_area_pct: Optional[float] = None
+    risk_level: str
+    risk_horizon_days: Optional[int] = None
+    scenarios: List[ScenarioResult]
+    recommended_scenario: str
+    recommended_action: dict
+    evidence_items: List[EvidenceItem]
+    contradictions: List[str]
+    missing_data: List[dict]
+    what_would_change_this: List[str]
+    safe_to_act: bool
+    scheme_matches: List[dict]
+    sources: List[dict]
+    model_version: str
+    knowledge_version: str
+    generation_ms: int
+    created_at: datetime
+3. LANGGRAPH GRAPH DEFINITION
+3.1 State Definition
+from langgraph.graph import StateGraph, END
+from typing import TypedDict, Optional, List, Annotated
+import operator
+class AgriSAGEState(TypedDict):
+    # Input
+    farm_state: FarmStateSchema
+    images: List[bytes]
+    # Agent outputs
+    vision_result: Optional[VisionResult]
+    weather_result: Optional[WeatherResult]
+    crop_stage_result: Optional[CropStageResult]
+    knowledge_result: Optional[KnowledgeResult]
+    critic_result: Optional[CriticResult]
+    scheme_result: Optional[dict]
+    simulation_result: Optional[dict]
+    decision_result: Optional[dict]
+    # Final
+    advisory: Optional[AdvisoryResponse]
+    # Control
+    errors: Annotated[List[str], operator.add]
+    warnings: Annotated[List[str], operator.add]
+    run_simulation: bool
+3.2 Graph Wiring
+def build_advisory_graph() -> StateGraph:
+    graph = StateGraph(AgriSAGEState)
+    # Add all nodes
+    graph.add_node('intake', intake_agent.run)
+    graph.add_node('vision', vision_agent.run)
+    graph.add_node('weather', weather_agent.run)
+    graph.add_node('crop_stage', crop_stage_agent.run)
+    graph.add_node('knowledge', knowledge_agent.run)
+    graph.add_node('critic', critic_agent.run)
+    graph.add_node('scheme', scheme_agent.run)
+    graph.add_node('simulation', simulation_agent.run)
+    graph.add_node('decision', decision_agent.run)
+    graph.add_node('explanation', explanation_agent.run)
+    # Entry point
+    graph.set_entry_point('intake')
+    # Intake → parallel execution (vision + weather + stage + knowledge)
+    graph.add_edge('intake', 'vision')
+    graph.add_edge('intake', 'weather')
+    graph.add_edge('intake', 'crop_stage')
+    graph.add_edge('intake', 'knowledge')
+    # All 4 parallel → critic (barrier node)
+    graph.add_edge('vision', 'critic')
+    graph.add_edge('weather', 'critic')
+    graph.add_edge('crop_stage', 'critic')
+    graph.add_edge('knowledge', 'critic')
+    # Critic → scheme (always) + simulation (conditional)
+    graph.add_edge('critic', 'scheme')
+    graph.add_conditional_edges(
+        'critic',
+        lambda s: 'simulation' if s['run_simulation'] else 'decision',
+        {'simulation': 'simulation', 'decision': 'decision'}
+    )
+    # Simulation → decision
+    graph.add_edge('simulation', 'decision')
+    graph.add_edge('scheme', 'decision')
+    graph.add_edge('decision', 'explanation')
+    graph.add_edge('explanation', END)
+    return graph.compile()
+advisory_graph = build_advisory_graph()
+4. ABSTRACTION INTERFACES
+4.1 Weather Provider
+from abc import ABC, abstractmethod
+class WeatherProvider(ABC):
+    @abstractmethod
+    async def get_current(self, lat: float, lon: float) -> WeatherSnapshot:
+        ...
+    @abstractmethod
+    async def get_forecast(self, lat: float, lon: float, days: int) -> List[WeatherForecast]:
+        ...
+    @abstractmethod
+    async def get_historical(self, lat: float, lon: float, start: date, end: date) -> List[WeatherDay]:
+        ...
+class OpenMeteoProvider(WeatherProvider):  # Development only — non-commercial
+    BASE_URL = 'https://api.open-meteo.com/v1/forecast'
+    # Implementation...
+class IMDProvider(WeatherProvider):       # Production — commercial API
+    # Implementation...
+class CachedWeatherProvider(WeatherProvider):
+    def __init__(self, provider: WeatherProvider, ttl_minutes: int = 30):
+        self.provider = provider
+        self.ttl = ttl_minutes
+    # Caches in memory + falls back to DB cache
+4.2 Simulation Engine
+class SimulationEngine(ABC):
+    @abstractmethod
+    async def simulate(self, params: SimulationParams) -> SimulationResult:
+        ...
+    @abstractmethod
+    def get_supported_crops(self) -> List[str]:
+        ...
+    @abstractmethod
+    def get_required_inputs(self) -> dict:
+        ...
+class DSSATEngine(SimulationEngine):
+    # BSD-3-Clause — production safe
+    async def simulate(self, params: SimulationParams) -> SimulationResult:
+        # 1. Validate params against DSSAT schema
+        # 2. Write DSSAT input files to temp directory
+        # 3. subprocess.run(['dscsm048', 'B', 'DSSBatch.v48'])
+        # 4. Parse .OUT files
+        # 5. Return structured SimulationResult
+        ...
+class LocalRulesEngine(SimulationEngine):
+    # Offline fallback — deterministic rule-based
+    # No subprocess — pure Python
+    async def simulate(self, params: SimulationParams) -> SimulationResult:
+        # Rule-based yield estimation from crop stage + weather + interventions
+        ...
+4.3 Speech Provider
+class SpeechProvider(ABC):
+    @abstractmethod
+    async def transcribe(self, audio: bytes, language: str) -> str:
+        ...
+    @abstractmethod
+    async def synthesize(self, text: str, language: str) -> bytes:
+        ...
+    @abstractmethod
+    def get_supported_languages(self) -> List[str]:
+        ...
+class BhashiniProvider(SpeechProvider):
+    # Apply at: bhashini.gov.in — 4-6 week approval
+    ...
+class AndroidTTSFallback(SpeechProvider):
+    # Used when Bhashini unavailable — Android built-in
+    # Limited language support but no API dependency
+    ...
+5. ALEMBIC MIGRATION ORDER
+5.1 Migration Sequence
+Migration File
+Creates
+Depends On
+001_extensions.py
+uuid-ossp, vector, postgis extensions
+None — first migration always
+002_users.py
+users, otp_sessions, refresh_tokens
+001
+003_farms.py
+farms, fields, soil_profiles
+002
+004_crop_cycles.py
+crop_cycles
+003
+005_observations.py
+observations, images
+004
+006_weather.py
+weather_snapshots
+005
+007_diagnoses.py
+diagnoses
+005
+008_advisories.py
+advisories
+007
+009_interventions.py
+interventions, outcomes
+008
+010_simulation.py
+simulation_runs
+008
+011_knowledge.py
+knowledge_documents, knowledge_chunks, IVFFlat index
+001
+012_schemes.py
+schemes
+001
+013_market.py
+market_prices
+001
+014_notifications.py
+notifications
+002
+015_expert.py
+expert_reviews
+008, 002
+016_audit.py
+audit_logs
+002
+017_rls.py
+All RLS policies
+002-016 complete
+⚠ Never run migrations out of order. The IVFFlat index in 011 requires pgvector to be installed (001). RLS policies in 017 must run LAST — after all tables exist.
+5.2 Running Migrations
+# Initial setup
+alembic init alembic
+# Configure alembic.ini with DATABASE_URL
+# Run all migrations
+alembic upgrade head
+# Check current state
+alembic current
+# Rollback one step
+alembic downgrade -1
+# Generate new migration after schema change
+alembic revision --autogenerate -m 'description'
+6. SAFETY CHECK IMPLEMENTATIONS
+6.1 Chemical Safety Check
+class ChemicalSafetyChecker:
+    """
+    All chemical recommendations must pass these checks.
+    A BLOCK result means the advisory is held — not shown to farmer.
+    """
+    async def check_product_exists(self, product_name: str) -> bool:
+        """Product name must exist in CIB&RC database."""
+        result = await db.fetch_one(
+            'SELECT id FROM chemical_labels WHERE product_name ILIKE :name',
+            {'name': product_name}
+        )
+        return result is not None
+    async def check_crop_registration(self, product_name: str, crop: str) -> bool:
+        """Product must be registered for use on stated crop."""
+        result = await db.fetch_one(
+            'SELECT id FROM chemical_labels WHERE product_name ILIKE :name AND :crop = ANY(registered_crops)',
+            {'name': product_name, 'crop': crop}
+        )
+        return result is not None
+    async def check_dosage(self, product_name: str, stated_dose: float, unit: str, crop: str) -> bool:
+        """Stated dosage must be within label-approved range."""
+        label = await self.get_label(product_name, crop)
+        if label is None:
+            return False
+        return label.min_dose <= stated_dose <= label.max_dose
+    async def run_all_checks(self, recommendation: dict) -> tuple[bool, List[str]]:
+        """Run all safety checks. Returns (safe, list_of_issues)."""
+        issues = []
+        product = recommendation.get('product_name')
+        if not product:
+            return True, []  # No chemical — skip
+        if not await self.check_product_exists(product):
+            issues.append(f'BLOCK: Product {product} not found in CIB&RC database')
+        if not await self.check_crop_registration(product, recommendation['crop']):
+            issues.append(f'BLOCK: {product} not registered for {recommendation["crop"]}')
+        if recommendation.get('dosage'):
+            if not await self.check_dosage(product, recommendation['dosage'], recommendation['unit'], recommendation['crop']):
+                issues.append(f'BLOCK: Dosage outside label-approved range')
+        return len(issues) == 0, issues
+AGRI-SAGE BACKEND SCHEMA v1.0
+Complete SQL DDL · Pydantic Schemas · LangGraph Definition · Safety Checks

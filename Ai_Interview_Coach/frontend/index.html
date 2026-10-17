@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interview Coach - Master Your Next Interview</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+                <span>AI Interview Coach</span>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="#home" class="nav-link active">Home</a></li>
+                <li><a href="#features" class="nav-link">Features</a></li>
+                <li><a href="#how-it-works" class="nav-link">How It Works</a></li>
+                <li><a href="#pricing" class="nav-link">Pricing</a></li>
+                <li><a href="#testimonials" class="nav-link">Testimonials</a></li>
+            </ul>
+            <div class="nav-buttons">
+                <a href="login.html" class="btn-secondary">Login</a>
+                <a href="signup.html" class="btn-primary">Get Started</a>
+            </div>
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <i class="fas fa-star"></i>
+                <span>Trusted by 50,000+ Job Seekers</span>
+            </div>
+            <h1 class="hero-title">
+                Master Your Next Interview with
+                <span class="gradient-text">AI-Powered Coaching</span>
+            </h1>
+            <p class="hero-description">
+                Practice real interview scenarios, get instant AI feedback, and land your dream job.
+                Our advanced AI analyzes your responses and provides personalized coaching.
+            </p>
+            <div class="hero-buttons">
+                <a href="signup.html" class="btn-primary btn-lg">
+                    Start Free Trial
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+                <button class="btn-secondary btn-lg" onclick="playVideo()">
+                    <i class="fas fa-play"></i>
+                    Watch Demo
+                </button>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <h3>50K+</h3>
+                    <p>Users</p>
+                </div>
+                <div class="stat-item">
+                    <h3>95%</h3>
+                    <p>Success Rate</p>
+                </div>
+                <div class="stat-item">
+                    <h3>1M+</h3>
+                    <p>Interviews</p>
+                </div>
+                <div class="stat-item">
+                    <h3>4.9/5</h3>
+                    <p>Rating</p>
+                </div>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="floating-card card-1">
+                <i class="fas fa-code"></i>
+                <span>Software Engineering</span>
+            </div>
+            <div class="floating-card card-2">
+                <i class="fas fa-chart-line"></i>
+                <span>Data Science</span>
+            </div>
+            <div class="floating-card card-3">
+                <i class="fas fa-briefcase"></i>
+                <span>Product Management</span>
+            </div>
+            <div class="hero-mockup">
+                <div class="mockup-screen">
+                    <div class="mockup-header">
+                        <span class="dot red"></span>
+                        <span class="dot yellow"></span>
+                        <span class="dot green"></span>
+                    </div>
+                    <div class="mockup-content">
+                        <div class="chat-message ai">
+                            <div class="avatar">AI</div>
+                            <div class="message">Tell me about a challenging project you worked on...</div>
+                        </div>
+                        <div class="chat-message user">
+                            <div class="message">In my previous role, I led a team to redesign...</div>
+                            <div class="avatar">You</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="section-header">
+            <span class="section-badge">Features</span>
+            <h2>Everything You Need to Ace Your Interview</h2>
+            <p>Comprehensive tools designed to prepare you for success</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon purple">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h3>AI-Powered Feedback</h3>
+                <p>Get instant, detailed feedback on your answers with actionable improvement suggestions</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon blue">
+                    <i class="fas fa-microphone"></i>
+                </div>
+                <h3>Voice & Video Practice</h3>
+                <p>Practice with real-time voice recognition and video analysis for body language</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon green">
+                    <i class="fas fa-database"></i>
+                </div>
+                <h3>1000+ Questions</h3>
+                <p>Access a vast library of real interview questions from top companies</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon orange">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <h3>Performance Analytics</h3>
+                <p>Track your progress with detailed analytics and performance insights</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon red">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>Mock Interviews</h3>
+                <p>Simulate real interview scenarios with industry-specific questions</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon teal">
+                    <i class="fas fa-certificate"></i>
+                </div>
+                <h3>Expert Resources</h3>
+                <p>Learn from industry experts with curated guides and best practices</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="section-header">
+            <span class="section-badge">Process</span>
+            <h2>How It Works</h2>
+            <p>Get started in three simple steps</p>
+        </div>
+        <div class="steps-container">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>Choose Your Path</h3>
+                    <p>Select your industry, role, and experience level to get personalized questions</p>
+                    <div class="step-icon">
+                        <i class="fas fa-compass"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>Practice & Record</h3>
+                    <p>Answer interview questions via text, voice, or video - just like the real thing</p>
+                    <div class="step-icon">
+                        <i class="fas fa-video"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>Get AI Feedback</h3>
+                    <p>Receive instant, detailed feedback and improve with every practice session</p>
+                    <div class="step-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing" id="pricing">
+        <div class="section-header">
+            <span class="section-badge">Pricing</span>
+            <h2>Choose Your Plan</h2>
+            <p>Start free, upgrade when you're ready</p>
+        </div>
+        <div class="pricing-toggle">
+            <span class="toggle-label">Monthly</span>
+            <label class="switch">
+                <input type="checkbox" id="pricingToggle">
+                <span class="slider"></span>
+            </label>
+            <span class="toggle-label">Annual <span class="save-badge">Save 30%</span></span>
+        </div>
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <div class="plan-header">
+                    <h3>Free</h3>
+                    <div class="price">
+                        <span class="currency">$</span>
+                        <span class="amount">0</span>
+                        <span class="period">/month</span>
+                    </div>
+                </div>
+                <ul class="plan-features">
+                    <li><i class="fas fa-check"></i> 10 practice sessions/month</li>
+                    <li><i class="fas fa-check"></i> Basic AI feedback</li>
+                    <li><i class="fas fa-check"></i> 100+ questions</li>
+                    <li><i class="fas fa-check"></i> Text-based practice</li>
+                    <li class="disabled"><i class="fas fa-times"></i> Voice & video practice</li>
+                    <li class="disabled"><i class="fas fa-times"></i> Performance analytics</li>
+                </ul>
+                <a href="signup.html" class="btn-outline btn-block">Get Started</a>
+            </div>
+            <div class="pricing-card featured">
+                <div class="popular-badge">Most Popular</div>
+                <div class="plan-header">
+                    <h3>Pro</h3>
+                    <div class="price">
+                        <span class="currency">$</span>
+                        <span class="amount monthly-price">29</span>
+                        <span class="amount annual-price" style="display:none;">20</span>
+                        <span class="period">/month</span>
+                    </div>
+                </div>
+                <ul class="plan-features">
+                    <li><i class="fas fa-check"></i> Unlimited practice sessions</li>
+                    <li><i class="fas fa-check"></i> Advanced AI feedback</li>
+                    <li><i class="fas fa-check"></i> 1000+ questions</li>
+                    <li><i class="fas fa-check"></i> Voice & video practice</li>
+                    <li><i class="fas fa-check"></i> Performance analytics</li>
+                    <li><i class="fas fa-check"></i> Priority support</li>
+                </ul>
+                <a href="signup.html?plan=pro" class="btn-primary btn-block">Start Free Trial</a>
+            </div>
+            <div class="pricing-card">
+                <div class="plan-header">
+                    <h3>Enterprise</h3>
+                    <div class="price">
+                        <span class="amount">Custom</span>
+                    </div>
+                </div>
+                <ul class="plan-features">
+                    <li><i class="fas fa-check"></i> Everything in Pro</li>
+                    <li><i class="fas fa-check"></i> Custom question libraries</li>
+                    <li><i class="fas fa-check"></i> Team analytics</li>
+                    <li><i class="fas fa-check"></i> API access</li>
+                    <li><i class="fas fa-check"></i> Dedicated support</li>
+                    <li><i class="fas fa-check"></i> Custom integrations</li>
+                </ul>
+                <a href="contact.html" class="btn-outline btn-block">Contact Sales</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials" id="testimonials">
+        <div class="section-header">
+            <span class="section-badge">Success Stories</span>
+            <h2>What Our Users Say</h2>
+            <p>Join thousands of successful candidates</p>
+        </div>
+        <div class="testimonials-grid">
+            <div class="testimonial-card">
+                <div class="stars">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <p class="testimonial-text">"This platform helped me land my dream job at Google. The AI feedback was incredibly accurate and helped me improve my answers significantly."</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">SJ</div>
+                    <div class="author-info">
+                        <h4>Sarah Johnson</h4>
+                        <p>Software Engineer at Google</p>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="stars">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <p class="testimonial-text">"The mock interviews felt so real! The AI's feedback on my communication style and technical answers was spot-on. Highly recommend!"</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">MC</div>
+                    <div class="author-info">
+                        <h4>Michael Chen</h4>
+                        <p>Data Scientist at Amazon</p>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="stars">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <p class="testimonial-text">"As a career changer, I was nervous about interviews. This tool gave me the confidence and preparation I needed. Got offers from 3 companies!"</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">EP</div>
+                    <div class="author-info">
+                        <h4>Emily Parker</h4>
+                        <p>Product Manager at Microsoft</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="cta-content">
+            <h2>Ready to Ace Your Next Interview?</h2>
+            <p>Join 50,000+ professionals who have improved their interview skills</p>
+            <div class="cta-buttons">
+                <a href="signup.html" class="btn-primary btn-lg">
+                    Start Your Free Trial
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+                <a href="#pricing" class="btn-secondary btn-lg">View Pricing</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <div class="footer-logo">
+                    <i class="fas fa-brain"></i>
+                    <span>AI Interview Coach</span>
+                </div>
+                <p>Empowering job seekers with AI-powered interview preparation</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h4>Product</h4>
+                <ul>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#pricing">Pricing</a></li>
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="#">API</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Resources</h4>
+                <ul>
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Interview Tips</a></li>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Community</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Careers</a></li>
+                    <li><a href="#">Contact</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 AI Interview Coach. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Video Modal -->
+    <div class="modal" id="videoModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeVideo()">&times;</span>
+            <div class="video-container">
+                <iframe width="100%" height="500" src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

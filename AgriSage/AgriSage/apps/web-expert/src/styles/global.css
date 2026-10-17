@@ -1,0 +1,831 @@
+@import "tailwindcss";
+@import './tokens.css';
+
+/* Universal Modern Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  min-height: 100%;
+  font-family: var(--font-family-base);
+  color: var(--color-on-surface);
+  background-color: var(--color-bg-base);
+  background-image: var(--color-bg-mesh);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+  transition: background-color 250ms ease, color 250ms ease;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Glassmorphism Surface Foundations */
+.glass-panel {
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--color-surface-glass-border);
+  box-shadow: var(--shadow-md);
+  border-radius: var(--corner-lg);
+  transition: all 200ms var(--ease-smooth);
+  will-change: transform, opacity;
+}
+
+.glass-panel:hover {
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: var(--shadow-lg), 0 0 20px rgba(16, 185, 129, 0.1);
+}
+
+.glass-panel-elevated {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-outline-variant);
+  box-shadow: var(--shadow-lg);
+  border-radius: var(--corner-xl);
+}
+
+/* Dark Mode Overrides for Hardcoded Light Classes */
+[data-theme='dark'] .bg-white {
+  background-color: var(--color-surface) !important;
+  color: var(--color-on-surface) !important;
+}
+
+[data-theme='dark'] .bg-white\/60,
+[data-theme='dark'] .bg-white\/70,
+[data-theme='dark'] .bg-white\/80,
+[data-theme='dark'] .bg-white\/90 {
+  background-color: rgba(22, 32, 42, 0.75) !important;
+}
+
+[data-theme='dark'] .bg-gray-100,
+[data-theme='dark'] .bg-gray-200 {
+  background-color: var(--color-surface-variant) !important;
+}
+
+[data-theme='dark'] .text-slate-900,
+[data-theme='dark'] .text-gray-900 {
+  color: var(--color-on-surface) !important;
+}
+
+[data-theme='dark'] .border-purple-200,
+[data-theme='dark'] .border-emerald-200 {
+  border-color: var(--color-outline-variant) !important;
+}
+
+/* Glowing Neon Elements */
+.glow-emerald {
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.35);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.35);
+}
+
+.glow-critical {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+/* Interactive Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  min-height: 42px;
+  padding: 0 var(--spacing-md);
+  border-radius: var(--corner-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 200ms var(--ease-smooth);
+  user-select: none;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+}
+
+.btn-secondary {
+  background: var(--color-surface-variant);
+  color: var(--color-primary) !important;
+  border-color: var(--color-outline-variant);
+}
+
+.btn-secondary:hover {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+}
+
+.btn-outline {
+  background: transparent;
+  border-color: var(--color-outline);
+  color: var(--color-on-surface);
+}
+
+.btn-outline:hover {
+  background: var(--color-surface-variant);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* Pulsing Radar Wave Animation */
+@keyframes radarPing {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+.radar-ping {
+  animation: radarPing 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Audio Visualizer Equalizer Bars */
+@keyframes eqBounce {
+  0%, 100% { height: 4px; }
+  50% { height: 16px; }
+}
+
+.eq-bar-1 { animation: eqBounce 0.6s ease-in-out infinite; }
+.eq-bar-2 { animation: eqBounce 0.8s ease-in-out infinite 0.15s; }
+.eq-bar-3 { animation: eqBounce 0.5s ease-in-out infinite 0.3s; }
+.eq-bar-4 { animation: eqBounce 0.7s ease-in-out infinite 0.45s; }
+
+/* Sci-fi Scanline Effect */
+.scanline-overlay {
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0),
+    rgba(255,255,255,0) 50%,
+    rgba(16, 185, 129, 0.08) 50%,
+    rgba(16, 185, 129, 0.08)
+  );
+  background-size: 100% 4px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-outline);
+  border-radius: 9999px;
+  border: 2px solid var(--color-bg-base);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
+
+/* =========================================================================
+   MILLION-DOLLAR LUXURY 3D & HOLOGRAPHIC ANIMATIONS
+   ========================================================================= */
+
+/* Continuous Laser Scan Bar */
+@keyframes laserSweep {
+  0% { top: 0%; opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { top: 98%; opacity: 0; }
+}
+
+.laser-scanner-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #10b981 30%, #6ee7b7 50%, #10b981 70%, transparent);
+  box-shadow: 0 0 15px #10b981, 0 0 30px #34d399;
+  animation: laserSweep 3.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  pointer-events: none;
+  z-index: 25;
+}
+
+/* Floating 3D Hologram Breathing */
+@keyframes hologramFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(0.4deg);
+  }
+}
+
+.hologram-float {
+  animation: hologramFloat 5s ease-in-out infinite;
+}
+
+.hologram-float-delayed {
+  animation: hologramFloat 5.8s ease-in-out infinite 1.5s;
+}
+
+/* Orbital Rotation for Multi-Agent AI System */
+@keyframes orbitRotateClockwise {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orbitRotateCounter {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+.orbit-cw-fast { animation: orbitRotateClockwise 28s linear infinite; }
+.orbit-cw-slow { animation: orbitRotateClockwise 50s linear infinite; }
+.orbit-ccw-fast { animation: orbitRotateCounter 32s linear infinite; }
+.orbit-counter-item { animation: orbitRotateCounter 28s linear infinite; }
+
+/* Metallic Shimmer Gradient for Titles */
+@keyframes shimmerText {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.text-shimmer {
+  background: linear-gradient(90deg, #ffffff 0%, #34d399 35%, #a7f3d0 50%, #38bdf8 65%, #ffffff 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmerText 8s linear infinite;
+}
+
+/* Ambient Radial Glow Backdrops */
+.glow-backdrop-emerald {
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.16) 0%, rgba(6, 182, 212, 0.05) 50%, transparent 70%);
+}
+
+.glow-backdrop-amber {
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, rgba(239, 68, 68, 0.04) 50%, transparent 70%);
+}
+
+/* =========================================================================
+   SNAP ON SCROLL & GSAP SCROLLTRIGGER MULTI-LAYER UTILITIES
+   ========================================================================= */
+
+/* Official Lenis Smooth Scroll Performance CSS Rules */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+/* Snap on Scroll Container */
+.snap-scroll-container {
+  scroll-behavior: auto;
+}
+
+/* Optional Desktop Scroll Snap (Uncomment if needed)
+@media (min-width: 1024px) {
+  .snap-scroll-container {
+    scroll-snap-type: y mandatory;
+  }
+
+  .snap-scroll-section {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+}
+*/
+
+/* Staggered Multi-Layer ScrollTrigger Reveals */
+.st-layer-1,
+.st-layer-2,
+.st-layer-3,
+.st-layer-4 {
+  opacity: 0;
+  transform: translateY(30px) scale(0.97);
+  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.st-layer-1 { transition-delay: 0.05s; }
+.st-layer-2 { transition-delay: 0.18s; }
+.st-layer-3 { transition-delay: 0.32s; }
+.st-layer-4 { transition-delay: 0.48s; }
+
+/* When section is active in viewport */
+.is-active-snap .st-layer-1,
+.is-active-snap .st-layer-2,
+.is-active-snap .st-layer-3,
+.is-active-snap .st-layer-4 {
+  opacity: 1;
+  transform: translateY(0px) scale(1);
+}
+
+/* =========================================================================
+   MULTI-LAYER PARALLAX FLOATING DECORATIONS
+   Independent visual planes that move at different scroll speeds
+   ========================================================================= */
+
+/* Base parallax element styling */
+.parallax-decoration {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform;
+  z-index: 5;
+  transition: opacity 0.4s ease;
+}
+
+/* Floating orb decorations */
+.parallax-orb {
+  border-radius: 50%;
+  filter: blur(0.5px);
+}
+
+.parallax-orb-emerald {
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.35) 0%, rgba(16, 185, 129, 0.08) 50%, transparent 70%);
+  box-shadow: 0 0 40px rgba(16, 185, 129, 0.2), inset 0 0 20px rgba(16, 185, 129, 0.1);
+}
+
+.parallax-orb-cyan {
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.3) 0%, rgba(6, 182, 212, 0.06) 50%, transparent 70%);
+  box-shadow: 0 0 40px rgba(6, 182, 212, 0.2), inset 0 0 20px rgba(6, 182, 212, 0.1);
+}
+
+.parallax-orb-amber {
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.25) 0%, rgba(245, 158, 11, 0.05) 50%, transparent 70%);
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.15);
+}
+
+.parallax-orb-purple {
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.25) 0%, rgba(139, 92, 246, 0.05) 50%, transparent 70%);
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.15);
+}
+
+/* Floating geometric line decorations */
+.parallax-line {
+  height: 1px;
+  opacity: 0.3;
+}
+
+.parallax-line-h {
+  width: 100%;
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.4), transparent);
+}
+
+.parallax-line-v {
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(180deg, transparent, rgba(6, 182, 212, 0.4), transparent);
+}
+
+/* Floating diamond/rhombus shapes */
+.parallax-diamond {
+  transform: rotate(45deg);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  background: rgba(16, 185, 129, 0.04);
+  backdrop-filter: blur(2px);
+}
+
+/* Floating ring decoration */
+.parallax-ring {
+  border-radius: 50%;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: transparent;
+}
+
+.parallax-ring-dashed {
+  border-radius: 50%;
+  border: 1px dashed rgba(6, 182, 212, 0.2);
+  background: transparent;
+}
+
+/* Cross/plus decoration */
+.parallax-cross::before,
+.parallax-cross::after {
+  content: '';
+  position: absolute;
+  background: rgba(16, 185, 129, 0.3);
+}
+.parallax-cross::before {
+  width: 1px;
+  height: 100%;
+  left: 50%;
+  top: 0;
+}
+.parallax-cross::after {
+  width: 100%;
+  height: 1px;
+  top: 50%;
+  left: 0;
+}
+
+/* Dot grid pattern decoration */
+.parallax-dotgrid {
+  background-image: radial-gradient(rgba(16, 185, 129, 0.15) 1px, transparent 1px);
+  background-size: 16px 16px;
+  opacity: 0.5;
+}
+
+/* Hex grid pattern */
+.parallax-hexgrid {
+  background-image:
+    linear-gradient(30deg, rgba(6, 182, 212, 0.08) 12%, transparent 12.5%, transparent 87%, rgba(6, 182, 212, 0.08) 87.5%),
+    linear-gradient(150deg, rgba(6, 182, 212, 0.08) 12%, transparent 12.5%, transparent 87%, rgba(6, 182, 212, 0.08) 87.5%),
+    linear-gradient(30deg, rgba(6, 182, 212, 0.08) 12%, transparent 12.5%, transparent 87%, rgba(6, 182, 212, 0.08) 87.5%),
+    linear-gradient(150deg, rgba(6, 182, 212, 0.08) 12%, transparent 12.5%, transparent 87%, rgba(6, 182, 212, 0.08) 87.5%);
+  background-size: 60px 104px;
+  background-position: 0 0, 0 0, 30px 52px, 30px 52px;
+  opacity: 0.4;
+}
+
+/* Ambient glow pulse (for parallax orbs) */
+@keyframes parallaxGlowPulse {
+  0%, 100% {
+    opacity: 0.6;
+    filter: blur(0.5px);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(1px);
+  }
+}
+
+.parallax-glow-pulse {
+  animation: parallaxGlowPulse 4s ease-in-out infinite;
+}
+
+.parallax-glow-pulse-delayed {
+  animation: parallaxGlowPulse 5s ease-in-out infinite 1.5s;
+}
+
+.parallax-glow-pulse-slow {
+  animation: parallaxGlowPulse 7s ease-in-out infinite 3s;
+}
+
+/* =========================================================================
+   SCROLL-DRIVEN IMAGE SEQUENCE (Video-to-JPG Canvas)
+   Apple-style scroll-scrubbed frame player
+   ========================================================================= */
+
+.scroll-sequence-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--corner-xl);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: #000;
+}
+
+.scroll-sequence-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scroll-sequence-progress-track {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  z-index: 10;
+}
+
+.scroll-sequence-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #06b6d4);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+  transition: width 60ms linear;
+}
+
+/* Frame counter overlay badge */
+.scroll-sequence-frame-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 6px 14px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #a7f3d0;
+  font-family: var(--font-family-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  z-index: 15;
+  pointer-events: none;
+}
+
+/* =========================================================================
+   INTER-SECTION TRANSITION DIVIDERS
+   Gradient wipe elements between scroll-snapped chapters
+   ========================================================================= */
+.section-wipe-divider {
+  position: relative;
+  height: 120px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.section-wipe-divider::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    var(--color-bg-base),
+    transparent 30%,
+    transparent 70%,
+    var(--color-bg-base)
+  );
+}
+
+
+/* SplitType Kinetic Typography Masked Lines */
+.line-mask {
+  overflow: hidden;
+  display: block;
+}
+
+.split-line {
+  display: block;
+  will-change: transform, opacity;
+}
+
+.split-word {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+/* Sticky Dewdrop Track Architecture */
+.sticky-dewdrop-track {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100%;
+  pointer-events: none;
+  z-index: 35;
+  overflow: hidden;
+}
+
+/* Hardware accelerated fluid SVG canvas */
+.dewdrop-svg-canvas {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* =========================================================================
+   21ST.DEV OSMO PARALLAX SCROLLING COMPONENT STYLES
+   ========================================================================= */
+.parallax {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.parallax__header {
+  position: relative;
+  width: 100%;
+  min-height: 90vh;
+}
+
+.parallax__visuals {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.parallax__layers {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.parallax__layer-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  will-change: transform;
+}
+
+.parallax__layer-title {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  will-change: transform;
+}
+
+.parallax__fade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 140px;
+  background: linear-gradient(to top, rgba(2, 6, 23, 1), transparent);
+  pointer-events: none;
+  z-index: 30;
+}
+
+/* =========================================================================
+   ADVANCED SCROLLYTELLING ANIMATION SYSTEM
+   GPU-composited reveals, horizontal scroll, velocity effects, depth layers
+   All animations use transform + opacity exclusively → zero layout/paint cost
+   ========================================================================= */
+
+/* ── Batch reveal base states (GPU hints) ──────────────────────────────── */
+.reveal-up,
+.reveal-down,
+.reveal-left,
+.reveal-right,
+.reveal-scale,
+.reveal-blur,
+.reveal-rotate {
+  will-change: transform, opacity;
+}
+
+/* ── Hero zoom target ──────────────────────────────────────────────────── */
+.hero-zoom-target {
+  will-change: transform, opacity, filter;
+  transform-origin: center center;
+}
+
+/* ── Chapter ambient glow overlay ──────────────────────────────────────── */
+.chapter-ambient-glow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -15;
+  will-change: background-color, box-shadow;
+  border-radius: 50%;
+  transform: scale(1.5);
+}
+
+/* ── Velocity-reactive elements ────────────────────────────────────────── */
+.velocity-reactive {
+  will-change: transform;
+  transform-style: preserve-3d;
+}
+
+/* ── Text clip wipe ────────────────────────────────────────────────────── */
+.text-wipe {
+  will-change: clip-path;
+}
+
+/* ── Card stagger grid ─────────────────────────────────────────────────── */
+.card-stagger-grid > * {
+  will-change: transform, opacity;
+}
+
+/* ── Horizontal scroll section ─────────────────────────────────────────── */
+.horizontal-scroll-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.horizontal-scroll-track {
+  display: flex;
+  will-change: transform;
+}
+
+.h-panel {
+  flex: none;
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.h-panel-content,
+.h-panel-stat,
+.h-panel-bg {
+  will-change: transform, opacity;
+}
+
+/* ── 3D depth parallax layers ──────────────────────────────────────────── */
+[data-depth] {
+  will-change: transform;
+}
+
+/* ── Floating particle decorations ─────────────────────────────────────── */
+@keyframes floatOrbit {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  25%      { transform: translate3d(12px, -22px, 0) rotate(90deg); }
+  50%      { transform: translate3d(-6px, -38px, 0) rotate(180deg); }
+  75%      { transform: translate3d(-16px, -14px, 0) rotate(270deg); }
+}
+
+.particle-float {
+  animation: floatOrbit 22s ease-in-out infinite;
+  will-change: transform;
+}
+
+.particle-float-delayed {
+  animation: floatOrbit 28s ease-in-out infinite 6s;
+  will-change: transform;
+}
+
+.particle-float-fast {
+  animation: floatOrbit 16s ease-in-out infinite 3s;
+  will-change: transform;
+}
+
+/* ── Organic breathing scale ───────────────────────────────────────────── */
+@keyframes organicBreathe {
+  0%, 100% { transform: scale3d(1, 1, 1); }
+  50%      { transform: scale3d(1.06, 1.06, 1); }
+}
+
+.breathe {
+  animation: organicBreathe 6s ease-in-out infinite;
+  will-change: transform;
+}
+
+.breathe-slow {
+  animation: organicBreathe 9s ease-in-out infinite 2.5s;
+  will-change: transform;
+}
+
+/* ── Gentle drift float ────────────────────────────────────────────────── */
+@keyframes gentleDrift {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  33%      { transform: translate3d(8px, -12px, 0); }
+  66%      { transform: translate3d(-6px, 4px, 0); }
+}
+
+.drift-float {
+  animation: gentleDrift 14s ease-in-out infinite;
+  will-change: transform;
+}
+
+.drift-float-alt {
+  animation: gentleDrift 18s ease-in-out infinite reverse 4s;
+  will-change: transform;
+}
+
+/* ── Inter-section divider particles ───────────────────────────────────── */
+.section-particle-field {
+  position: relative;
+  height: 120px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.section-particle-field .particle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.35;
+  will-change: transform;
+}
+
+
+

@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - AI Interview Coach</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dashboard-page">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+                <span>AI Coach</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-page="overview">
+                <i class="fas fa-home"></i>
+                <span>Overview</span>
+            </a>
+            <a href="#" class="nav-item" data-page="practice">
+                <i class="fas fa-microphone"></i>
+                <span>Practice Interview</span>
+            </a>
+            <a href="#" class="nav-item" data-page="sessions">
+                <i class="fas fa-history"></i>
+                <span>Past Sessions</span>
+            </a>
+            <a href="#" class="nav-item" data-page="analytics">
+                <i class="fas fa-chart-bar"></i>
+                <span>Analytics</span>
+            </a>
+            <a href="#" class="nav-item" data-page="library">
+                <i class="fas fa-book"></i>
+                <span>Question Library</span>
+            </a>
+            <a href="#" class="nav-item" data-page="resources">
+                <i class="fas fa-graduation-cap"></i>
+                <span>Resources</span>
+            </a>
+            <a href="#" class="nav-item" data-page="settings">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="upgrade-card">
+                <i class="fas fa-crown"></i>
+                <h4>Upgrade to Pro</h4>
+                <p>Unlock unlimited interviews</p>
+                <button class="btn-primary btn-sm">Upgrade Now</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search questions, topics, or companies...">
+            </div>
+            <div class="top-bar-actions">
+                <div class="api-status-badge" id="apiStatusBadge">
+                    <span class="status-dot"></span>
+                    <span class="status-text" id="apiStatusText">Checking AI Engine...</span>
+                </div>
+                <button class="notification-btn" id="notificationBtn">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+                <div class="user-menu">
+                    <button class="user-btn" id="userMenuBtn">
+                        <div class="user-avatar">JD</div>
+                        <span class="user-name">John Doe</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-menu" id="userDropdown">
+                        <a href="#" onclick="showPage('overview')"><i class="fas fa-user"></i> Profile</a>
+                        <a href="#" onclick="showPage('settings')"><i class="fas fa-cog"></i> Settings</a>
+                        <a href="#" onclick="showPage('resources')"><i class="fas fa-question-circle"></i> Help</a>
+                        <hr>
+                        <a href="index.html" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="page-content">
+            <!-- Overview Page -->
+            <div class="page active" id="overviewPage">
+                <div class="page-header">
+                    <div>
+                        <h1>Welcome back, John! 👋</h1>
+                        <p>Here's your interview preparation progress</p>
+                    </div>
+                    <button class="btn-primary" onclick="startNewInterview()">
+                        <i class="fas fa-plus"></i>
+                        Start New Interview
+                    </button>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card blue">
+                        <div class="stat-icon">
+                            <i class="fas fa-clipboard-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>24</h3>
+                            <p>Completed Interviews</p>
+                        </div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i> 12% this week
+                        </div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="stat-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>8.5/10</h3>
+                            <p>Average Score</p>
+                        </div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i> 0.5 points
+                        </div>
+                    </div>
+                    <div class="stat-card purple">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>12h 30m</h3>
+                            <p>Total Practice Time</p>
+                        </div>
+                        <div class="stat-change neutral">
+                            <i class="fas fa-minus"></i> Same as last week
+                        </div>
+                    </div>
+                    <div class="stat-card orange">
+                        <div class="stat-icon">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>7 Days</h3>
+                            <p>Current Streak</p>
+                        </div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i> Keep it up!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions & Recent Activity -->
+                <div class="content-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Quick Actions</h2>
+                        </div>
+                        <div class="quick-actions">
+                            <button class="action-btn" onclick="quickStartInterview('technical')">
+                                <i class="fas fa-code"></i>
+                                <span>Technical Interview</span>
+                            </button>
+                            <button class="action-btn" onclick="quickStartInterview('behavioral')">
+                                <i class="fas fa-users"></i>
+                                <span>Behavioral Interview</span>
+                            </button>
+                            <button class="action-btn" onclick="quickStartInterview('system-design')">
+                                <i class="fas fa-project-diagram"></i>
+                                <span>System Design</span>
+                            </button>
+                            <button class="action-btn" onclick="quickStartInterview('hr')">
+                                <i class="fas fa-handshake"></i>
+                                <span>HR Round</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Recent Sessions</h2>
+                            <a href="#" class="link">View All</a>
+                        </div>
+                        <div class="session-list">
+                            <div class="session-item">
+                                <div class="session-icon green">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="session-details">
+                                    <h4>Software Engineering - Technical</h4>
+                                    <p>Score: 9.2/10 • 45 minutes ago</p>
+                                </div>
+                                <button class="btn-icon"><i class="fas fa-eye"></i></button>
+                            </div>
+                            <div class="session-item">
+                                <div class="session-icon blue">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="session-details">
+                                    <h4>Data Science - Behavioral</h4>
+                                    <p>Score: 8.5/10 • 2 days ago</p>
+                                </div>
+                                <button class="btn-icon"><i class="fas fa-eye"></i></button>
+                            </div>
+                            <div class="session-item">
+                                <div class="session-icon purple">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="session-details">
+                                    <h4>Product Management - Case Study</h4>
+                                    <p>Score: 7.8/10 • 3 days ago</p>
+                                </div>
+                                <button class="btn-icon"><i class="fas fa-eye"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Chart -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Performance Trend</h2>
+                        <div class="chart-filters">
+                            <button class="filter-btn active">7 Days</button>
+                            <button class="filter-btn">30 Days</button>
+                            <button class="filter-btn">90 Days</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Practice Interview Page -->
+            <div class="page" id="practicePage">
+                <div class="page-header">
+                    <h1>Practice Interview</h1>
+                    <p>Select your preferences and start practicing</p>
+                </div>
+
+                <div class="interview-setup">
+                    <div class="setup-card">
+                        <h2>Setup Your Interview</h2>
+                        
+                        <div class="form-group">
+                            <label>Interview Type</label>
+                            <div class="button-group">
+                                <button class="option-btn active" data-type="technical">
+                                    <i class="fas fa-code"></i>
+                                    Technical
+                                </button>
+                                <button class="option-btn" data-type="behavioral">
+                                    <i class="fas fa-users"></i>
+                                    Behavioral
+                                </button>
+                                <button class="option-btn" data-type="system-design">
+                                    <i class="fas fa-project-diagram"></i>
+                                    System Design
+                                </button>
+                                <button class="option-btn" data-type="hr">
+                                    <i class="fas fa-handshake"></i>
+                                    HR
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="field">Field/Industry</label>
+                            <select id="field" class="form-select">
+                                <option value="">Select Field</option>
+                                <option value="software">Software Engineering</option>
+                                <option value="data-science">Data Science</option>
+                                <option value="product">Product Management</option>
+                                <option value="marketing">Marketing</option>
+                                <option value="sales">Sales</option>
+                                <option value="finance">Finance</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="level">Experience Level</label>
+                            <select id="level" class="form-select">
+                                <option value="">Select Level</option>
+                                <option value="entry">Entry Level (0-2 years)</option>
+                                <option value="mid">Mid Level (2-5 years)</option>
+                                <option value="senior">Senior (5-10 years)</option>
+                                <option value="lead">Lead/Principal (10+ years)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="company">Target Company (Optional)</label>
+                            <select id="company" class="form-select">
+                                <option value="">Any Company</option>
+                                <option value="google">Google</option>
+                                <option value="amazon">Amazon</option>
+                                <option value="microsoft">Microsoft</option>
+                                <option value="meta">Meta</option>
+                                <option value="apple">Apple</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Practice Mode</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="mode" value="text" checked>
+                                    <span class="radio-custom"></span>
+                                    <div class="radio-content">
+                                        <strong>Text Mode</strong>
+                                        <p>Type your answers</p>
+                                    </div>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="mode" value="voice">
+                                    <span class="radio-custom"></span>
+                                    <div class="radio-content">
+                                        <strong>Voice Mode</strong>
+                                        <p>Speak your answers</p>
+                                    </div>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="mode" value="video">
+                                    <span class="radio-custom"></span>
+                                    <div class="radio-content">
+                                        <strong>Video Mode</strong>
+                                        <p>Full video interview</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button class="btn-primary btn-lg btn-block" id="startBtn" onclick="startInterview()">
+                            <i class="fas fa-play"></i>
+                            Start Interview
+                        </button>
+                    </div>
+
+                    <!-- Interview Active Screen -->
+                    <div class="interview-screen" id="interviewScreen" style="display: none;">
+                        <div class="interview-header">
+                            <div class="timer">
+                                <i class="fas fa-clock"></i>
+                                <span id="timer">00:00</span>
+                            </div>
+                            <div class="question-counter">
+                                Question <span id="currentQuestion">1</span> of <span id="totalQuestions">5</span>
+                            </div>
+                            <button class="btn-secondary" onclick="endInterview()">End Interview</button>
+                        </div>
+
+                        <div class="question-card">
+                            <div class="question-header">
+                                <span class="difficulty-badge medium">Medium</span>
+                                <span class="category-badge">Technical</span>
+                            </div>
+                            <h2 id="questionText">Loading question...</h2>
+                            <div class="question-hints">
+                                <button class="hint-btn" onclick="showHint()">
+                                    <i class="fas fa-lightbulb"></i> Show Hint
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="answer-section">
+                            <textarea id="answerBox" placeholder="Type your answer here..." rows="10"></textarea>
+                            
+                            <div class="voice-controls" style="display: none;">
+                                <button class="voice-btn" id="recordBtn">
+                                    <i class="fas fa-microphone"></i>
+                                    Start Recording
+                                </button>
+                                <div class="waveform" id="waveform"></div>
+                            </div>
+
+                            <div class="answer-actions">
+                                <button class="btn-outline" onclick="skipQuestion()">
+                                    <i class="fas fa-forward"></i> Skip
+                                </button>
+                                <button class="btn-primary" id="submitAnswer" onclick="submitAnswer()">
+                                    Submit Answer
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="feedback-section" id="feedbackSection" style="display: none;">
+                            <div class="feedback-card">
+                                <div class="feedback-header">
+                                    <h3>AI Feedback</h3>
+                                    <div class="score-badge">8.5/10</div>
+                                </div>
+                                <div class="feedback-content" id="feedbackContent">
+                                    <!-- AI feedback will be displayed here -->
+                                </div>
+                                <button class="btn-primary" onclick="nextQuestion()">
+                                    Next Question
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Page -->
+            <div class="page" id="analyticsPage">
+                <div class="page-header">
+                    <h1>Performance Analytics</h1>
+                    <p>Track your progress and identify areas for improvement</p>
+                </div>
+
+                <div class="analytics-grid">
+                    <div class="card">
+                        <h3>Score Distribution</h3>
+                        <canvas id="scoreChart"></canvas>
+                    </div>
+                    <div class="card">
+                        <h3>Interview Types</h3>
+                        <canvas id="typeChart"></canvas>
+                    </div>
+                    <div class="card">
+                        <h3>Skills Assessment</h3>
+                        <canvas id="skillsChart"></canvas>
+                    </div>
+                    <div class="card">
+                        <h3>Time Analysis</h3>
+                        <canvas id="timeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sessions Page -->
+            <div class="page" id="sessionsPage">
+                <div class="page-header">
+                    <h1>Past Sessions</h1>
+                    <div class="filter-group">
+                        <select class="form-select" id="sessionTypeFilter">
+                            <option value="all">All Types</option>
+                            <option value="technical">Technical</option>
+                            <option value="behavioral">Behavioral</option>
+                            <option value="system-design">System Design</option>
+                            <option value="hr">HR</option>
+                        </select>
+                        <select class="form-select" id="sessionTimeFilter">
+                            <option value="all">All Time</option>
+                            <option value="7">Last 7 Days</option>
+                            <option value="30">Last 30 Days</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="sessions-grid" id="sessionsGrid">
+                    <!-- Sessions populated via script.js -->
+                </div>
+            </div>
+
+            <!-- Question Library Page -->
+            <div class="page" id="libraryPage">
+                <div class="page-header">
+                    <h1>Question Library</h1>
+                    <div class="search-bar">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="librarySearchInput" placeholder="Search questions by topic, keyword, or concept...">
+                    </div>
+                </div>
+
+                <div class="library-filters" id="libraryFilters">
+                    <button class="filter-chip active" data-category="all">All</button>
+                    <button class="filter-chip" data-category="technical">Technical</button>
+                    <button class="filter-chip" data-category="behavioral">Behavioral</button>
+                    <button class="filter-chip" data-category="system-design">System Design</button>
+                    <button class="filter-chip" data-category="hr">HR</button>
+                </div>
+
+                <div class="question-grid" id="questionGrid">
+                    <!-- Questions populated via script.js -->
+                </div>
+            </div>
+
+            <!-- Resources Page -->
+            <div class="page" id="resourcesPage">
+                <div class="page-header">
+                    <h1>Learning Resources</h1>
+                    <p>Expert guides and tips to excel in interviews</p>
+                </div>
+
+                <div class="resources-grid">
+                    <div class="resource-card">
+                        <div class="resource-icon">📚</div>
+                        <h3>Interview Guides</h3>
+                        <p>Comprehensive guides for different interview types</p>
+                        <a href="#" class="link">Explore Guides →</a>
+                    </div>
+                    <div class="resource-card">
+                        <div class="resource-icon">🎥</div>
+                        <h3>Video Tutorials</h3>
+                        <p>Learn from expert interview coaches</p>
+                        <a href="#" class="link">Watch Videos →</a>
+                    </div>
+                    <div class="resource-card">
+                        <div class="resource-icon">💡</div>
+                        <h3>Tips & Tricks</h3>
+                        <p>Insider tips to ace your interviews</p>
+                        <a href="#" class="link">Read Tips →</a>
+                    </div>
+                    <div class="resource-card">
+                        <div class="resource-icon">📊</div>
+                        <h3>Company Insights</h3>
+                        <p>Learn about interview processes at top companies</p>
+                        <a href="#" class="link">View Insights →</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div class="page" id="settingsPage">
+                <div class="page-header">
+                    <h1>Settings</h1>
+                    <p>Manage your account and preferences</p>
+                </div>
+
+                <div class="settings-grid">
+                    <div class="card">
+                        <h3>Profile Information</h3>
+                        <form class="settings-form">
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" class="form-input" value="John Doe">
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" class="form-input" value="john@example.com">
+                            </div>
+                            <button class="btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <h3>Preferences</h3>
+                        <div class="settings-form">
+                            <div class="setting-item">
+                                <div>
+                                    <h4>Email Notifications</h4>
+                                    <p>Receive email updates about your progress</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div>
+                                    <h4>Voice Feedback</h4>
+                                    <p>Get spoken feedback on your answers</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for Results -->
+    <div class="modal" id="resultsModal">
+        <div class="modal-content large">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <div class="results-container">
+                <div class="results-header">
+                    <i class="fas fa-trophy"></i>
+                    <h2>Interview Complete!</h2>
+                    <p>Great job! Here's your performance summary</p>
+                </div>
+                <div class="overall-score">
+                    <div class="score-circle">
+                        <svg viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="#1e293b" stroke-width="8"/>
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="#38bdf8" stroke-width="8" 
+                                    stroke-dasharray="283" stroke-dashoffset="70" class="score-progress"/>
+                        </svg>
+                        <div class="score-text">8.5<span>/10</span></div>
+                    </div>
+                    <h3>Excellent Performance!</h3>
+                </div>
+                <div class="results-details" id="resultsDetails">
+                    <!-- Detailed results populated dynamically via script.js -->
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-outline" onclick="showPage('sessions'); closeModal();">View All Sessions</button>
+                    <button class="btn-primary" onclick="closeModal(); startNewInterview();">Start Another Interview</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage"></span>
+    </div>
+
+    <!-- Chart.js CDN for Analytics Visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

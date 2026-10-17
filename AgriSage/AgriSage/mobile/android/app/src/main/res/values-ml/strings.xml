@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">അഗ്രി-സേജ്</string>
+    <string name="app_tagline">സ്കേലബിൾ അഗ്രികൾച്ചറൽ ഗൈഡൻസ് എഞ്ചിൻ</string>
+    <string name="nav_home">ഹോം</string>
+    <string name="nav_advisor">അഡ്വൈസർ</string>
+    <string name="nav_fields">പാടങ്ങൾ</string>
+    <string name="nav_weather">കാലാവസ്ഥ</string>
+    <string name="nav_alerts">മുന്നറിയിപ്പുകൾ</string>
+    <string name="nav_profile">പ്രൊഫൈൽ</string>
+    <string name="ask_advisor">ചോദിക്കുക</string>
+    <string name="my_fields">എന്റെ പാടങ്ങൾ</string>
+    <string name="get_started">തുടങ്ങാം</string>
+    <string name="welcome">അഗ്രി-സേജിലേക്ക് സ്വാഗതം</string>
+</resources>

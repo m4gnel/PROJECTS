@@ -1,0 +1,656 @@
+AGRI-SAGE
+SECURITY & COMPLIANCE DOCUMENT
+API Security · Data Privacy · OWASP Checklist · Audit Rules · Privacy Policy Template · Compliance Requirements
+Field
+Detail
+Document
+Security & Compliance v1.0
+Audience
+All developers — every line of code must comply with this document
+Frameworks
+OWASP Mobile Top 10 · OWASP API Security Top 10 · India PDPB 2023
+Enforcement
+Automated checks in CI/CD — build fails on security violations
+Review
+Every new endpoint and agent must be reviewed against this document before merge
+1. SECURITY ARCHITECTURE PRINCIPLES
+⚠ These are not guidelines — they are hard rules. Any code that violates these rules must not be merged. The VSCode AI agent building this project must treat every rule in this document as a non-negotiable constraint.
+1.1 The 10 Hard Security Rules
+Rule
+Statement
+How to Enforce
+SEC-001
+Never store passwords. Use OTP-only authentication.
+No password field in users table. No bcrypt on user passwords. bcrypt used only for OTP hashes.
+SEC-002
+Never hardcode secrets in source code.
+grep CI check: any pattern like API_KEY="..." or secret = "..." with literal value fails build.
+SEC-003
+User input is never trusted as a system instruction.
+All user text is treated as data. Never inserted into SQL strings. Never passed as LLM system prompt.
+SEC-004
+Never expose internal error details to the client.
+All 500 errors return generic message. Error details logged server-side only. Never in API response.
+SEC-005
+Every API endpoint requires authentication except /health and /auth/*.
+FastAPI dependency require_auth injected on every router. Verified in CI by scanning router definitions.
+SEC-006
+Row-Level Security enforced at database level — not only application level.
+PostgreSQL RLS policies applied. Application-level checks are secondary defense only.
+SEC-007
+All file uploads validated for type, size, and content — not just extension.
+MIME type from python-magic library. Size checked before reading. Metadata stripped before storage.
+SEC-008
+LLM output is validated against schema before use. Never trusted raw.
+Explanation agent output parsed as JSON. Invalid JSON triggers retry. Fails to safe fallback after 2 retries.
+SEC-009
+Simulation engine receives only validated typed structs. Never free text.
+SimulationParams Pydantic model validation before any DSSAT call. Schema violation returns 422.
+SEC-010
+All sensitive data encrypted at rest.
+PostgreSQL: pgcrypto for sensitive columns. Android: EncryptedSharedPreferences + encrypted Room database.
+2. AUTHENTICATION & SESSION SECURITY
+2.1 JWT Implementation Requirements
+# JWT signing — backend/services/jwt_service.py
+ALGORITHM = 'HS256'  # Never RS256 without key rotation infrastructure
+ACCESS_TOKEN_EXPIRE_MINUTES = 15   # Short — minimizes exposure window
+REFRESH_TOKEN_EXPIRE_DAYS = 7      # Rotates on every use
+# Token payload — minimum claims only
+def create_access_token(user_id: str, subscription_tier: str) -> str:
+    payload = {
+        'sub': user_id,           # Subject — user UUID only
+        'tier': subscription_tier, # For feature gating
+        'exp': datetime.utcnow() + timedelta(minutes=15),
+        'iat': datetime.utcnow(),
+        'jti': str(uuid4()),      # JWT ID — enables token blacklisting if needed
+    }
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=ALGORITHM)
+# Validation — backend/dependencies.py
+async def require_auth(token: str = Depends(oauth2_scheme), db=Depends(get_db)):
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get('sub')
+        if not user_id:
+            raise HTTPException(401, 'Invalid token')
+        # Set PostgreSQL session variable for RLS
+        await db.execute(f"SET LOCAL app.current_user_id = '{user_id}'")
+        return payload
+    except JWTError:
+        raise HTTPException(401, 'Invalid or expired token')
+2.2 OTP Security
+Requirement
+Implementation
+Why
+OTP is 6 digits
+secrets.randbelow(1000000) zero-padded to 6
+Not predictable from timestamp
+OTP hashed before storage
+bcrypt with cost factor 10
+If DB leaked, OTPs are not exposed
+OTP expires in 5 minutes
+expires_at = now + 300 seconds checked on verify
+Limits attack window
+Max 5 attempts per phone per 10 minutes
+Increment attempts counter, check before verify
+Prevents brute force of 6-digit space
+Used OTP cannot be reused
+used=True set on successful verify, checked before use
+Prevents replay attacks
+OTP session deleted after use or expiry
+Cron job: DELETE FROM otp_sessions WHERE expires_at < NOW()
+Keeps table clean
+Rate limit on send-otp endpoint
+5 requests per phone per 10 minutes at nginx level
+Prevents SMS flooding costs
+2.3 Refresh Token Rotation
+# On every token refresh — backend/api/v1/auth.py
+async def refresh_token(refresh_token: str, db=Depends(get_db)):
+    # 1. Hash the incoming token
+    token_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
+    # 2. Find in DB — must exist, not revoked, not expired
+    record = await db.fetch_one(
+        'SELECT * FROM refresh_tokens WHERE token_hash=:h AND NOT revoked AND expires_at > NOW()',
+        {'h': token_hash}
+    )
+    if not record:
+        raise HTTPException(401, 'Invalid refresh token')
+    # 3. Revoke old token BEFORE issuing new one
+    await db.execute('UPDATE refresh_tokens SET revoked=true WHERE id=:id', {'id': record['id']})
+    # 4. Issue new access + refresh token pair
+    new_access = create_access_token(record['user_id'])
+    new_refresh = create_refresh_token(record['user_id'])
+    return {'access_token': new_access, 'refresh_token': new_refresh}
+3. API SECURITY — OWASP API TOP 10 COMPLIANCE
+OWASP ID
+Risk
+Agri-SAGE Mitigation
+Implementation
+API1
+Broken Object Level Auth
+PostgreSQL RLS enforces row-level ownership at DB level — not app level
+SET LOCAL app.current_user_id in every request; RLS policies on all user tables
+API2
+Broken Authentication
+OTP only, bcrypt hashed, 5-minute expiry, max 5 attempts
+Implemented in auth.py — see Section 2
+API3
+Broken Object Property Auth
+Pydantic response models expose only allowed fields — no SELECT *
+All endpoints return typed Pydantic schemas — DB model fields never exposed directly
+API4
+Unrestricted Resource Consumption
+Rate limiting at nginx + per-user advisory quota enforcement
+nginx: 2r/s on /diagnose; user.advisories_this_month checked before pipeline starts
+API5
+Broken Function Level Auth
+Role check on expert endpoints — regular users cannot access /expert/
+JWT tier claim checked: expert endpoints require tier='expert' or role='expert'
+API6
+Unrestricted Access to Sensitive Business Flows
+Advisory generation rate limited — prevents scraping
+10 advisory requests per user per hour; subscription tier enforcement
+API7
+Server-Side Request Forgery
+No user-controlled URLs fetched by server
+Weather/scheme URLs are hardcoded — no user input ever used as URL
+API8
+Security Misconfiguration
+CORS explicit allowlist, no debug mode in production, no stack traces in responses
+ENVIRONMENT=production disables all debug features; CORS origins from env var list
+API9
+Improper Inventory Management
+All endpoints documented in OpenAPI — no hidden endpoints
+FastAPI auto-generates OpenAPI; internal routes prefixed /internal/ and not in router
+API10
+Unsafe Consumption of APIs
+All external API responses validated before use
+Weather/e-NAM responses parsed through Pydantic models — unexpected fields ignored
+3.1 Input Validation Rules — Every Endpoint
+# All string inputs — backend/api/v1/farms.py example
+class FarmCreateRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=200, strip_whitespace=True)
+    location_lat: float = Field(..., ge=-90, le=90)
+    location_lon: float = Field(..., ge=-180, le=180)
+    area_ha: Optional[float] = Field(None, gt=0, le=10000)
+    @field_validator('name')
+    def sanitize_name(cls, v):
+        # Strip HTML tags and control characters
+        import re
+        v = re.sub(r'<[^>]+>', '', v)          # No HTML
+        v = re.sub(r'[\x00-\x1f\x7f]', '', v) # No control chars
+        return v.strip()
+# Observation description — prevent prompt injection
+class ObservationRequest(BaseModel):
+    problem_description: Optional[str] = Field(None, max_length=2000)
+    @field_validator('problem_description')
+    def prevent_injection(cls, v):
+        if v is None: return v
+        # Log if injection-like patterns detected
+        import re
+        if re.search(r'(ignore previous|system:|<\|im_start\|>|\[INST\])', v, re.IGNORECASE):
+            logger.warning('Possible prompt injection attempt in observation description')
+        # Still store as data — just log. Never pass raw to LLM system prompt.
+        return v[:2000]
+3.2 Rate Limiting Configuration
+# nginx.conf — production rate limiting
+http {
+    # Rate limit zones
+    limit_req_zone $binary_remote_addr zone=general:10m rate=20r/s;
+    limit_req_zone $binary_remote_addr zone=diagnose:10m rate=2r/s;
+    limit_req_zone $binary_remote_addr zone=otp:10m rate=5r/10m;
+    limit_req_zone $binary_remote_addr zone=auth:10m rate=10r/s;
+    server {
+        # All API routes
+        location /api/v1/ {
+            limit_req zone=general burst=40 nodelay;
+            limit_req_status 429;
+        }
+        # Advisory generation — expensive, strict limit
+        location /api/v1/diagnose {
+            limit_req zone=diagnose burst=5 nodelay;
+            limit_req_status 429;
+        }
+        # OTP sending — prevent SMS bill abuse
+        location /api/v1/auth/send-otp {
+            limit_req zone=otp burst=2 nodelay;
+            limit_req_status 429;
+        }
+    }
+}
+4. FILE UPLOAD SECURITY
+4.1 Complete Image Upload Security Pipeline
+# backend/services/image_security.py
+import magic          # python-magic — MIME from file content, not extension
+import subprocess     # ExifTool for metadata strip
+from PIL import Image
+import io
+ALLOWED_MIME_TYPES = {'image/jpeg', 'image/png', 'image/webp'}
+MAX_SIZE_BYTES = 5 * 1024 * 1024  # 5MB
+MAX_DIMENSION_PX = 1200
+async def process_uploaded_image(file_bytes: bytes, original_filename: str) -> bytes:
+    # 1. Size check BEFORE reading into memory fully
+    if len(file_bytes) > MAX_SIZE_BYTES:
+        raise ValueError(f'Image too large: {len(file_bytes)} bytes. Max: {MAX_SIZE_BYTES}')
+    # 2. MIME check from content — NOT from filename/extension
+    mime = magic.from_buffer(file_bytes[:2048], mime=True)
+    if mime not in ALLOWED_MIME_TYPES:
+        raise ValueError(f'File type not allowed: {mime}')
+    # 3. Open with Pillow — verifies it is a real image
+    try:
+        img = Image.open(io.BytesIO(file_bytes))
+        img.verify()  # Detect truncated/corrupt images
+        img = Image.open(io.BytesIO(file_bytes))  # Reopen after verify
+    except Exception as e:
+        raise ValueError(f'Invalid image: {e}')
+    # 4. Strip ALL EXIF metadata — protects farmer location privacy
+    # Create new image without metadata
+    clean = Image.new(img.mode, img.size)
+    clean.putdata(list(img.getdata()))
+    # 5. Resize to max dimension while preserving aspect ratio
+    if max(clean.size) > MAX_DIMENSION_PX:
+        clean.thumbnail((MAX_DIMENSION_PX, MAX_DIMENSION_PX), Image.LANCZOS)
+    # 6. Re-encode as JPEG (normalizes format, removes any embedded scripts)
+    output = io.BytesIO()
+    clean.save(output, format='JPEG', quality=85, optimize=True)
+    return output.getvalue()
+5. DATA PRIVACY & INDIA PDPB 2023 COMPLIANCE
+5.1 Data Classification
+Data Type
+Classification
+Storage
+Retention
+Farmer Control
+Phone number
+Personal — PII
+Users table — required for auth
+Account lifetime
+Can delete account
+GPS coordinates
+Personal — Sensitive PII
+farms table — encrypted column
+Account lifetime
+Can delete farm
+Crop photos
+Personal
+Cloudflare R2 — encrypted at rest
+2 years then auto-delete
+Can delete per image
+Diagnosis results
+Personal
+advisories table
+3 years for research
+Can delete observation
+Farm economics data
+Sensitive Personal
+interventions/outcomes tables
+Account lifetime
+Included in data export
+Voice recordings
+Personal
+R2 — deleted after transcription
+Not retained after transcription
+Auto-deleted
+Market prices
+Non-personal
+market_prices table — public data
+Indefinite
+N/A
+Government schemes
+Non-personal
+schemes table — public data
+Until scheme expires
+N/A
+Aggregated analytics
+Anonymized
+Separate analytics DB
+Indefinite
+Cannot be linked to individual
+5.2 Data Minimization Rules — What to Collect and What NOT to
+Data Point
+Collect?
+Reason
+Phone number
+YES
+Required for OTP authentication — no alternative
+Name
+OPTIONAL
+Not required for advisory — collected only if farmer provides
+GPS exact coordinates
+ONLY for weather/schemes
+Rounded to 2dp for any analytics — never exact in logs
+Device IMEI / device ID
+NO
+Not needed — not collected
+App usage analytics
+Minimal only
+Advisory count, session duration — no screen-level tracking
+Farmer financial income
+NO
+Not collected — we estimate cost/revenue from crop data only
+Aadhaar / PAN
+NO
+Not needed, not collected, not stored
+Family information
+NO
+Not needed, not collected
+Photos of farmer / face
+NO
+Only crop photos — if face detected in image, warn and request re-capture
+Location history
+NO
+Current farm location only — no movement tracking
+5.3 User Rights Implementation
+Right
+Endpoint
+Implementation
+Timeline
+Right to access all data
+GET /api/v1/users/my-data
+Returns all user data as JSON export — all tables joined on user_id
+Immediate
+Right to delete account
+DELETE /api/v1/users/me
+Soft delete user, queue hard delete of all data in 30 days, revoke all tokens
+Confirmed in 30 days
+Right to delete specific images
+DELETE /api/v1/images/{id}
+Deletes from R2 and DB — confirms deletion in response
+Immediate
+Right to correct data
+PUT /api/v1/users/profile
+Update name, language, location
+Immediate
+Right to data portability
+GET /api/v1/users/export
+ZIP file: JSON of all farm data + image links
+Generated within 24 hours
+Right to know what we collect
+Public privacy policy page
+All data types listed with purpose and retention period
+Static page — always accessible
+5.4 Privacy Policy Template
+Deploy this at: https://yourdomain.in/privacy — required for Google Play Store submission.
+AGRI-SAGE PRIVACY POLICY
+Last updated: [DATE]
+1. WHO WE ARE
+Agri-SAGE is operated by [YOUR NAME/COMPANY], Thiruvananthapuram, Kerala, India.
+Contact: privacy@[yourdomain].in
+2. WHAT WE COLLECT
+- Phone number: required to create your account via OTP verification
+- Farm location: district and state level — used to provide relevant weather and scheme information
+- Crop photos: analyzed for disease/pest detection — stored securely in encrypted storage
+- Crop and farming information: planting dates, interventions, outcomes — used to improve your advisory
+- Device information: Android version, device model — used for app compatibility only
+3. WHAT WE DO NOT COLLECT
+We do not collect: your Aadhaar, PAN, income, biometric data, precise GPS history,
+family information, or any data not listed above.
+4. HOW WE USE YOUR DATA
+- To generate agricultural advisories specific to your farm, crop, and location
+- To send you relevant alerts and morning briefings
+- To match you with applicable government schemes
+- To improve our AI models using anonymized, aggregated data only
+5. DATA SHARING
+We do not sell your data. We do not share personal data with advertisers.
+We share data only with: cloud storage providers (Cloudflare) under data processing agreements.
+6. YOUR RIGHTS
+You can: access all your data, correct it, delete it, or export it.
+Contact us at privacy@[yourdomain].in or use the in-app 'My Data' option.
+7. DATA RETENTION
+Account data: retained while account is active + 30 days after deletion request.
+Crop photos: auto-deleted after 2 years. Voice recordings: deleted immediately after transcription.
+8. SECURITY
+All data encrypted in transit (TLS 1.3) and at rest. Passwords are not stored — we use OTP only.
+9. CHILDREN
+Agri-SAGE is not intended for users under 18. We do not knowingly collect data from minors.
+10. CHANGES
+We will notify you in-app of material changes to this policy at least 7 days before they take effect.
+6. ANDROID SECURITY REQUIREMENTS
+6.1 OWASP Mobile Top 10 Compliance
+OWASP M
+Risk
+Agri-SAGE Implementation
+M1 Improper Platform Usage
+Misuse of Android APIs
+Use EncryptedSharedPreferences for tokens — never plain SharedPreferences. Use FileProvider for image sharing.
+M2 Insecure Data Storage
+Data stored in plain text
+EncryptedSharedPreferences for JWT tokens. Encrypted Room database using SQLCipher. Images in app-private directory.
+M3 Insecure Communication
+HTTP instead of HTTPS
+Network security config: cleartextTrafficPermitted=false. Certificate pinning for agrisage API domain.
+M4 Insecure Authentication
+Weak auth
+OTP + JWT only. Biometric lock option for app open (optional). Tokens stored in EncryptedSharedPreferences.
+M5 Insufficient Crypto
+Weak encryption
+AES-256-GCM for local storage. TLS 1.3 minimum for network. No MD5, no SHA-1.
+M6 Insecure Auth
+Auth bypass
+JWT validated on every API call. Expired token triggers re-auth — not silent refresh to protect user.
+M7 Poor Code Quality
+SQL injection in local DB
+Room ORM used — no raw SQL string construction. Parameterized queries only.
+M8 Code Tampering
+Rooted device bypass
+ProGuard/R8 obfuscation. SafetyNet/Play Integrity API check on first launch — warn if device rooted.
+M9 Reverse Engineering
+API key extraction
+No API keys in APK. All keys stored server-side. R2 keys never in mobile code.
+M10 Extraneous Functionality
+Debug code in production
+BuildConfig.DEBUG gates all debug features. No debug endpoints in production build. Logs disabled in release build.
+6.2 Android Security Configuration Files
+<!-- res/xml/network_security_config.xml -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <!-- Certificate pinning for production API -->
+    <domain-config>
+        <domain includeSubdomains="true">api.agrisage.in</domain>
+        <pin-set expiration="2027-01-01">
+            <!-- Primary pin: SHA256 of your server certificate public key -->
+            <pin digest="SHA-256">REPLACE_WITH_ACTUAL_PIN=</pin>
+            <!-- Backup pin: SHA256 of CA certificate -->
+            <pin digest="SHA-256">REPLACE_WITH_BACKUP_PIN=</pin>
+        </pin-set>
+    </domain-config>
+</network-security-config>
+<!-- AndroidManifest.xml additions -->
+<application
+    android:networkSecurityConfig="@xml/network_security_config"
+    android:allowBackup="false"
+    android:debuggable="false"
+    android:usesCleartextTraffic="false">
+7. DATABASE SECURITY
+7.1 PostgreSQL Hardening
+-- Create application user with minimum required privileges
+CREATE USER agrisage_app WITH PASSWORD 'strong_random_password';
+GRANT CONNECT ON DATABASE agrisage TO agrisage_app;
+GRANT USAGE ON SCHEMA public TO agrisage_app;
+-- Grant only what is needed — no superuser, no createdb
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO agrisage_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO agrisage_app;
+-- Create read-only user for analytics/reporting
+CREATE USER agrisage_readonly WITH PASSWORD 'another_strong_password';
+GRANT CONNECT ON DATABASE agrisage TO agrisage_readonly;
+GRANT USAGE ON SCHEMA public TO agrisage_readonly;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO agrisage_readonly;
+-- Encrypt sensitive columns using pgcrypto
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+-- Farm locations stored encrypted (farmer privacy)
+-- Use pgcrypto encrypt/decrypt functions in application layer
+-- Column type: BYTEA for encrypted values
+-- Application encrypts: pgp_sym_encrypt(lat::text, :encryption_key)
+-- Application decrypts: pgp_sym_decrypt(location_encrypted, :encryption_key)::float
+7.2 Connection Security
+# SQLAlchemy connection — backend/database.py
+engine = create_async_engine(
+    settings.DATABASE_URL,
+    pool_size=10,           # Max 10 connections
+    max_overflow=5,         # Allow 5 overflow in bursts
+    pool_timeout=30,        # Wait max 30s for connection
+    pool_recycle=1800,      # Recycle connections every 30 min
+    echo=settings.ENVIRONMENT == 'development',  # Log SQL only in dev
+    connect_args={
+        'ssl': 'require',   # TLS for all DB connections in production
+        'server_settings': {
+            'application_name': 'agrisage_backend',
+        }
+    }
+)
+8. SECRET MANAGEMENT
+8.1 Secret Rotation Schedule
+Secret
+Rotation Frequency
+Method
+Impact of Rotation
+SECRET_KEY (JWT signing)
+Every 90 days
+Generate new: python -c "import secrets; print(secrets.token_hex(32))"
+All existing JWTs invalidated — users must re-login
+DATABASE_URL password
+Every 90 days
+PostgreSQL ALTER USER ... PASSWORD — update env var — restart app
+Brief downtime during restart
+R2_ACCESS_KEY
+Every 90 days
+Cloudflare dashboard — create new key, update env, delete old
+Brief downtime during restart
+OTP_PROVIDER_KEY
+Every 6 months
+MSG91 dashboard — new API key
+No user impact
+BHASHINI_API_KEY
+As directed by Bhashini
+Bhashini portal
+Voice feature briefly unavailable
+FCM_KEY
+Only if compromised
+Firebase console
+Notifications temporarily disrupted
+8.2 .env File Rules
+.env file NEVER committed to git — verify .gitignore contains .env before first commit
+.env.example has all keys with empty values or placeholder descriptions — always kept updated
+Production secrets stored in Oracle Cloud Vault (free tier) or environment variables set directly on server
+Never log environment variable values — structlog config must exclude env vars
+Local dev uses .env — staging and production use server environment variables directly
+# Generate all secrets in one command — run once during setup
+python3 -c "
+import secrets
+print(f'SECRET_KEY={secrets.token_hex(32)}')
+print(f'DB_PASSWORD={secrets.token_urlsafe(24)}')
+print(f'ENCRYPTION_KEY={secrets.token_hex(32)}')
+"
+9. AUDIT LOGGING
+9.1 What Must Be Logged
+Event
+Required Fields
+Retention
+Reason
+Advisory generated
+user_id, observation_id, advisory_id, model_version, generation_ms, timestamp
+3 years
+Traceability — explain any advisory at any time
+Advisory marked unsafe by Critic
+user_id, observation_id, blocked_reason, timestamp
+5 years
+Safety audit trail
+Authentication event (login/OTP)
+phone_hash (not plain), ip_address, success/fail, timestamp
+1 year
+Security monitoring
+Data export requested
+user_id, timestamp, ip_address
+3 years
+Privacy compliance
+Account deletion requested
+user_id, timestamp, scheduled_deletion_date
+7 years
+Legal requirement
+Image uploaded
+user_id, image_id, mime_type, size_bytes, quality_score, timestamp
+3 years
+Debugging and safety
+Scheme eligibility assessed
+user_id, scheme_id, eligibility_score, timestamp
+3 years
+Compliance — never claim eligibility wrongly
+Expert review submitted
+expert_id, advisory_id, verdict, timestamp
+5 years
+Model improvement trail
+Payment event
+user_id, amount, plan, razorpay_order_id, success/fail, timestamp
+7 years
+Financial compliance
+Security event (rate limit, injection attempt)
+ip_address, endpoint, pattern_detected, timestamp
+2 years
+Security monitoring
+9.2 Structlog Configuration
+# backend/logging_config.py
+import structlog
+def configure_logging():
+    structlog.configure(
+        processors=[
+            structlog.contextvars.merge_contextvars,
+            structlog.processors.add_log_level,
+            structlog.processors.TimeStamper(fmt='iso'),
+            # CRITICAL: Never log sensitive values
+            structlog.processors.ExceptionRenderer(),
+            structlog.processors.JSONRenderer(),  # JSON for log aggregation
+        ],
+        wrapper_class=structlog.make_filtering_bound_logger(logging.INFO),
+    )
+# Usage — every advisory generation
+logger = structlog.get_logger()
+await logger.ainfo('advisory_generated',
+    user_id=str(user_id),    # UUID — safe to log
+    advisory_id=advisory_id,
+    model_version=settings.MODEL_VERSION,
+    generation_ms=elapsed_ms,
+    confidence_state=advisory.confidence_state,
+    # NEVER LOG: phone numbers, GPS coords, image content, OTPs
+)
+10. CI/CD SECURITY GATES
+10.1 Automated Security Checks in GitHub Actions
+# .github/workflows/security.yml
+name: Security Gates
+on: [push, pull_request]
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for hardcoded secrets
+        run: |
+          # Fail if any pattern like API_KEY="actual_value" found
+          if grep -rn --include='*.py' --include='*.kt' --include='*.js' \
+             -E '(SECRET_KEY|API_KEY|PASSWORD|TOKEN)\s*=\s*"[a-zA-Z0-9+/]{20,}"' .; then
+            echo 'FAIL: Hardcoded secret detected'
+            exit 1
+          fi
+      - name: Dependency vulnerability scan
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt --fail-on CRITICAL
+      - name: Verify .env not committed
+        run: |
+          if git ls-files --error-unmatch .env 2>/dev/null; then
+            echo 'FAIL: .env file is tracked by git'
+            exit 1
+          fi
+      - name: Check RLS enabled on user tables
+        run: |
+          # Connect to test DB and verify RLS
+          python3 scripts/verify_rls.py
+      - name: SAST scan
+        run: |
+          pip install bandit
+          bandit -r backend/ -ll --exit-zero  # Report only, don't block on LOW
+          bandit -r backend/ -lll             # Block on HIGH severity
+AGRI-SAGE SECURITY & COMPLIANCE v1.0
+Every rule in this document is a hard requirement — not a guideline

@@ -1,0 +1,237 @@
+-- lib/main.dart --
+import 'package:flutter/material.dart';
+import 'config/app_config.dart';
+import 'screens/splash_screen.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: AppConfig.appName,
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: const SplashScreen(),
+    );
+  }
+}
+
+-- lib/config/app_config.dart --
+class AppConfig {
+  static const String appName = 'Device Test Suite';
+  static const String baseUrl = 'https://devicetestsuite.incai.in/';
+  static const String appVersion = '1.0.0';
+  static const String environment = 'Development';
+}
+
+-- lib/screens/splash_screen.dart --
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import '../config/app_config.dart';
+import 'webview_screen.dart';
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({Key? key}) : super(key: key);
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Timer(const Duration(seconds: 3), () {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const WebViewScreen()),
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const FlutterLogo(size: 96),
+            const SizedBox(height: 16),
+            Text(AppConfig.appName, style: Theme.of(context).textTheme.headlineLarge),
+            const SizedBox(height: 8),
+            const Text('Version ${AppConfig.appVersion}'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+-- lib/screens/webview_screen.dart --
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import '../config/app_config.dart';
+import '../widgets/loading_widget.dart';
+import '../widgets/error_widget.dart';
+
+class WebViewScreen extends StatefulWidget {
+  const WebViewScreen({Key? key}) : super(key: key);
+
+  @override
+  State<WebViewScreen> createState() => _WebViewScreenState();
+}
+
+class _WebViewScreenState extends State<WebViewScreen> {
+  late final WebViewController _controller;
+  bool _isLoading = true;
+  bool _hasError = false;
+  String _platform = 'Unknown';
+  String _version = AppConfig.appVersion;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0x00000000))
+      ..setNavigationDelegate(NavigationDelegate(
+        onPageStarted: (_) => setState(() { _isLoading = true; _hasError = false; }),
+        onPageFinished: (_) => setState(() { _isLoading = false; }),
+        onWebResourceError: (_) => setState(() { _hasError = true; _isLoading = false; }),
+      ))
+      ..loadRequest(Uri.parse(AppConfig.baseUrl));
+
+    _initDeviceInfo();
+  }
+
+  Future<void> _initDeviceInfo() async {
+    setState(() {
+      _platform = Platform.isAndroid ? 'Android' : Platform.isIOS ? 'iOS' : Platform.operatingSystem;
+      _version = AppConfig.appVersion;
+    });
+  }
+
+  void _reload() {
+    setState(() { _isLoading = true; _hasError = false; });
+    _controller.reload();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(AppConfig.appName),
+        actions: [
+          IconButton(onPressed: _reload, icon: const Icon(Icons.refresh)),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(22),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Text('Platform: $_platform    Version: $_version    Env: ${AppConfig.environment}', style: const TextStyle(fontSize: 12)),
+          ),
+        ),
+      ),
+      body: Stack(
+        children: [
+          WebViewWidget(controller: _controller),
+          if (_isLoading) const Positioned.fill(child: LoadingWidget()),
+          if (_hasError) Positioned.fill(child: AppErrorWidget(onRetry: _reload)),
+        ],
+      ),
+    );
+  }
+}
+
+-- lib/widgets/loading_widget.dart --
+import 'package:flutter/material.dart';
+
+class LoadingWidget extends StatelessWidget {
+  final String? message;
+  const LoadingWidget({Key? key, this.message}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: 12),
+          Text(message ?? 'Loading...'),
+        ],
+      ),
+    );
+  }
+}
+
+-- lib/widgets/error_widget.dart --
+import 'package:flutter/material.dart';
+
+class AppErrorWidget extends StatelessWidget {
+  final String title;
+  final String message;
+  final VoidCallback onRetry;
+
+  const AppErrorWidget({
+    Key? key,
+    this.title = 'Unable to load application',
+    this.message = 'Please check your internet connection.',
+    required this.onRetry,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, size: 56, color: Colors.red.shade700),
+            const SizedBox(height: 12),
+            Text(title, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(message, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+-- pubspec.yaml --
+name: mobile_container
+description: A minimal Flutter WebView mobile container for Device Test Suite.
+publish_to: 'none'
+version: 1.0.0+1
+environment:
+  sdk: '>=2.18.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  webview_flutter: ^4.2.1
+  # removed package_info_plus to avoid Android build namespace issues; use AppConfig.appVersion
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
