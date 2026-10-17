@@ -60,8 +60,7 @@ AgriSage/
 │   ├── docs/                  # Full PRD, TRD, Schema & Security specifications
 │   ├── docker-compose.yml     # Local orchestration configuration
 │   └── requirements.txt       # Backend dependencies
-├── AgriSage_document_files/   # System documentation, PRD and architecture artifacts
-├── docs_text/                 # Extracted text references and agronomy standards
+├── docs_text/                 # Extracted agronomy and system reference standards
 ├── adapters/                  # Integration adapters
 ├── scripts/                   # Utility and diagnostic scripts
 ├── screenshots/               # Application UI and architecture screenshots
