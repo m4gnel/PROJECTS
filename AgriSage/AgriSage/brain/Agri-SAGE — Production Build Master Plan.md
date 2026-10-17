@@ -485,7 +485,7 @@ Demo Prep Sprint
 
 ## 🌾 Start Right Now
 
-Open Cline in VS Code. Paste **Prompt #1** to create your brain/ folder. Then register your free API keys. The entire system is buildable in 8 weeks with zero cost. Kerala farmers are waiting.
+Configure your local environment and API keys in `.env` to launch the Agri-SAGE backend and agent orchestration services. The entire system is buildable in 8 weeks with zero cost. Kerala farmers are waiting.
 
 $ git clone agrisage-repo\
 $ cd agrisage\

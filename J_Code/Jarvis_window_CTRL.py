@@ -28,6 +28,8 @@ sys.stdout.reconfigure(encoding='utf-8')
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+_local_appdata = os.environ.get("LOCALAPPDATA", "")
+
 # App command map
 APP_MAPPINGS = {
     "notepad": "notepad",
@@ -38,8 +40,8 @@ APP_MAPPINGS = {
     "control panel": "control",
     "settings": "start ms-settings:",
     "paint": "mspaint",
-    "vs code": "C:\\Users\\gaura\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
-    "postman": "C:\\Users\\gaura\\AppData\\Local\\Postman\\Postman.exe"
+    "vs code": os.path.join(_local_appdata, "Programs", "Microsoft VS Code", "Code.exe") if _local_appdata else "code",
+    "postman": os.path.join(_local_appdata, "Postman", "Postman.exe") if _local_appdata else "postman"
 }
 
 # -------------------------

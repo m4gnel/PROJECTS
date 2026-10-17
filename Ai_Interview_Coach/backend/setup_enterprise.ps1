@@ -9,7 +9,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$ProjectPath = "D:\ASIET\Projects\ai_coach_demo\backend"
+$ProjectPath = $PSScriptRoot
 
 function Write-ColorOutput($ForegroundColor) {
     $fc = $host.UI.RawUI.ForegroundColor

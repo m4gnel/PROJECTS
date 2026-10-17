@@ -32,7 +32,7 @@
 
 ```bash
 # Navigate to your backend folder
-cd D:\ASIET\Projects\ai_coach_demo\backend
+cd backend
 
 # Backup current database
 copy interview_coach.db interview_coach_backup_$(date +%Y%m%d).db

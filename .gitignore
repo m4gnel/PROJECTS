@@ -19,7 +19,7 @@
 **/.git_subrepo/
 .git_subrepo/
 
-# --- Local Scripts & Scratch Files (Keep Local, Exclude from GitHub) ---
+# --- Local Scripts, Private Credentials & Scratch Files ---
 *.bat
 !**/gradlew.bat
 *.cmd
@@ -30,6 +30,68 @@ gitignore.txt
 VIDEO_LAZY_TERMINAL
 video/kk
 /kk
+google-services.json
+!**/google-services.json.example
+
+# --- Internal AI Agent Prompts, Scaffolding & IDE Tools ---
+.agent/
+**/.agent/
+.agents/
+**/.agents/
+.gemini/
+**/.gemini/
+.gsd/
+**/.gsd/
+.playwright-mcp/
+**/.playwright-mcp/
+.opencode/
+**/.opencode/
+*MASTER_AGENT_PROMPT*
+*COPILOT*PROMPT*
+*COPILOT_PROMPTS*
+COPILOT_PROMPTS_ALL_PARTS/
+*master build in prompts*
+*AGRISAGE_MASTER_BUILD_PROMPTS*
+AgriSage/AgriSage/Prompts/
+AgriSage/AgriSage/master build in prompts/
+AgriSage/adapters/
+AgriSage/GSD-STYLE.md
+AgriSage/PROJECT_RULES.md
+AGENTS.md
+CLAUDE.md
+*AntiGravtiy Award Winning Website*
+
+# --- Internal Delivery Manifests, Coursework Dumps & Audit Reports ---
+docs_text/
+ai_interview_coach_docx/
+AgriSage/AgriSage/docs/
+AgriSage/AgriSage/brain/05_AGENT_PROMPTS.md
+AgriSage/AgriSage/brain/06_LLM_PROMPTS.md
+AgriSage/AgriSage/brain/AGRISAGE_MASTER_BUILD_PROMPTS.md
+AgriSage/AgriSage/brain/master build in prompts.zip
+*CHANGES_REPORT.md
+*GITHUB_PUSH_COMPLETION.md
+*GITHUB_UPLOAD_COMPLETE.md
+*PROJECT_COMPLETION_STATUS.md
+*COMPLETE_PROJECT_SUMMARY.md
+*FINAL_DEPLOYMENT_SUMMARY.md
+*INSTALLATION_DEPLOYMENT_CHECKLIST.md
+*DELIVERY_MANIFEST.md
+*FILES_MANIFEST.md
+*COMPLETE_AUDIT_SUMMARY.txt
+*DOCUMENTATION_INDEX.md
+*SRS_COMPLETION_REPORT.md
+*FINAL_AUDIT_CERTIFICATION*
+*TESTING_PHASE*
+*PROJECT_REPORT.md
+*COLOR_SCHEME_UPDATE.md
+*GITHUB_SETUP.md
+flutter-mobile_container/DOCUMENTATION.md
+flutter-mobile_container/MASTER_SETUP_GUIDE.md
+flutter-mobile_container/QUICK_START.md
+ngo_volunteer_app/QUICK_START.md
+*_old.py
+*_new.tsx
 
 # --- Python & Virtual Environments ---
 __pycache__/
