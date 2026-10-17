@@ -81,27 +81,6 @@ This repository enforces strict enterprise security guidelines:
 
 ---
 
-## 🚀 Pushing to GitHub
-
-To push all 9 projects into your single GitHub repository (e.g., `projects`):
-
-```powershell
-# 1. Initialize root repository
-git init
-
-# 2. Add remote (replace YOUR_USERNAME and REPO_NAME)
-git remote add origin https://github.com/YOUR_USERNAME/projects.git
-
-# 3. Stage all files (ensuring submodules are handled cleanly)
-git add .
-
-# 4. Commit all 9 projects
-git commit -m "feat: initial commit of multi-project engineering portfolio"
-
-# 5. Set main branch and push
-git branch -M main
-git push -u origin main
-```
 
 ---
 
