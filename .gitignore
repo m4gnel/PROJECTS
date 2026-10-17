@@ -19,6 +19,18 @@
 **/.git_subrepo/
 .git_subrepo/
 
+# --- Local Scripts & Scratch Files (Keep Local, Exclude from GitHub) ---
+*.bat
+!**/gradlew.bat
+*.cmd
+bat_output.txt
+all_docs_extracted.txt
+SOURCE_CODE.txt
+gitignore.txt
+VIDEO_LAZY_TERMINAL
+video/kk
+/kk
+
 # --- Python & Virtual Environments ---
 __pycache__/
 *.py[cod]

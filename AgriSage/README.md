@@ -64,10 +64,24 @@ AgriSage/
 ├── docs_text/                 # Extracted text references and agronomy standards
 ├── adapters/                  # Integration adapters
 ├── scripts/                   # Utility and diagnostic scripts
-├── Launch_AgriSage_App.bat    # Emulator launcher script
+├── screenshots/               # Application UI and architecture screenshots
 ├── PROJECT_RULES.md           # Engineering principles & coding standards
 └── README.md                  # Root documentation
 ```
+
+---
+
+## 🖼️ Application Interface & System Previews
+
+<div align="center">
+  <img src="screenshots/hero_section_cleaned.png" alt="AgriSage Hero Banner" width="90%" />
+</div>
+
+<br/>
+
+| Disease Diagnosis & Advisory | Microclimate & Weather Forecast | Agronomist Expert Triage |
+| :---: | :---: | :---: |
+| <img src="screenshots/screen_advisory_result2.png" width="280" /> | <img src="screenshots/screen_weather.png" width="280" /> | <img src="screenshots/sandbox_view.png" width="280" /> |
 
 ---
 
