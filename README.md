@@ -81,8 +81,5 @@ This repository enforces strict enterprise security guidelines:
 
 ---
 
-
----
-
 ## 📄 License
 This repository is licensed under the [MIT License](./LICENSE). Individual projects may also contain domain-specific open-source licenses as documented in their subdirectories.
