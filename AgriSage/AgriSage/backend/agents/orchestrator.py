@@ -14,7 +14,7 @@ from backend.agents.critic import CriticAgent
 from backend.agents.scheme import SchemeAgent
 from backend.agents.simulation import SimulationAgent
 from backend.agents.decision import DecisionAgent
-from backend.agents.explanation import ExplanationAgent
+from backend.agents.explanation import ExplanationAgent, SAFE_FALLBACK
 
 # Instantiate agent singletons
 intake_agent = IntakeAgent()
@@ -59,7 +59,6 @@ async def knowledge_node(state: AgriSAGEState) -> dict:
 async def critic_node(state: AgriSAGEState) -> dict:
     res = await critic_agent.run(state)
     conf_st = res.get("confidence_state") or (res.get("critic_result") or {}).get("confidence_state")
-    print(f"[DEBUG critic_node] conf_st = {conf_st}")
     return {
         "critic_result": res.get("critic_result"),
         "confidence_state": conf_st or "CONFIRMED",
@@ -161,7 +160,24 @@ async def run_advisory_pipeline(initial_state: AgriSAGEState, thread_id: str) ->
         initial_state.update(res)
         return initial_state
     except asyncio.TimeoutError:
-        initial_state["errors"] = initial_state.get("errors", []) + ["Pipeline timeout after 10s"]
+        # Timeouts must return a safe, schema-complete advisory rather than
+        # leaking the partially processed input state to API callers.
+        initial_state["confidence_state"] = "INSUFFICIENT_DATA"
+        initial_state["critic_result"] = {
+            "confidence_state": "INSUFFICIENT_DATA",
+            "confidence_score": 0.0,
+            "conflicts": [],
+            "safe_to_act": False,
+            "run_simulation": False,
+        }
+        initial_state["advisory"] = {
+            **SAFE_FALLBACK,
+            "recommended_action": dict(SAFE_FALLBACK["recommended_action"]),
+            "evidence_summary": list(SAFE_FALLBACK["evidence_summary"]),
+            "what_would_change_this": list(SAFE_FALLBACK["what_would_change_this"]),
+            "insufficient_data_message": "Advisory generation timed out. No chemical treatment is recommended until more evidence is available.",
+        }
+        initial_state["errors"] = initial_state.get("errors", []) + ["Pipeline timeout after 15s"]
         initial_state["generation_ms"] = -1
         return initial_state
 

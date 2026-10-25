@@ -37,10 +37,10 @@ class SoilService:
                 try:
                     with open(p, "r", encoding="utf-8") as f:
                         self._data = json.load(f)
-                    logger.info("loaded_kerala_soil_data", count=len(self._data), path=str(p))
+                    logger.info("loaded_kerala_soil_data: count=%s path=%s", len(self._data), p)
                     return
                 except Exception as e:
-                    logger.warning("error_reading_kerala_soil_data", path=str(p), error=str(e))
+                    logger.warning("error_reading_kerala_soil_data: path=%s error=%s", p, e)
 
         logger.warning("kerala_soil_data_json_not_found")
 

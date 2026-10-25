@@ -12,4 +12,6 @@
     <string name="my_fields">എന്റെ പാടങ്ങൾ</string>
     <string name="get_started">തുടങ്ങാം</string>
     <string name="welcome">അഗ്രി-സേജിലേക്ക് സ്വാഗതം</string>
+    <string name="notification_channel_name">കൃഷിയിട അറിയിപ്പുകൾ</string>
+    <string name="notification_channel_description">അഗ്രി-സേജിൽ നിന്നുള്ള കാലാവസ്ഥ, കീട, കൃഷിയിട അറിയിപ്പുകൾ</string>
 </resources>

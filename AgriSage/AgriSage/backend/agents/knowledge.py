@@ -1,6 +1,6 @@
-from typing import Dict, Any, List
 from backend.agents.state import AgriSAGEState
 from backend.services.embedding_service import embed_service
+from backend.config import settings
 
 
 class KnowledgeAgent:
@@ -16,30 +16,22 @@ class KnowledgeAgent:
 
         query_text = f"{crop} {vision_label} {stage_name} {district}"
 
-        # Generate embedding vector with 'query: ' prefix
-        query_vec = embed_service.embed_query(query_text)
+        # This agent has no database-backed retrieval connection.  Returning
+        # bundled treatment doses here would present unverified text as live
+        # evidence, so provider/model unavailability must remain explicit.
+        if not settings.ENABLE_EMBEDDINGS:
+            warning = "Authoritative knowledge retrieval is disabled; no treatment guidance was generated."
+        elif embed_service.get_model() is None:
+            warning = "Authoritative knowledge embedding model is unavailable; no treatment guidance was generated."
+        else:
+            warning = "Authoritative knowledge database is unavailable; no treatment guidance was generated."
 
-        # Fallback / Initial curated knowledge chunks
-        chunks = [
-            {
-                "chunk_id": "chunk-101",
-                "content": "For Rice Blast control, spray Tricyclazole 75% WP @ 0.6g/L or Isoprothiolane 40% EC @ 1.5ml/L at early tillering stage.",
-                "source_authority": "ICAR - National Rice Research Institute",
-                "source_tier": 1,
-                "rrf_score": 0.85
-            },
-            {
-                "chunk_id": "chunk-102",
-                "content": "Maintain field water depth at 2-5 cm to suppress rice blast spore germination.",
-                "source_authority": "Kerala Agricultural University (KAU)",
-                "source_tier": 1,
-                "rrf_score": 0.72
-            }
-        ]
-
+        state.setdefault("warnings", []).append(warning)
         state["knowledge_result"] = {
             "query_text": query_text,
-            "top_chunks": chunks,
-            "count": len(chunks)
+            "top_chunks": [],
+            "count": 0,
+            "available": False,
+            "warning": warning,
         }
         return state

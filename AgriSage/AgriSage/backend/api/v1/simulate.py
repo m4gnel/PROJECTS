@@ -1,7 +1,8 @@
-from typing import Dict, Any, Optional
-from fastapi import APIRouter, Body
+from typing import Dict, Any
+from fastapi import APIRouter, Body, Depends
 from backend.simulation.dssat import DSSATSimulator
 from backend.simulation.interface import SimulationParams
+from backend.dependencies import get_current_user
 
 router = APIRouter(tags=["Simulation"])
 
@@ -10,7 +11,8 @@ simulator = DSSATSimulator()
 
 @router.post("/simulate/scenario")
 async def run_crop_simulation_scenario(
-    payload: Dict[str, Any] = Body(...)
+    payload: Dict[str, Any] = Body(...),
+    _auth: Dict[str, Any] = Depends(get_current_user),
 ) -> Dict[str, Any]:
     """Run DSSAT simulation returning 3-way comparative yield, cost, and income scenarios."""
     crop = payload.get("crop", "paddy")

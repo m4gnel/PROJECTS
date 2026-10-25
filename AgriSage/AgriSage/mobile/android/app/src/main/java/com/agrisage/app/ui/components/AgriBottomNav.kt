@@ -2,9 +2,8 @@ package com.agrisage.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -12,13 +11,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.agrisage.app.ui.theme.SageDeep
-import com.agrisage.app.ui.theme.SageMid
 
 // Navigation route constants used by AgriBottomNav
 object AgriNavRoutes {
@@ -44,7 +44,7 @@ data class BottomNavTabItem(
  * - Tab 3: Weather (Sun icon)
  * - Tab 4: Advisor (Smart Toy icon)
  * - Tab 5: Profile (Person icon)
- * - 1:1 active emerald tint (#16A34A / SageDeep) and tactile feedback
+ * - Token-driven active tint, selected container, and tactile feedback
  */
 @Composable
 fun AgriBottomNav(
@@ -58,9 +58,12 @@ fun AgriBottomNav(
         BottomNavTabItem(AgriNavRoutes.ADVISOR, "Advisor", Icons.Default.SmartToy),
         BottomNavTabItem(AgriNavRoutes.PROFILE, "Profile", Icons.Default.Person)
     )
+    val colorScheme = MaterialTheme.colorScheme
 
     Surface(
-        color = Color.White,
+        color = colorScheme.surface,
+        contentColor = colorScheme.onSurface,
+        tonalElevation = 3.dp,
         shadowElevation = 8.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -68,54 +71,61 @@ fun AgriBottomNav(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
             items.forEach { item ->
                 val isSelected = currentRoute == item.route ||
                         (item.route == AgriNavRoutes.FARM && (currentRoute == "fields" || currentRoute == "farm"))
 
-                val activeColor = Color(0xFF16A34A)
-                val inactiveColor = Color(0xFF94A3B8)
+                val activeColor = colorScheme.primary
+                val inactiveColor = colorScheme.onSurfaceVariant
+                val selectedContainer = colorScheme.primaryContainer
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .tactilePress(scaleDown = 0.90f) {
+                        .defaultMinSize(minWidth = 64.dp, minHeight = 48.dp)
+                        .semantics(mergeDescendants = true) {
+                            contentDescription = "${item.title} tab"
+                            role = Role.Button
+                        }
+                        .tactilePress(
+                            scaleDown = 0.96f,
+                            onClickLabel = "Open ${item.title} tab"
+                        ) {
                             if (!isSelected) {
                                 onNavigate(item.route)
                             }
                         }
-                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                        .padding(horizontal = 4.dp, vertical = 4.dp)
                 ) {
-                    if (isSelected) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFFDCFCE7)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = item.title,
-                                tint = activeColor,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    } else {
-                        Box(
-                            modifier = Modifier.size(36.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = item.title,
-                                tint = inactiveColor,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .then(
+                                if (isSelected) {
+                                    Modifier
+                                        .background(selectedContainer)
+                                        .border(
+                                            width = 1.dp,
+                                            color = activeColor.copy(alpha = 0.2f),
+                                            shape = RoundedCornerShape(14.dp)
+                                        )
+                                } else {
+                                    Modifier
+                                }
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = item.icon,
+                            contentDescription = null,
+                            tint = if (isSelected) activeColor else inactiveColor,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
 
                     Spacer(Modifier.height(3.dp))
@@ -124,7 +134,8 @@ fun AgriBottomNav(
                         text = item.title,
                         fontSize = 11.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isSelected) activeColor else inactiveColor
+                        color = if (isSelected) activeColor else inactiveColor,
+                        maxLines = 1
                     )
                 }
             }

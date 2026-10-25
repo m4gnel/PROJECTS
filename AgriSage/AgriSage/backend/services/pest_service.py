@@ -1,6 +1,7 @@
 import logging
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
+from backend.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -21,16 +22,9 @@ class PestAlertContext:
     highest_severity: str  # HIGH | MEDIUM | LOW | NONE
 
 
-# In-memory store for active pest alerts
-_PEST_ALERTS_DB: List[Dict[str, Any]] = [
-    {
-        "title": "Rugose Spiraling Whitefly Alert on Coconut in Ernakulam",
-        "description": "High incidence of rugose spiraling whitefly reported on coconut palms across Ernakulam district.",
-        "severity": "HIGH",
-        "affected_crops": ["coconut"],
-        "pub_date": "2026-10-01"
-    }
-]
+# In-memory cache for provider-backed pest alerts. It intentionally starts
+# empty; a dated fixture must never be presented as a current outbreak.
+_PEST_ALERTS_DB: List[Dict[str, Any]] = []
 
 
 class PestService:
@@ -49,7 +43,7 @@ class PestService:
     async def fetch_rss_alerts(self) -> List[Dict[str, Any]]:
         if feedparser is None:
             logger.warning("pest_service_feedparser_missing")
-            return _PEST_ALERTS_DB
+            return [] if settings.ENVIRONMENT.lower() == "production" else _PEST_ALERTS_DB
 
         url = "https://nbair.res.in/PestAlerts/rassFeed.php"
         try:
@@ -69,9 +63,9 @@ class PestService:
                         "pub_date": getattr(entry, "published", "")
                     })
         except Exception as e:
-            logger.warning("pest_service_fetch_error", error=str(e))
+            logger.warning("pest_service_fetch_error: %s", e)
 
-        return _PEST_ALERTS_DB
+        return [] if settings.ENVIRONMENT.lower() == "production" else _PEST_ALERTS_DB
 
     async def get_alerts_for_district_and_crop(
         self,
@@ -88,7 +82,8 @@ class PestService:
 
             # Check crop match if crop specified
             crop_match = (not crop_lower) or (crop_lower in crops) or (crop_lower in alert_text)
-            if crop_match:
+            district_match = not district_lower or district_lower in alert_text
+            if crop_match and district_match:
                 matching.append(alert)
 
         highest = "NONE"

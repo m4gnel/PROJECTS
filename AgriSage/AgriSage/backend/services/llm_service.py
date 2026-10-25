@@ -16,6 +16,8 @@ class LLMService:
     def __init__(self):
         self.gemini_key = settings.GEMINI_API_KEY
         self.ollama_url = settings.OLLAMA_URL
+        self.provider = settings.LLM_PROVIDER
+        self.model = settings.LLM_MODEL
 
     async def generate(
         self,
@@ -62,8 +64,8 @@ class LLMService:
         max_tokens: int
     ) -> Optional[str]:
         async with httpx.AsyncClient(timeout=15.0) as client:
-            if self.gemini_key:
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={self.gemini_key}"
+            if self.provider == "gemini" and self.gemini_key:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.gemini_key}"
                 payload = {
                     "system_instruction": {
                         "parts": [{"text": system_prompt}]
@@ -85,11 +87,10 @@ class LLMService:
                         parts = candidates[0].get("content", {}).get("parts", [])
                         if parts:
                             return parts[0].get("text", "")
-            else:
-                # Ollama API fallback
+            elif self.provider == "ollama" and self.ollama_url:
                 url = f"{self.ollama_url.rstrip('/')}/api/chat"
                 payload = {
-                    "model": "llama3",
+                    "model": self.model,
                     "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
@@ -106,6 +107,9 @@ class LLMService:
                     data = resp.json()
                     return data.get("message", {}).get("content", "")
 
+        # Disabled or incompletely configured providers fail closed.  In
+        # particular, do not silently connect to a developer's localhost
+        # Ollama instance when a production Gemini key is missing.
         return None
 
 

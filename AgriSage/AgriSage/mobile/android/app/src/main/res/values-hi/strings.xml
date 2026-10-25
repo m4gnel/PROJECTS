@@ -12,4 +12,6 @@
     <string name="my_fields">मेरे खेत</string>
     <string name="get_started">शुरू करें</string>
     <string name="welcome">एग्री-सेज में आपका स्वागत है</string>
+    <string name="notification_channel_name">खेत अलर्ट</string>
+    <string name="notification_channel_description">एग्री-सेज से मौसम, कीट और खेत संबंधी अलर्ट</string>
 </resources>

@@ -3,8 +3,8 @@
 ## Pre-Launch: ALL must pass before any public announcement
 
 ### Backend
-- [ ] All 17 migrations run clean on fresh database
-- [ ] `curl /health` returns `{db_connected: true}`
+- [ ] All 19 migrations run clean on fresh database
+- [ ] `curl /health` returns `status: ok` and `/ready` returns `status: ready`
 - [ ] RLS verified: User B gets 404 on User A's farm
 - [ ] Rate limiting verified: 6th OTP request returns 429
 - [ ] `pip-audit` shows zero CRITICAL CVEs
@@ -13,7 +13,9 @@
 - [ ] Advisory P95 < 8 seconds under 50 concurrent users (locust)
 - [ ] All knowledge documents have valid `valid_until` dates
 - [ ] Zero expired schemes in PUBLISHED status
-- [ ] `scripts/smoke_tests.py` all 3 checks PASS
+- [ ] `scripts/smoke_tests.py` read-only health/readiness checks PASS
+- [ ] JWT/RBAC checks pass for farmer, employee, officer, and expert roles
+- [ ] Protected operations endpoints return 403 for farmer tokens and audit staff reads
 
 ### AI & Model
 - [ ] Vision model Macro-F1 ≥ 0.82 on **field** test set (not PlantVillage lab)

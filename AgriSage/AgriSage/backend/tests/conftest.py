@@ -1,8 +1,14 @@
 import pytest
 import asyncio
+import os
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from app.main import app
+
+os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://postgres:testpassword@localhost:5432/agrisage_test")
+os.environ.setdefault("GEMINI_API_KEY", "")
+os.environ.setdefault("SECRET_KEY", "test-only-secret-key-32-characters-long")
+
+from backend.main import app
 from app.database import get_db
 from app.models.base import Base
 

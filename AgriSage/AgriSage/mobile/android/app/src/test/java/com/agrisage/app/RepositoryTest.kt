@@ -2,6 +2,7 @@ package com.agrisage.app
 
 import com.agrisage.app.data.local.entity.WeatherEntity
 import com.agrisage.app.data.remote.dto.WeatherCurrentDto
+import com.agrisage.app.data.remote.dto.WeatherLocationDto
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -10,8 +11,12 @@ class RepositoryTest {
     @Test
     fun testWeatherEntityMapping() {
         val dto = WeatherCurrentDto(
-            latitude = 10.165,
-            longitude = 76.401,
+            location = WeatherLocationDto(
+                lat = 10.165,
+                lon = 76.401,
+                district = "Ernakulam",
+                state = "Kerala",
+            ),
             temperatureC = 30.0f,
             humidityPercent = 75,
             rainfallMm = 1.2f,
@@ -19,7 +24,6 @@ class RepositoryTest {
             uvIndex = 8.0f,
             weatherCondition = "Sunny",
             agriAdvisory = "Good day",
-            fetchedAt = "2026-10-13T10:00:00+05:30"
         )
 
         val entity = WeatherEntity(

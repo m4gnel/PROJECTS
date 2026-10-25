@@ -1,8 +1,16 @@
 import pytest
 from fastapi.testclient import TestClient
 from backend.main import app
+from backend.dependencies import get_current_user
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def override_user():
+    app.dependency_overrides[get_current_user] = lambda: {"sub": "test-user"}
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
 
 
 def test_markets_prices_endpoint():
@@ -25,9 +33,7 @@ def test_markets_msp_endpoint():
 def test_notifications_endpoint():
     response = client.get("/api/v1/notifications")
     assert response.status_code == 200
-    data = response.json()
-    assert isinstance(data, list)
-    assert len(data) > 0
+    assert response.json() == []
 
 
 def test_risk_dfi_endpoint():
@@ -85,13 +91,7 @@ def test_sync_package_endpoint():
 
 
 def test_weather_current_endpoint():
-    from jose import jwt
-    from backend.config import settings
-    token = jwt.encode({"sub": "test_user_123"}, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-    response = client.get(
-        "/api/v1/weather/current?lat=10.78&lng=76.65",
-        headers={"Authorization": f"Bearer {token}"}
-    )
+    response = client.get("/api/v1/weather/current?lat=10.78&lng=76.65")
     assert response.status_code == 200
     data = response.json()
     assert "temp_c" in data

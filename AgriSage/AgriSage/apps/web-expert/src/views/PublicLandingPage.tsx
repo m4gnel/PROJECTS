@@ -38,7 +38,8 @@ import {
   Check,
   AlertTriangle,
   Search,
-  Scan
+  Scan,
+  UserRoundPlus
 } from 'lucide-react';
 import { ThreeHeroCanvas } from '../components/landing/ThreeHeroCanvas';
 import { GlassTiltCard } from '../components/landing/GlassTiltCard';
@@ -64,7 +65,9 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 interface PublicLandingPageProps {
   onEnterAuth: () => void;
+  onEnterSignup: () => void;
   onDirectPlatformAccess: () => void;
+  onOperationsAccess: () => void;
   lang: 'en' | 'ml';
   onToggleLang: () => void;
   theme: 'dark' | 'light';
@@ -73,7 +76,9 @@ interface PublicLandingPageProps {
 
 export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
   onEnterAuth,
+  onEnterSignup,
   onDirectPlatformAccess,
+  onOperationsAccess,
   lang,
   onToggleLang,
   theme,
@@ -163,7 +168,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
     setTimeout(() => {
       playSuccessTone();
       setIsSimulating(false);
-      const cropName = query.trim() ? query.trim() : 'Palakkad Paddy Hectare #04';
+      const cropName = query.trim() ? query.trim() : 'India Rice Plot #04';
       setSimResult({
         title: `AI Diagnostic: ${cropName}`,
         subtitle: 'Canopy Transpiration Optimal · Spore Genesis Risk: <3.2% · INT8 Biophysical Model Checked',
@@ -338,6 +343,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             onClick={onToggleTheme}
             className="p-2 rounded-xl border border-white/10 hover:border-emerald-400 text-slate-200 bg-white/5 transition-all shadow-xs"
             title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
           >
             {theme === 'dark' ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} className="text-slate-300" />}
           </button>
@@ -347,28 +353,20 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             type="button"
             onClick={onToggleLang}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-white/10 hover:border-emerald-400 text-xs font-bold text-slate-200 bg-white/5 transition-all shadow-xs"
+            aria-label={`Switch language. Current language: ${lang === 'ml' ? 'Malayalam' : 'English'}`}
           >
             <Globe size={14} className="text-emerald-400" />
             <span>{lang === 'ml' ? 'മലയാളം' : 'English'}</span>
           </button>
 
-          {/* Launch Auth (Frame 2) */}
+          {/* Login / Sign Up */}
           <button
             type="button"
             onClick={onEnterAuth}
-            className="btn border border-white/20 hover:border-emerald-400 text-white text-xs h-9 px-3.5 flex items-center gap-1.5 font-bold bg-white/5"
+            className="btn btn-primary text-xs h-9 px-4 flex items-center gap-1.5 font-bold shadow-lg shadow-emerald-500/25 cursor-pointer"
+            aria-label="Login or Sign Up to Agri-SAGE"
           >
-            <Lock size={13} />
-            <span>{lang === 'ml' ? 'പ്രവേശിക്കുക' : 'Sign In'}</span>
-          </button>
-
-          {/* Launch Full Platform (Frame 3) */}
-          <button
-            type="button"
-            onClick={onDirectPlatformAccess}
-            className="btn btn-primary text-xs h-9 px-4 hidden sm:flex items-center gap-1.5 font-bold shadow-lg shadow-emerald-500/25"
-          >
-            <span>{lang === 'ml' ? 'പ്ലാറ്റ്‌ഫോം തുറക്കുക' : 'Enter Platform'}</span>
+            <span>{lang === 'ml' ? 'ലോഗിൻ / സൈൻ അപ്പ്' : 'Login / Sign Up'}</span>
             <ArrowRight size={14} />
           </button>
         </div>
@@ -383,6 +381,8 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             setIsChapterDrawerOpen(!isChapterDrawerOpen);
           }}
           className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-slate-950/90 backdrop-blur-xl border border-emerald-500/40 shadow-2xl text-xs font-mono text-white transition-all hover:scale-105 hover:border-emerald-400"
+          aria-expanded={isChapterDrawerOpen}
+          aria-controls="chapter-directory-dialog"
         >
           <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
           <span className="font-bold text-emerald-400">CH {String(activeChapter).padStart(2, '0')}</span>
@@ -396,14 +396,14 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
       {/* INTERACTIVE CHAPTER JUMP DIRECTORY OVERLAY MODAL */}
       {isChapterDrawerOpen && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-2xl animate-in fade-in duration-300">
-          <div className="bg-slate-950 border border-emerald-500/40 rounded-3xl p-6 max-w-4xl w-full max-h-[85vh] overflow-y-auto shadow-2xl space-y-6">
+          <div id="chapter-directory-dialog" role="dialog" aria-modal="true" aria-labelledby="chapter-directory-title" className="bg-slate-950 border border-emerald-500/40 rounded-3xl p-6 max-w-4xl w-full max-h-[85vh] overflow-y-auto shadow-2xl space-y-6">
             <div className="flex items-center justify-between pb-4 border-b border-white/10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-400 flex items-center justify-center">
                   <Layers size={22} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white tracking-tight">12 Chapter Interactive Directory</h3>
+                  <h3 id="chapter-directory-title" className="text-lg font-black text-white tracking-tight">12 Chapter Interactive Directory</h3>
                   <p className="text-xs text-slate-400 font-mono">Jump instantly across the scrollytelling timeline with 1 click</p>
                 </div>
               </div>
@@ -411,6 +411,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
                 type="button"
                 onClick={() => setIsChapterDrawerOpen(false)}
                 className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold transition-all"
+                aria-label="Close chapter directory"
               >
                 Close ✕
               </button>
@@ -569,8 +570,10 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             <div className="p-1.5 rounded-2xl bg-slate-900/90 backdrop-blur-2xl border border-white/20 flex flex-col sm:flex-row items-center gap-2 shadow-2xl transition-all focus-within:border-emerald-400">
               <div className="flex-1 flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-300 font-mono w-full">
                 <Search size={15} className="text-emerald-400 shrink-0" />
-                <input
-                  type="text"
+                 <label htmlFor="hero-field-simulator" className="sr-only">Enter a farm location or crop to simulate</label>
+                 <input
+                   id="hero-field-simulator"
+                   type="text"
                   placeholder="Enter farm location or crop (e.g. Palakkad Paddy, Vidarbha Cotton)"
                   value={heroSearchQuery}
                   onChange={(e) => setHeroSearchQuery(e.target.value)}
@@ -637,7 +640,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
               className="btn bg-white/10 hover:bg-white/20 text-white backdrop-blur-xl border border-white/20 text-sm h-12 px-6 font-bold flex items-center justify-center gap-2 w-full sm:w-auto hover:border-emerald-400 transition-all"
             >
               <Zap size={16} className="text-amber-400" />
-              <span>Launch Live Workstation</span>
+               <span>Explore Advisory Preview</span>
             </button>
           </div>
 
@@ -687,7 +690,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
           FRAME 1 INTELLIGENCE CAROUSEL: Squeeze Slat Engine
           Interactive panel carousel showing core agronomic intelligence modules
           ========================================================================= */}
-      <section className="relative py-16 px-4 md:px-10 max-w-7xl mx-auto snap-scroll-section z-20">
+      <section className="relative pt-6 pb-28 md:pb-36 px-4 md:px-10 max-w-7xl mx-auto snap-scroll-section z-20">
         <SqueezeCarouselDemo />
       </section>
 
@@ -2032,6 +2035,16 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             className="btn btn-outline text-sm h-14 px-8 font-bold w-full sm:w-auto hover:border-emerald-400"
           >
             <span>Direct Demo Access (Frame 3)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onOperationsAccess}
+            className="btn border border-cyan-400/30 hover:border-cyan-300 text-cyan-100 text-sm h-14 px-8 font-bold w-full sm:w-auto bg-cyan-400/10"
+            aria-label="Open staff operations console seed demo"
+          >
+            <ShieldCheck size={17} className="text-cyan-300" aria-hidden="true" />
+            <span>Staff operations console · seed demo</span>
           </button>
         </div>
 

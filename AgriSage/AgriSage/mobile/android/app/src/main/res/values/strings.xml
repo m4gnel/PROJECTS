@@ -12,4 +12,6 @@
     <string name="my_fields">My Fields</string>
     <string name="get_started">Get Started</string>
     <string name="welcome">Welcome to Agri-SAGE</string>
+    <string name="notification_channel_name">Farm alerts</string>
+    <string name="notification_channel_description">Weather, pest, and field alerts from Agri-SAGE</string>
 </resources>

@@ -2,7 +2,6 @@ package com.agrisage.app.data.remote
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
@@ -16,15 +15,20 @@ class AuthInterceptor @Inject constructor(
 ) : Interceptor {
 
     companion object {
-        val TOKEN_KEY = stringPreferencesKey("auth_token")
+        val TOKEN_KEY = TokenAuthenticator.ACCESS_TOKEN_KEY
     }
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
 
-        // Skip adding token for register and login endpoints
+        // OTP bootstrap and refresh do not require an access token. Match the
+        // complete API path so a user-controlled path segment cannot bypass
+        // authentication accidentally.
         val path = original.url.encodedPath
-        if (path.contains("auth/register") || path.contains("auth/token")) {
+        if (path == "/api/v1/auth/send-otp" ||
+            path == "/api/v1/auth/verify-otp" ||
+            path == "/api/v1/auth/refresh"
+        ) {
             return chain.proceed(original)
         }
 

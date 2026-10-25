@@ -21,7 +21,7 @@ async def test_speech_provider_synthesis():
     res = await provider.synthesize_speech("നമസ്കാരം രാമൻ, ഇന്ന് കാലാവസ്ഥ അനുയോജ്യമാണ്.", language="ml")
     assert res["language"] == "ml"
     assert "audio_base64" in res
-    assert res["duration_seconds"] > 0
+    assert res["available"] is False
 
 
 def test_knowledge_freshness():

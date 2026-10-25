@@ -5,7 +5,8 @@ from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, Depends, Query
 
 from backend.services.weather_service import weather_service
-from backend.dependencies import require_auth
+from backend.dependencies import get_current_user
+from backend.config import settings
 
 try:
     import structlog
@@ -26,19 +27,30 @@ router = APIRouter(tags=["Weather & Micro-climate"])
     ),
 )
 async def get_current_weather(
-    lat: Optional[float] = Query(None, description="Latitude (optional if district provided)"),
-    lng: Optional[float] = Query(None, description="Longitude (optional if district provided)"),
-    district: str = Query("Ernakulam", description="District name (used if lat/lon not provided)"),
-    state: str = Query("Kerala", description="State name"),
-    auth: Dict[str, Any] = Depends(require_auth),
+    lat: Optional[float] = Query(None, ge=6.0, le=38.0, description="Latitude (optional if district provided)"),
+    lon: Optional[float] = Query(None, ge=68.0, le=97.5, description="Longitude (optional if district provided)"),
+    lng: Optional[float] = Query(None, ge=68.0, le=97.5, description="Deprecated alias for lon"),
+    district: str = Query("", description="District name (used if coordinates are not provided)"),
+    state: str = Query("India", description="State or union territory name"),
+    auth: Dict[str, Any] = Depends(get_current_user),
 ) -> Dict[str, Any]:
     """Retrieve real current micro-climate data from Open-Meteo."""
-    ctx = await weather_service.get_weather(district=district, lat=lat, lon=lng)
+    target_lon = lon if lon is not None else lng
+    ctx = await weather_service.get_weather(state=state, district=district, lat=lat, lon=target_lon)
+
+    farming_advisory = _get_farming_advisory(ctx.advice_flag)
+    if ctx.stale:
+        farming_advisory = (
+            "Weather provider is unavailable and this is stale data. "
+            "Do not make spray or irrigation decisions solely from this reading. "
+            + farming_advisory
+        )
 
     return {
         "location": {
             "lat": lat,
-            "lng": lng,
+            "lng": target_lon,
+            "lon": target_lon,
             "district": district,
             "state": state,
         },
@@ -48,10 +60,16 @@ async def get_current_weather(
         "rain_chance_pct": ctx.rain_chance_pct,
         "wind_kmh": ctx.wind_kmh,
         "advice_flag": ctx.advice_flag,
-        "spray_window_open": ctx.advice_flag not in ("SPRAY_RISK", "FLOOD_RISK"),
+        # Stale/unavailable weather is never an actionable spray signal.
+        "spray_window_open": (
+            not ctx.stale
+            and ctx.available
+            and ctx.advice_flag not in ("SPRAY_RISK", "FLOOD_RISK")
+        ),
         "cached": ctx.cached,
         "stale": ctx.stale,
-        "farming_advisory": _get_farming_advisory(ctx.advice_flag),
+        "available": ctx.available,
+        "farming_advisory": farming_advisory,
     }
 
 
@@ -61,23 +79,28 @@ async def get_current_weather(
     description="Returns 7-day Open-Meteo forecast with farming condition indicators.",
 )
 async def get_weather_forecast(
-    lat: Optional[float] = Query(None),
-    lng: Optional[float] = Query(None),
-    district: str = Query("Ernakulam"),
-    state: str = Query("Kerala"),
+    lat: Optional[float] = Query(None, ge=6.0, le=38.0),
+    lon: Optional[float] = Query(None, ge=68.0, le=97.5),
+    lng: Optional[float] = Query(None, ge=68.0, le=97.5, description="Deprecated alias for lon"),
+    district: str = Query(""),
+    state: str = Query("India"),
     days: int = Query(7, ge=1, le=14),
-    auth: Dict[str, Any] = Depends(require_auth),
+    auth: Dict[str, Any] = Depends(get_current_user),
 ) -> List[Dict[str, Any]]:
-    """Returns 7-day forecast. Falls back to deterministic estimates if API unavailable."""
+    """Return a provider-backed 7-day forecast, or an empty list if unavailable."""
     import httpx
-    from backend.services.weather_service import KERALA_DISTRICT_COORDS
+    from backend.services.weather_service import resolve_coordinates
 
     # Resolve coords
-    coords = KERALA_DISTRICT_COORDS.get(district, (9.9816, 76.2999))
-    target_lat = lat if lat is not None else coords[0]
-    target_lon = lng if lng is not None else coords[1]
+    target_lon = lon if lon is not None else lng
+    target_lat, target_lon = resolve_coordinates(
+        state=state,
+        district=district,
+        lat=lat,
+        lon=target_lon,
+    )
 
-    url = "https://api.open-meteo.com/v1/forecast"
+    url = f"{settings.OPEN_METEO_BASE_URL.rstrip('/')}/forecast"
     params = {
         "latitude": target_lat,
         "longitude": target_lon,
@@ -92,20 +115,22 @@ async def get_weather_forecast(
             if resp.status_code == 200:
                 data = resp.json()
                 daily = data.get("daily", {})
-                dates = daily.get("time", [])
-                max_temps = daily.get("temperature_2m_max", [])
-                min_temps = daily.get("temperature_2m_min", [])
-                precip_sums = daily.get("precipitation_sum", [])
-                wind_speeds = daily.get("windspeed_10m_max", [])
-                weathercodes = daily.get("weathercode", [])
+                dates = daily.get("time")
+                max_temps = daily.get("temperature_2m_max")
+                min_temps = daily.get("temperature_2m_min")
+                precip_sums = daily.get("precipitation_sum")
+                wind_speeds = daily.get("windspeed_10m_max")
+                weathercodes = daily.get("weathercode")
+                if any(not values for values in (dates, max_temps, min_temps, precip_sums, wind_speeds, weathercodes)):
+                    raise ValueError("Open-Meteo response omitted required daily fields")
 
                 forecast = []
                 for i in range(min(days, len(dates))):
                     rain = float(precip_sums[i]) if i < len(precip_sums) else 0.0
-                    max_t = float(max_temps[i]) if i < len(max_temps) else 30.0
-                    min_t = float(min_temps[i]) if i < len(min_temps) else 22.0
-                    wind = float(wind_speeds[i]) if i < len(wind_speeds) else 10.0
-                    wc = int(weathercodes[i]) if i < len(weathercodes) else 0
+                    max_t = float(max_temps[i])
+                    min_t = float(min_temps[i])
+                    wind = float(wind_speeds[i])
+                    wc = int(weathercodes[i])
                     spray_open = rain < 2.0 and max_t < 35.0
 
                     # WMO weathercode → simple label
@@ -126,7 +151,8 @@ async def get_weather_forecast(
     except Exception as e:
         logger.warning("weather_forecast_api_failed", error=str(e))
 
-    # Fallback — deterministic estimates
+    # A provider outage must not be represented as a forecast with invented
+    # temperatures or rainfall values.
     return _fallback_forecast(days)
 
 
@@ -140,8 +166,9 @@ def _get_farming_advisory(advice_flag: str) -> str:
         "SPRAY_RISK": "High humidity conditions. Fungal disease risk elevated. Avoid spraying — wait for drier weather.",
         "IRRIGATION_NEEDED": "Low rainfall and high temperature detected. Irrigate crops within 24 hours to prevent moisture stress.",
         "NORMAL": "Conditions are within normal range. Standard farm operations can proceed.",
+        "UNKNOWN": "Weather data is unavailable. Do not make spray or irrigation decisions from this reading.",
     }
-    return mapping.get(advice_flag, "Conditions are within normal range.")
+    return mapping.get(advice_flag, mapping["UNKNOWN"])
 
 
 def _wmo_to_label(code: int) -> str:
@@ -177,21 +204,5 @@ def _day_farming_tip(rain_mm: float, max_temp: float, spray_open: bool) -> str:
 
 
 def _fallback_forecast(days: int) -> List[Dict[str, Any]]:
-    """Returns a safe deterministic fallback when Open-Meteo is unavailable."""
-    import datetime
-    today = datetime.date.today()
-    result = []
-    for i in range(days):
-        day = today + datetime.timedelta(days=i)
-        result.append({
-            "day_offset": i,
-            "date": str(day),
-            "temp_max_c": 30.0,
-            "temp_min_c": 22.0,
-            "rain_mm": 0.0,
-            "wind_kmh": 10.0,
-            "spray_window_open": True,
-            "condition": "Partly Cloudy",
-            "farming_tip": "Forecast unavailable — monitor local conditions.",
-        })
-    return result
+    """Return no forecast when Open-Meteo is unavailable."""
+    return []

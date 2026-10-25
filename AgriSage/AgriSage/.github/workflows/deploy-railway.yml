@@ -10,8 +10,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - run: npm install -g @railway/cli
-      - run: cd backend && railway up --service agrisage-backend
+          node-version: '20.19.0'
+      - name: Verify pinned Railway CLI
+        run: npm exec --yes --package=@railway/cli@5.70.0 -- railway version
+      - run: npm exec --yes --package=@railway/cli@5.70.0 -- railway up --service agrisage-backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

@@ -2,12 +2,16 @@ package com.agrisage.app.ui.screens.advisor
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.agrisage.app.BuildConfig
 import com.agrisage.app.data.remote.dto.ChatRequest
+import com.agrisage.app.data.repository.AuthRepository
 import com.agrisage.app.data.repository.ChatRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -25,7 +29,7 @@ data class AdvisorUiState(
     val messages: List<ChatMessage> = emptyList(),
     val currentInput: String = "",
     val isTyping: Boolean = false,
-    val selectedLanguage: String = "ml",
+    val selectedLanguage: String = if (BuildConfig.REFERENCE_PREVIEW) "en" else "ml",
     val isVoiceRecording: Boolean = false,
     val sessionId: String = UUID.randomUUID().toString(),
     val error: String? = null
@@ -33,23 +37,20 @@ data class AdvisorUiState(
 
 @HiltViewModel
 class AdvisorViewModel @Inject constructor(
-    private val chatRepository: ChatRepository
+    private val chatRepository: ChatRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(
-        AdvisorUiState(
-            messages = listOf(
-                ChatMessage(
-                    id = "welcome",
-                    content = "നമസ്കാരം! ഞാൻ അഗ്രി-സേജ് AI അഡ്വൈസർ. ഇന്ന് താങ്കളുടെ കൃഷിയെക്കുറിച്ച് എന്ത് സംശയമാണ് ചോദിക്കാനുള്ളത്?",
-                    isFromUser = false,
-                    timestamp = System.currentTimeMillis(),
-                    language = "ml"
-                )
-            )
-        )
-    )
+    private val _uiState = MutableStateFlow(AdvisorUiState())
     val uiState: StateFlow<AdvisorUiState> = _uiState.asStateFlow()
+
+    init {
+        if (!BuildConfig.REFERENCE_PREVIEW) viewModelScope.launch {
+            authRepository.selectedLanguage.collect { language ->
+                _uiState.update { it.copy(selectedLanguage = language) }
+            }
+        }
+    }
 
     fun updateInput(text: String) {
         _uiState.update { it.copy(currentInput = text) }
@@ -57,6 +58,9 @@ class AdvisorViewModel @Inject constructor(
 
     fun selectLanguage(lang: String) {
         _uiState.update { it.copy(selectedLanguage = lang) }
+        if (!BuildConfig.REFERENCE_PREVIEW) viewModelScope.launch {
+            authRepository.setLanguage(lang)
+        }
     }
 
     fun startVoiceRecording() {
@@ -67,43 +71,62 @@ class AdvisorViewModel @Inject constructor(
         _uiState.update { it.copy(isVoiceRecording = false) }
     }
 
+    fun voiceInputUnavailable() {
+        _uiState.update {
+            it.copy(isVoiceRecording = false, error = "Speech input is unavailable on this device. Please type your question.")
+        }
+    }
+
     fun clearError() {
         _uiState.update { it.copy(error = null) }
     }
 
     fun sendMessage() {
-        val input = _uiState.value.currentInput.trim()
-        if (input.isBlank()) return
-
-        val userMsg = ChatMessage(
-            id = UUID.randomUUID().toString(),
-            content = input,
-            isFromUser = true,
-            timestamp = System.currentTimeMillis(),
-            language = _uiState.value.selectedLanguage
-        )
-
-        _uiState.update {
-            it.copy(
-                messages = it.messages + userMsg,
-                currentInput = "",
-                isTyping = true,
-                error = null
-            )
+        val snapshot = _uiState.value
+        val input = snapshot.currentInput.trim()
+        if (input.isBlank() || snapshot.isTyping) return
+        if (BuildConfig.REFERENCE_PREVIEW) {
+            _uiState.update { it.copy(error = "Reference preview does not send questions. Sign in to the normal app for live advice.") }
+            return
         }
+
+        // Reserve this send before launching; repeated taps cannot enqueue it twice.
+        _uiState.update { it.copy(isTyping = true, error = null) }
 
         viewModelScope.launch {
             try {
+                val farmerId = authRepository.currentFarmerId()?.takeIf(String::isNotBlank)
+                if (farmerId == null) {
+                    _setUnavailable("Sign in is required before asking the farm advisor.")
+                    return@launch
+                }
+
+                val userMsg = ChatMessage(
+                    id = UUID.randomUUID().toString(),
+                    content = input,
+                    isFromUser = true,
+                    timestamp = System.currentTimeMillis(),
+                    language = snapshot.selectedLanguage
+                )
+
+                _uiState.update {
+                    it.copy(
+                        messages = it.messages + userMsg,
+                        currentInput = if (it.currentInput.trim() == input) "" else it.currentInput,
+                        isTyping = true,
+                        error = null
+                    )
+                }
+
                 val req = ChatRequest(
-                    sessionId = _uiState.value.sessionId,
+                    sessionId = snapshot.sessionId,
                     message = input,
-                    language = _uiState.value.selectedLanguage,
-                    farmerId = "farmer-default-id",
-                    latitude = 10.165,
-                    longitude = 76.401
+                    language = snapshot.selectedLanguage,
+                    farmerId = farmerId,
+                    district = authRepository.farmerDistrict.first()
                 )
                 val response = chatRepository.sendMessage(req)
-                if (response.isSuccessful && response.body() != null) {
+                if (response.isSuccessful && !response.body()?.message.isNullOrBlank()) {
                     val body = response.body()!!
                     val aiMsg = ChatMessage(
                         id = UUID.randomUUID().toString(),
@@ -114,31 +137,20 @@ class AdvisorViewModel @Inject constructor(
                     )
                     _uiState.update { it.copy(messages = it.messages + aiMsg, isTyping = false) }
                 } else {
-                    _fallbackOfflineResponse(input)
+                    _setUnavailable("The farm advisor is unavailable right now. No offline recommendation was generated.", input)
                 }
-            } catch (e: Exception) {
-                _fallbackOfflineResponse(input)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                _setUnavailable("The farm advisor is unavailable right now. No offline recommendation was generated.", input)
             }
         }
     }
 
-    private fun _fallbackOfflineResponse(query: String) {
-        val offlineAnswer = when {
-            query.contains("വളം", ignoreCase = true) || query.contains("fertilizer", ignoreCase = true) ->
-                "നെൽകൃഷിക്ക് വളം നൽകുമ്പോൾ: NPK 14-14-14 ഫോർമുലേഷൻ ഹെക്ടറിന് 25 കി.ഗ്രാം ശുപാർശ ചെയ്യുന്നു. മഴയ്ക്ക് മുൻപ് വളം നൽകരുത്."
-            query.contains("രോഗം", ignoreCase = true) || query.contains("pest", ignoreCase = true) ->
-                "കീടബാധ നിയന്ത്രണം: പ്രാദേശിക കാർഷിക സർവ്വകലാശാലയുടെ നിർദ്ദേശപ്രകാരം വേപ്പെണ്ണ എമൽഷൻ തളിക്കുക."
-            else ->
-                "താങ്കളുടെ ചോദ്യം ലഭിച്ചു. പ്രാദേശിക കാലാവസ്ഥയും കാർഷിക സർവകലാശാലാ ഡാറ്റയും അനുസരിച്ച് വിവരങ്ങൾ ലഭ്യമാക്കുന്നു."
+    private fun _setUnavailable(message: String, failedInput: String? = null) {
+        _uiState.update {
+            it.copy(isTyping = false, error = message,
+                currentInput = it.currentInput.ifBlank { failedInput.orEmpty() })
         }
-
-        val aiMsg = ChatMessage(
-            id = UUID.randomUUID().toString(),
-            content = offlineAnswer,
-            isFromUser = false,
-            timestamp = System.currentTimeMillis(),
-            language = _uiState.value.selectedLanguage
-        )
-        _uiState.update { it.copy(messages = it.messages + aiMsg, isTyping = false) }
     }
 }

@@ -2,10 +2,13 @@ package com.agrisage.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material.icons.filled.WbSunny
+import androidx.compose.material.icons.filled.Air
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -13,9 +16,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.agrisage.app.ui.theme.AlertGold
 
 /**
  * Hero KPI Cards overlaid at the bottom of the illustrated farm scene (Reference Reel 2).
@@ -43,7 +51,15 @@ fun HeroKpiCardsRow(
             modifier = Modifier
                 .weight(1f)
                 .clip(RoundedCornerShape(20.dp))
-                .tactilePress(scaleDown = 0.95f, onClick = onHealthClick),
+                .semantics(mergeDescendants = true) {
+                    contentDescription = "Farm health: $healthScore percent, $healthStatus"
+                    role = Role.Button
+                }
+                .tactilePress(
+                    scaleDown = 0.95f,
+                    onClickLabel = "Open farm health",
+                    onClick = onHealthClick
+                ),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -116,7 +132,15 @@ fun HeroKpiCardsRow(
             modifier = Modifier
                 .weight(1f)
                 .clip(RoundedCornerShape(20.dp))
-                .tactilePress(scaleDown = 0.95f, onClick = onWeatherClick),
+                .semantics(mergeDescendants = true) {
+                    contentDescription = "Weather: $tempCelsius degrees Celsius, $weatherCondition, $rainChance percent rain chance, $humidity percent humidity"
+                    role = Role.Button
+                }
+                .tactilePress(
+                    scaleDown = 0.95f,
+                    onClickLabel = "Open weather",
+                    onClick = onWeatherClick
+                ),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -136,7 +160,12 @@ fun HeroKpiCardsRow(
                         .background(Color(0xFFFEF3C7)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("☀️", fontSize = 24.sp)
+                    Icon(
+                        imageVector = Icons.Default.WbSunny,
+                        contentDescription = null,
+                        tint = AlertGold,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
 
                 Spacer(Modifier.width(10.dp))
@@ -155,12 +184,35 @@ fun HeroKpiCardsRow(
                         fontWeight = FontWeight.Medium
                     )
                     Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = "💨 $rainChance% · 💧 $humidity%",
-                        fontSize = 10.sp,
-                        color = Color(0xFF94A3B8),
-                        fontWeight = FontWeight.Medium
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Air,
+                            contentDescription = null,
+                            tint = Color(0xFF94A3B8),
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(Modifier.width(2.dp))
+                        Text(
+                            text = "$rainChance% rain",
+                            fontSize = 10.sp,
+                            color = Color(0xFF94A3B8),
+                            fontWeight = FontWeight.Medium
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Icon(
+                            imageVector = Icons.Default.WaterDrop,
+                            contentDescription = null,
+                            tint = Color(0xFF94A3B8),
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(Modifier.width(2.dp))
+                        Text(
+                            text = "$humidity% humidity",
+                            fontSize = 10.sp,
+                            color = Color(0xFF94A3B8),
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }

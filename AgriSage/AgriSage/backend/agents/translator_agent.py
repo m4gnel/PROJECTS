@@ -16,6 +16,18 @@ def is_tamil(text: str) -> bool:
     return any('\u0b80' <= char <= '\u0bff' for char in text)
 
 
+def is_hindi(text: str) -> bool:
+    return any('\u0900' <= char <= '\u097f' for char in text)
+
+
+def is_telugu(text: str) -> bool:
+    return any('\u0c00' <= char <= '\u0c7f' for char in text)
+
+
+def is_punjabi(text: str) -> bool:
+    return any('\u0a00' <= char <= '\u0a7f' for char in text)
+
+
 async def translator_pre_node(state: AgriSageState) -> Dict[str, Any]:
     raw_query = state.get("farmer_query", "")
     if not raw_query:
@@ -25,6 +37,12 @@ async def translator_pre_node(state: AgriSageState) -> Dict[str, Any]:
         detected_lang = "ml"
     elif is_tamil(raw_query):
         detected_lang = "ta"
+    elif is_hindi(raw_query):
+        detected_lang = "hi"
+    elif is_telugu(raw_query):
+        detected_lang = "te"
+    elif is_punjabi(raw_query):
+        detected_lang = "pa"
     else:
         detected_lang = "en"
 
@@ -32,7 +50,7 @@ async def translator_pre_node(state: AgriSageState) -> Dict[str, Any]:
         return {"language": "en", "farmer_query": raw_query}
 
     # Translate ML/TA query to English for internal agents
-    prompt = f"Translate this Malayalam/Tamil text to English. Return ONLY the English translation. No explanation. Text: {raw_query}"
+    prompt = f"Translate this {detected_lang} farmer question to English. Return ONLY the English translation. No explanation. Text: {raw_query}"
     translated_en = await call_gemini_safe(prompt)
     
     # Fallback heuristic if Gemini key not configured
@@ -52,7 +70,9 @@ async def translator_post_node(state: AgriSageState) -> Dict[str, Any]:
     if lang == "en" or not answer_en:
         return {"final_answer_ml": answer_en}
 
-    prompt = f"Translate this agricultural advice to natural Malayalam. Use simple words a Kerala farmer would understand. Do not translate: specific numbers, crop names, chemical names. Text: {answer_en}"
+    language_names = {"ml": "Malayalam", "ta": "Tamil", "hi": "Hindi", "te": "Telugu", "pa": "Punjabi"}
+    target_language = language_names.get(lang, "the farmer's selected language")
+    prompt = f"Translate this agricultural advice to natural {target_language}. Use simple words a farmer would understand. Do not translate specific numbers, crop names, or chemical names. Text: {answer_en}"
     answer_ml = await call_gemini_safe(prompt)
 
     if not answer_ml:

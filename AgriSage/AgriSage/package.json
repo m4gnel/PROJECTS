@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "npm --prefix apps/web-expert run dev",
-    "build": "cd apps/web-expert && npx vite build --outDir ../../out --emptyOutDir",
+    "typecheck": "npm --prefix apps/web-expert run typecheck",
+    "build": "npm --prefix apps/web-expert run build",
     "start": "npm --prefix apps/web-expert run preview",
-    "lint": "oxlint"
+    "lint": "npm --prefix apps/web-expert run lint"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

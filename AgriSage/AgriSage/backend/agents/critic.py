@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import Any, Dict, List, Tuple
 from backend.agents.state import AgriSAGEState
 
 VALID_CROPS = {"rice", "banana", "coconut", "tomato", "maize"}
@@ -9,15 +9,20 @@ class CriticAgent:
         crop = state.get("crop")
         vision = state.get("vision_result") or {}
         weather = state.get("weather_result") or {}
-        crop_stage = state.get("crop_stage_result") or {}
         knowledge = state.get("knowledge_result") or {}
 
         conflicts: List[str] = []
-        warnings: List[str] = state.get("warnings", [])
+        knowledge_available = bool(knowledge.get("top_chunks"))
+        weather_available = bool(weather) and weather.get("available", True) is not False
 
-        # 1. Check Out of Scope
+        # 1. Check evidence scope before confidence scoring.  A missing model,
+        # provider, or authoritative source must never become a confirmed
+        # diagnosis merely because another input has a high score.
         if not crop or crop not in VALID_CROPS:
             confidence_state = "OUT_OF_SCOPE"
+            confidence_score = 0.0
+        elif not weather_available or not knowledge_available:
+            confidence_state = "INSUFFICIENT_DATA"
             confidence_score = 0.0
         elif vision.get("out_of_distribution", False):
             confidence_state = "INSUFFICIENT_DATA"
@@ -49,6 +54,8 @@ class CriticAgent:
         safe_to_act = True
         if confidence_state in ["UNCERTAIN", "INSUFFICIENT_DATA", "CONFLICTING_EVIDENCE", "OUT_OF_SCOPE"]:
             safe_to_act = False
+        if not weather_available or not knowledge_available:
+            safe_to_act = False
 
         # Image quality suspicious mismatch check
         q_score = vision.get("quality_score", 1.0)
@@ -62,6 +69,8 @@ class CriticAgent:
             confidence_score > 0.65
             and len(conflicts) == 0
             and confidence_state in ["CONFIRMED", "LIKELY"]
+            and weather_available
+            and knowledge_available
         )
 
         critic_result = {

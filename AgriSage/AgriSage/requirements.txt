@@ -16,6 +16,8 @@ onnxruntime==1.20.0
 torch==2.5.1
 torchvision==0.20.1
 langgraph==1.0.8
+feedparser==6.0.11
+pypdf==4.3.1
 PyMuPDF==1.24.0
 beautifulsoup4==4.12.3
 Pillow==11.0.0
@@ -28,4 +30,3 @@ pytest==8.3.0
 pytest-asyncio==0.24.0
 bandit==1.8.0
 pip-audit==2.8.0
-cross-encoder==0.1.0

@@ -6,13 +6,13 @@ from backend.agents.llm_util import call_gemini_safe
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are the RouterAgent for Agri-SAGE Kerala.
+SYSTEM_PROMPT = """You are the RouterAgent for Agri-SAGE, an India-wide agricultural guidance service.
 Classify the farmer's query into one or more of these intents ONLY:
 WEATHER, PEST, MARKET, FERTILIZER, IRRIGATION, SOWING, CROP_ADVICE, GENERAL
 Return ONLY valid JSON matching this schema:
 {"intents": ["INTENT1", "INTENT2"], "crop": "detected_crop", "crop_stage": "detected_stage"}
 
-crop: one of [coconut,rice,banana,rubber,tapioca,pepper,cardamom,ginger,turmeric,arecanut,unknown]
+crop: one of [rice,wheat,maize,cotton,soybean,mustard,chickpea,groundnut,sugarcane,coconut,banana,rubber,tapioca,pepper,cardamom,ginger,turmeric,arecanut,unknown]
 crop_stage: one of [seedling,vegetative,flowering,harvest,unknown]
 Never return anything except the JSON object.
 """
@@ -46,7 +46,11 @@ async def router_node(state: AgriSageState) -> Dict[str, Any]:
 
     # Detect crop locally
     crop = "unknown"
-    for c in ["coconut", "rice", "banana", "rubber", "tapioca", "pepper", "cardamom", "ginger", "turmeric", "arecanut"]:
+    for c in [
+        "coconut", "rice", "wheat", "maize", "cotton", "soybean", "mustard",
+        "chickpea", "groundnut", "sugarcane", "banana", "rubber", "tapioca",
+        "pepper", "cardamom", "ginger", "turmeric", "arecanut",
+    ]:
         if c in q_lower:
             crop = c
             break

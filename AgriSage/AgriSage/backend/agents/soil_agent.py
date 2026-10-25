@@ -8,8 +8,7 @@ logger = logging.getLogger(__name__)
 
 async def soil_node(state: AgriSageState) -> Dict[str, Any]:
     location = state.get("location", {})
-    district = location.get("district", "Ernakulam") if isinstance(location, dict) else "Ernakulam"
-    crop = state.get("crop", "unknown")
+    district = location.get("district", "") if isinstance(location, dict) else ""
 
     soil_ctx = get_soil_by_district(district)
     if not soil_ctx:

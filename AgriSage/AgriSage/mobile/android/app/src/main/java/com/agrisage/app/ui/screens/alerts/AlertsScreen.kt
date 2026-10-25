@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -18,6 +20,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -74,12 +83,21 @@ fun AlertsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text(
-                                text = "🔔 Alerts",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = Color.White
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Notifications,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Alerts",
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color.White
+                                )
+                            }
                             Text(
                                 text = "${state.unreadCount} unread farm advisories & warnings",
                                 fontSize = 12.sp,
@@ -122,12 +140,40 @@ fun AlertsScreen(
                 }
             }
 
-            items(state.filteredAlerts) { alert ->
-                val (bgColor, stripeColor, icon, timeText) = when (alert.severity) {
-                    AlertSeverity.CRITICAL -> Quadruple(WireAlertPale, WireAlert, "🐛", "⏰ 2 hours ago")
-                    AlertSeverity.WARNING -> Quadruple(WireGoldPale, WireGold, "🌧️", "⏰ 5 hours ago")
-                    AlertSeverity.INFO -> Quadruple(WireSkyPale, WireSky, "🌱", "⏰ Yesterday")
-                    AlertSeverity.SUCCESS -> Quadruple(WireLeafPale, WireLeaf, "✅", "⏰ Yesterday")
+            state.error?.let { message ->
+                item {
+                    AlertDataNotice(
+                        title = "Alert data unavailable",
+                        message = message,
+                        onRetry = viewModel::refresh
+                    )
+                }
+            }
+
+            if (state.filteredAlerts.isEmpty()) {
+                item {
+                    AlertDataNotice(
+                        title = when (state.status) {
+                            AlertsDataStatus.LOADING -> "Loading alerts"
+                            AlertsDataStatus.AVAILABLE -> "No alerts for this filter"
+                            AlertsDataStatus.UNAVAILABLE -> "Alerts unavailable"
+                        },
+                        message = when (state.status) {
+                            AlertsDataStatus.LOADING -> "Checking the provider and local alert cache."
+                            AlertsDataStatus.AVAILABLE -> "No provider-backed alert records are currently available for this farm."
+                            AlertsDataStatus.UNAVAILABLE -> "The provider and local alert cache did not return alert data."
+                        },
+                        onRetry = if (state.status == AlertsDataStatus.UNAVAILABLE) viewModel::refresh else null
+                    )
+                }
+            }
+
+            items(state.filteredAlerts, key = { it.id }) { alert ->
+                val (bgColor, stripeColor, icon) = when (alert.severity) {
+                    AlertSeverity.CRITICAL -> Triple(WireAlertPale, WireAlert, Icons.Default.Warning)
+                    AlertSeverity.WARNING -> Triple(WireGoldPale, WireGold, Icons.Default.WaterDrop)
+                    AlertSeverity.INFO -> Triple(WireSkyPale, WireSky, Icons.Default.CloudOff)
+                    AlertSeverity.SUCCESS -> Triple(WireLeafPale, WireLeaf, Icons.Default.CheckCircle)
                 }
 
                 Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 5.dp)) {
@@ -154,7 +200,12 @@ fun AlertsScreen(
                                     .padding(12.dp),
                                 verticalAlignment = Alignment.Top
                             ) {
-                                Text(text = icon, fontSize = 22.sp)
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = alert.severityLabel,
+                                    tint = stripeColor,
+                                    modifier = Modifier.size(22.dp)
+                                )
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
@@ -170,8 +221,8 @@ fun AlertsScreen(
                                         lineHeight = 17.sp,
                                         modifier = Modifier.padding(top = 3.dp)
                                     )
-                                    Text(
-                                        text = timeText,
+                                     Text(
+                                        text = if (alert.isRead) "Read" else "Unread",
                                         fontSize = 10.sp,
                                         color = WireTextMuted,
                                         modifier = Modifier.padding(top = 4.dp)
@@ -192,8 +243,6 @@ fun AlertsScreen(
     }
 }
 
-private data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
-
 @Composable
 private fun WireFilterChip(
     label: String,
@@ -205,6 +254,7 @@ private fun WireFilterChip(
             .clip(RoundedCornerShape(8.dp))
             .background(if (isSelected) WireSageDeep else WireSurface2)
             .clickable { onClick() }
+            .heightIn(min = 48.dp)
             .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {
         Text(
@@ -213,5 +263,53 @@ private fun WireFilterChip(
             fontWeight = FontWeight.Bold,
             color = if (isSelected) Color.White else WireSageDeep
         )
+    }
+}
+
+@Composable
+private fun AlertDataNotice(
+    title: String,
+    message: String,
+    onRetry: (() -> Unit)? = null
+) {
+    Card(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 5.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = WireSurface2)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = if (onRetry == null) Icons.Default.CloudOff else Icons.Default.Warning,
+                contentDescription = null,
+                tint = WireTextMuted,
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = WireTextPrimary
+                )
+                Text(
+                    text = message,
+                    fontSize = 12.sp,
+                    color = WireTextSecondary,
+                    lineHeight = 17.sp,
+                    modifier = Modifier.padding(top = 3.dp)
+                )
+            }
+            onRetry?.let { retry ->
+                TextButton(onClick = retry) {
+                    Text("Retry", color = WireSageDeep, fontSize = 12.sp)
+                }
+            }
+        }
     }
 }

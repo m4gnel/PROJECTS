@@ -99,7 +99,7 @@ async def _fetch_ndvi_appeears(
                     ndvi = raw / 10000.0 if raw > 1.0 else raw
                     return round(ndvi, 3)
     except Exception as e:
-        logger.warning("ndvi_appeears_fetch_failed", error=str(e))
+        logger.warning(f"ndvi_appeears_fetch_failed: {e}")
     return None
 
 
@@ -111,8 +111,6 @@ async def ndvi_node(state: AgriSageState) -> Dict[str, Any]:
     location = state.get("location", {})
     lat = location.get("lat") if isinstance(location, dict) else None
     lon = location.get("lon") if isinstance(location, dict) else None
-    weather = state.get("weather_context", {})
-
     ndvi_value: Optional[float] = None
 
     # Try live AppEEARS API if token configured and coordinates available
@@ -127,23 +125,38 @@ async def ndvi_node(state: AgriSageState) -> Dict[str, Any]:
             age_days = (now - cached["fetched_at"]).days
             if age_days < 16:  # MODIS product is 16-day
                 ndvi_value = cached["ndvi"]
-                logger.debug("ndvi_cache_hit", cache_key=cache_key, age_days=age_days)
+                logger.debug(f"ndvi_cache_hit: cache_key={cache_key} age_days={age_days}")
 
         if ndvi_value is None:
             ndvi_value = await _fetch_ndvi_appeears(lat, lon, token)
             if ndvi_value is not None:
                 _NDVI_CACHE[cache_key] = {"ndvi": ndvi_value, "fetched_at": now}
 
-    # Fallback: synthetic NDVI from weather context
+    # Do not turn missing satellite data into a synthetic vegetation reading.
+    # A weather proxy is not an NDVI observation and must not be presented as
+    # one to downstream advisory logic.
     if ndvi_value is None:
-        ndvi_value = _synthetic_ndvi_from_weather(weather)
-        source = "synthetic_weather_proxy"
-    else:
-        source = "nasa_modis_mod13q1"
+        res_dict = {
+            "available": False,
+            "ndvi": None,
+            "health": "UNKNOWN",
+            "label": "Satellite data unavailable",
+            "recommendation": "No vegetation-health recommendation is available until current satellite data is verified.",
+            "source": "unavailable",
+            "product": "MOD13Q1 (250m, 16-day)",
+            "warning": "Satellite provider data is unavailable; do not infer crop health from this result.",
+        }
+        return {
+            "agent_outputs": {"ndvi": res_dict},
+            "warnings": [res_dict["warning"]],
+        }
+
+    source = "nasa_modis_mod13q1"
 
     interpretation = _interpret_ndvi(ndvi_value)
 
     res_dict = {
+        "available": True,
         "ndvi": ndvi_value,
         "health": interpretation["health"],
         "label": interpretation["label"],
@@ -152,7 +165,10 @@ async def ndvi_node(state: AgriSageState) -> Dict[str, Any]:
         "product": "MOD13Q1 (250m, 16-day)",
     }
 
-    logger.info("ndvi_agent_complete", ndvi=ndvi_value, health=interpretation["health"], source=source)
+    logger.info(
+        f"ndvi_agent_complete: ndvi={ndvi_value} "
+        f"health={interpretation['health']} source={source}"
+    )
 
     return {
         "agent_outputs": {"ndvi": res_dict}

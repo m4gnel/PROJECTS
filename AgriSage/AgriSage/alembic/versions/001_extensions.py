@@ -17,10 +17,8 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
     op.execute('CREATE EXTENSION IF NOT EXISTS vector;')
-    op.execute('CREATE EXTENSION IF NOT EXISTS postgis;')
 
 
 def downgrade() -> None:
-    op.execute('DROP EXTENSION IF EXISTS postgis;')
     op.execute('DROP EXTENSION IF EXISTS vector;')
     op.execute('DROP EXTENSION IF EXISTS "uuid-ossp";')

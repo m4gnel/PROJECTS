@@ -10,8 +10,12 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Agriculture
+import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,7 +35,7 @@ import com.agrisage.app.ui.theme.*
  * Route: Advisor
  *
  * Per spec:
- * - TopBar: back arrow | "🤖 Farm Advisor" | language toggle chips
+ * - TopBar: back arrow | Farm Advisor | language toggle chips
  * - Chat area (LazyColumn reversed): AI bubbles (left) + User bubbles (right)
  * - Input area: text field + mic + send button
  * - Empty state: suggestion chips
@@ -56,9 +60,9 @@ fun AdvisorScreen(navController: NavController) {
     val listState = rememberLazyListState()
 
     val suggestions = listOf(
-        "My crop is yellowing 🌿",
-        "When should I irrigate? 💧",
-        "Pest on my paddy 🐛"
+        "My crop is yellowing",
+        "When should I irrigate?",
+        "Pest on my paddy"
     )
 
     fun handleSendMessage(msg: String) {
@@ -92,12 +96,21 @@ fun AdvisorScreen(navController: NavController) {
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        "🤖 Advisor",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 17.sp,
-                        color = Color.White
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.SmartToy,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            "Advisor",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 17.sp,
+                            color = Color.White
+                        )
+                    }
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
@@ -112,7 +125,9 @@ fun AdvisorScreen(navController: NavController) {
                             selected = selected,
                             onClick = { selectedLang = lang },
                             label = { Text(lang, fontSize = 10.sp) },
-                            modifier = Modifier.padding(end = 4.dp).height(26.dp),
+                            modifier = Modifier
+                                .padding(end = 4.dp)
+                                .heightIn(min = 48.dp),
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = Color(0xFF52B788),
                                 selectedLabelColor = Color.White,
@@ -164,7 +179,7 @@ fun AdvisorScreen(navController: NavController) {
                         Spacer(Modifier.width(8.dp))
                         // Mic button
                         IconButton(
-                            onClick = { handleSendMessage("When should I irrigate? 💧") },
+                            onClick = { handleSendMessage("When should I irrigate?") },
                             modifier = Modifier
                                 .size(48.dp)
                                 .background(Color(0xFF40916C), RoundedCornerShape(12.dp))
@@ -213,7 +228,12 @@ fun AdvisorScreen(navController: NavController) {
                     modifier = Modifier.align(Alignment.Center).padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("🌾", fontSize = 48.sp)
+                    Icon(
+                        imageVector = Icons.Default.Agriculture,
+                        contentDescription = "Farm advisor",
+                        tint = Color(0xFF2D6A4F),
+                        modifier = Modifier.size(48.dp)
+                    )
                     Spacer(Modifier.height(12.dp))
                     Text(
                         "Ask me anything about your farm",
@@ -226,7 +246,9 @@ fun AdvisorScreen(navController: NavController) {
                         SuggestionChip(
                             onClick = { handleSendMessage(suggestion) },
                             label = { Text(suggestion) },
-                            modifier = Modifier.padding(bottom = 8.dp)
+                            modifier = Modifier
+                                .padding(bottom = 8.dp)
+                                .heightIn(min = 48.dp)
                         )
                     }
                 }
@@ -251,11 +273,19 @@ fun AdvisorScreen(navController: NavController) {
                                     color = Color.White,
                                     shadowElevation = 2.dp
                                 ) {
-                                    Text(
-                                        "⏳ Thinking...",
+                                    Row(
                                         modifier = Modifier.padding(12.dp),
-                                        color = Color(0xFF6B7280)
-                                    )
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.HourglassEmpty,
+                                            contentDescription = "Thinking",
+                                            tint = Color(0xFF6B7280),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(Modifier.width(6.dp))
+                                        Text("Thinking...", color = Color(0xFF6B7280))
+                                    }
                                 }
                             }
                         }
@@ -314,11 +344,20 @@ fun AiBubble(
                     }
                     if (sourceAgents.isNotEmpty()) {
                         Spacer(Modifier.height(6.dp))
-                        Text(
-                            text = "📡 ${sourceAgents.joinToString(" + ")}",
-                            fontSize = 10.sp,
-                            color = Color(0xFF6B7280)
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                 imageVector = Icons.Default.Settings,
+                                contentDescription = "Source agents",
+                                tint = Color(0xFF6B7280),
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = sourceAgents.joinToString(" + "),
+                                fontSize = 10.sp,
+                                color = Color(0xFF6B7280)
+                            )
+                        }
                     }
                     Text(timestamp, fontSize = 10.sp, color = Color(0xFF9CA3AF))
                 }

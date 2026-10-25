@@ -18,6 +18,9 @@ interface AlertDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAlerts(alerts: List<AlertEntity>)
 
+    @Query("DELETE FROM alerts")
+    suspend fun deleteAll()
+
     @Query("UPDATE alerts SET isRead = 1 WHERE id = :alertId")
     suspend fun markAsRead(alertId: String)
 

@@ -58,6 +58,8 @@ export const ExpertDashboard: React.FC<ExpertDashboardProps> = ({
   const escalatedCount = advisories.filter((a) => a.triageStatus === 'ESCALATED').length;
   const approvedCount = advisories.filter((a) => a.triageStatus === 'VERIFIED_APPROVED').length;
 
+  const selectAdvisory = (advisory: DiagnosticAdvisory) => onSelectAdvisory(advisory);
+
   return (
     <div className="space-y-6">
       {/* Top Banner & KPI Stat Cards */}
@@ -117,7 +119,9 @@ export const ExpertDashboard: React.FC<ExpertDashboardProps> = ({
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-4 bg-white rounded-xl border border-[var(--color-outline-variant)] shadow-xs">
         <div className="flex items-center gap-2 flex-1 relative">
           <Search size={18} className="absolute left-3 text-[var(--color-on-surface-tertiary)]" />
+          <label htmlFor="expert-queue-search" className="sr-only">Search by farmer, diagnosis, district, or case ID</label>
           <input
+            id="expert-queue-search"
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -190,7 +194,17 @@ export const ExpertDashboard: React.FC<ExpertDashboardProps> = ({
             filteredAdvisories.map((adv) => (
               <div
                 key={adv.id}
-                onClick={() => onSelectAdvisory(adv)}
+                onClick={() => selectAdvisory(adv)}
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget) return;
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    selectAdvisory(adv);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={`Open audit review for ${adv.diagnosisNameEn} from ${adv.farmerContext.farmerName}`}
                 className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-[var(--color-primary-light)]/40 transition-colors cursor-pointer group"
               >
                 {/* Left: Thumbnail & Core Diagnosis */}
@@ -248,14 +262,13 @@ export const ExpertDashboard: React.FC<ExpertDashboardProps> = ({
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    className="btn btn-secondary text-xs h-9 px-3 flex items-center gap-1.5"
-                  >
-                    <Eye size={14} />
-                    <span>Audit Review</span>
-                    <ChevronRight size={14} />
-                  </button>
+                   <span
+                     className="btn btn-secondary text-xs h-9 px-3 flex items-center gap-1.5"
+                   >
+                     <Eye size={14} />
+                     <span>Audit Review</span>
+                     <ChevronRight size={14} />
+                   </span>
                 </div>
               </div>
             ))

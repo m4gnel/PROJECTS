@@ -8,11 +8,12 @@ logger = logging.getLogger(__name__)
 
 async def weather_node(state: AgriSageState) -> Dict[str, Any]:
     location = state.get("location", {})
-    district = location.get("district", "Ernakulam") if isinstance(location, dict) else "Ernakulam"
+    state_name = location.get("state", "India") if isinstance(location, dict) else "India"
+    district = location.get("district", "") if isinstance(location, dict) else ""
     lat = location.get("lat") if isinstance(location, dict) else None
     lon = location.get("lon") if isinstance(location, dict) else None
 
-    ctx = await weather_service.get_weather(district=district, lat=lat, lon=lon)
+    ctx = await weather_service.get_weather(state=state_name, district=district, lat=lat, lon=lon)
     res_dict = {
         "temp_c": ctx.temp_c,
         "humidity_pct": ctx.humidity_pct,
@@ -21,7 +22,8 @@ async def weather_node(state: AgriSageState) -> Dict[str, Any]:
         "wind_kmh": ctx.wind_kmh,
         "advice_flag": ctx.advice_flag,
         "cached": ctx.cached,
-        "stale": ctx.stale
+        "stale": ctx.stale,
+        "available": ctx.available,
     }
 
     return {

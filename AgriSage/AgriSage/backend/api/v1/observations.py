@@ -3,8 +3,12 @@ from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from backend.config import settings
 from backend.database import get_db
-from backend.dependencies import require_auth
+from backend.dependencies import get_current_user
+from backend.models.db.farms import CropCycle, Field, Farm, Image, Observation
+from backend.services.image_security import process_uploaded_image
+from backend.services.storage import StorageNotConfigured, r2_storage
 
 try:
     import structlog
@@ -22,7 +26,7 @@ async def create_observation(
     crop_cycle_id: str = Form(...),
     description: Optional[str] = Form(None),
     images: List[UploadFile] = File(...),
-    auth: Dict[str, Any] = Depends(require_auth),
+    auth: Dict[str, Any] = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -30,7 +34,10 @@ async def create_observation(
     Enforces image quality checks, EXIF stripping, R2 upload, and RLS ownership.
     """
     user_id = auth.get("sub")
-    await db.execute(text(f"SET LOCAL app.current_user_id = '{user_id}'"))
+    await db.execute(
+        text("SELECT set_config('app.current_user_id', :user_id, true)"),
+        {"user_id": str(user_id)},
+    )
 
     # Validate image count
     if len(images) > 5:
@@ -70,7 +77,13 @@ async def create_observation(
 
     image_ids = []
     for file in images:
-        file_bytes = await file.read()
+        max_size_bytes = max(1, settings.MAX_IMAGE_SIZE_MB) * 1024 * 1024
+        file_bytes = await file.read(max_size_bytes + 1)
+        if len(file_bytes) > max_size_bytes:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Image exceeds the {settings.MAX_IMAGE_SIZE_MB} MB limit",
+            )
         try:
             processed_bytes = process_uploaded_image(file_bytes)
         except ValueError as e:
@@ -83,7 +96,13 @@ async def create_observation(
         r2_key = f"observations/{user_id}/{obs_id}/{img_uuid}.jpg"
 
         # Upload to R2
-        r2_url = await r2_storage.upload_image(processed_bytes, r2_key)
+        try:
+            await r2_storage.upload_image(processed_bytes, r2_key)
+        except StorageNotConfigured as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Image storage is not configured",
+            ) from exc
 
         img_record = Image(
             id=img_uuid,

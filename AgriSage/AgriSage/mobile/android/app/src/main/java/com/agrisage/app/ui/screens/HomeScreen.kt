@@ -2,7 +2,6 @@ package com.agrisage.app.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -17,6 +16,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,7 +31,7 @@ import com.agrisage.app.ui.theme.*
  * Route: Home
  *
  * Features:
- * - Top Header: Rounded avatar pill, "Good afternoon, Guest", "Green Valley Farm ⌵", circular bell with unread dot
+ * - Top Header: Rounded avatar pill, "Good afternoon, Guest", Green Valley Farm selector, circular bell with unread dot
  * - Hero Farm Scene: Animated Canvas vector farm with rolling pastures, red barn, cows & spinning wind turbines
  * - Overlaid Hero KPI Cards: Farm Health circular gauge (92% Healthy) + Weather snapshot (28°C Sunny)
  * - 2x2 Bento Quick Stats: 12 Crops (Mint), 48 Animals (Peach), 72% Soil Moisture (Ice Blue), 1,280 kg Harvest (Amber)
@@ -70,7 +73,17 @@ fun HomeScreen(
                     // Profile & Farm Selector
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.clickable { onNavigateToProfile() }
+                        modifier = Modifier
+                            .defaultMinSize(minHeight = 48.dp)
+                            .semantics(mergeDescendants = true) {
+                                contentDescription = "Open profile and farm selector"
+                                role = Role.Button
+                            }
+                            .tactilePress(
+                                scaleDown = 0.97f,
+                                onClickLabel = "Open profile",
+                                onClick = onNavigateToProfile
+                            )
                     ) {
                         // Avatar inside subtle pill container
                         Box(
@@ -84,8 +97,13 @@ fun HomeScreen(
                                 )
                                 .border(2.dp, Color.White, CircleShape),
                             contentAlignment = Alignment.Center
-                        ) {
-                            Text("👨‍🌾", fontSize = 22.sp)
+                            ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
 
                         Spacer(modifier = Modifier.width(12.dp))
@@ -105,11 +123,11 @@ fun HomeScreen(
                                     color = Color(0xFF0F172A)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = "⌵",
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF64748B)
+                                Icon(
+                                    imageVector = Icons.Default.KeyboardArrowDown,
+                                    contentDescription = null,
+                                    tint = Color(0xFF64748B),
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
                         }
@@ -118,16 +136,24 @@ fun HomeScreen(
                     // Notification Bell (Circular white button with unread red badge)
                     Box(
                         modifier = Modifier
-                            .size(42.dp)
+                            .size(48.dp)
                             .clip(CircleShape)
                             .background(Color(0xFFF8FAFC))
                             .border(1.dp, Color(0xFFE2E8F0), CircleShape)
-                            .clickable { onNavigateToAlerts() },
+                            .semantics {
+                                contentDescription = "Open alerts"
+                                role = Role.Button
+                            }
+                            .tactilePress(
+                                scaleDown = 0.95f,
+                                onClickLabel = "Open alerts",
+                                onClick = onNavigateToAlerts
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Notifications,
-                            contentDescription = "Alerts",
+                            contentDescription = null,
                             tint = Color(0xFF334155),
                             modifier = Modifier.size(22.dp)
                         )
@@ -182,12 +208,12 @@ fun HomeScreen(
                         ) {
                             Icon(
                                 imageVector = if (connectivity == ConnectivityStatus.OFFLINE) Icons.Default.CloudOff else Icons.Default.Warning,
-                                contentDescription = null,
+                                contentDescription = if (connectivity == ConnectivityStatus.OFFLINE) "Offline" else "Limited connection",
                                 tint = if (connectivity == ConnectivityStatus.OFFLINE) ColorOfflineText else ColorWarningText
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = if (connectivity == ConnectivityStatus.OFFLINE) "📴 Offline — Showing cached data" else "Limited connection",
+                                text = if (connectivity == ConnectivityStatus.OFFLINE) "Offline — Showing cached data" else "Limited connection",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = if (connectivity == ConnectivityStatus.OFFLINE) ColorOfflineText else ColorWarningText
                             )
@@ -257,7 +283,17 @@ fun HomeScreen(
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = Color(0xFF16A34A),
-                            modifier = Modifier.clickable { onNavigateToFields() }
+                            modifier = Modifier
+                                .defaultMinSize(minHeight = 48.dp)
+                                .semantics {
+                                    contentDescription = "Open fields overview"
+                                    role = Role.Button
+                                }
+                                .tactilePress(
+                                    scaleDown = 0.97f,
+                                    onClickLabel = "Open fields overview",
+                                    onClick = onNavigateToFields
+                                )
                         )
                     }
 
@@ -270,7 +306,7 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         QuickStatCard(
-                            emojiOrIcon = "🌱",
+                            iconVector = Icons.Default.Eco,
                             value = "12",
                             label = "Crops",
                             badgeBgColor = Color(0xFFDCFCE7),
@@ -280,7 +316,7 @@ fun HomeScreen(
                         )
 
                         QuickStatCard(
-                            emojiOrIcon = "🐮",
+                            iconVector = Icons.Default.Pets,
                             value = "48",
                             label = "Animals",
                             badgeBgColor = Color(0xFFFFEDD5),
@@ -298,7 +334,7 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         QuickStatCard(
-                            emojiOrIcon = "💧",
+                            iconVector = Icons.Default.WaterDrop,
                             value = "72%",
                             label = "Soil Moisture",
                             badgeBgColor = Color(0xFFE0F2FE),
@@ -308,7 +344,7 @@ fun HomeScreen(
                         )
 
                         QuickStatCard(
-                            emojiOrIcon = "🧺",
+                            iconVector = Icons.Default.ShoppingBasket,
                             value = "1,280 kg",
                             label = "Harvest Yield",
                             badgeBgColor = Color(0xFFFEF3C7),
@@ -347,7 +383,15 @@ fun HomeScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(118.dp)
-                                .tactilePress(scaleDown = 0.95f, onClick = onNavigateToAdvisor),
+                                .semantics(mergeDescendants = true) {
+                                    contentDescription = "Ask Advisor. AI crop assistance"
+                                    role = Role.Button
+                                }
+                                .tactilePress(
+                                    scaleDown = 0.95f,
+                                    onClickLabel = "Ask Advisor",
+                                    onClick = onNavigateToAdvisor
+                                ),
                             elevation = CardDefaults.cardElevation(2.dp)
                         ) {
                             Column(
@@ -363,7 +407,12 @@ fun HomeScreen(
                                         .background(Color.White.copy(alpha = 0.15f)),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text("🤖", fontSize = 20.sp)
+                                    Icon(
+                                        imageVector = Icons.Default.SmartToy,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(22.dp)
+                                    )
                                 }
                                 Column {
                                     Text(
@@ -388,7 +437,15 @@ fun HomeScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(118.dp)
-                                .tactilePress(scaleDown = 0.95f, onClick = onNavigateToCamera),
+                                .semantics(mergeDescendants = true) {
+                                    contentDescription = "Diagnose. Scan plant disease"
+                                    role = Role.Button
+                                }
+                                .tactilePress(
+                                    scaleDown = 0.95f,
+                                    onClickLabel = "Diagnose plant disease",
+                                    onClick = onNavigateToCamera
+                                ),
                             elevation = CardDefaults.cardElevation(2.dp)
                         ) {
                             Column(
@@ -404,7 +461,12 @@ fun HomeScreen(
                                         .background(Color.White.copy(alpha = 0.15f)),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text("📸", fontSize = 20.sp)
+                                    Icon(
+                                        imageVector = Icons.Default.CameraAlt,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(22.dp)
+                                    )
                                 }
                                 Column {
                                     Text(
@@ -435,7 +497,15 @@ fun HomeScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
                         .border(1.dp, Color(0xFFF1F5F9), RoundedCornerShape(20.dp))
-                        .tactilePress(scaleDown = 0.97f, onClick = onNavigateToMarket)
+                        .semantics(mergeDescendants = true) {
+                            contentDescription = "Open APMC market live prices"
+                            role = Role.Button
+                        }
+                        .tactilePress(
+                            scaleDown = 0.97f,
+                            onClickLabel = "Open market prices",
+                            onClick = onNavigateToMarket
+                        )
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
@@ -453,7 +523,12 @@ fun HomeScreen(
                                     .background(Color(0xFFDCFCE7)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text("📈", fontSize = 22.sp)
+                                Icon(
+                                    imageVector = Icons.Default.TrendingUp,
+                                    contentDescription = null,
+                                    tint = Color(0xFF166534),
+                                    modifier = Modifier.size(24.dp)
+                                )
                             }
                             Spacer(Modifier.width(14.dp))
                             Column {
@@ -473,7 +548,7 @@ fun HomeScreen(
                         }
                         Icon(
                             imageVector = Icons.Default.ChevronRight,
-                            contentDescription = "Market Details",
+                            contentDescription = null,
                             tint = Color(0xFF94A3B8)
                         )
                     }
@@ -586,4 +661,3 @@ fun HomeScreen(
         }
     }
 }
-

@@ -3,11 +3,13 @@
 import {
     type ComponentProps,
     type CSSProperties,
+    forwardRef,
     type KeyboardEvent,
     type ReactNode,
     useCallback,
     useEffect,
     useId,
+    useImperativeHandle,
     useLayoutEffect,
     useRef,
     useState,
@@ -112,6 +114,11 @@ const GEIST = `
 src:local("Inter"), local("system-ui"), local("sans-serif");}
 `;
 
+export type SqueezeCarouselHandle = {
+    step: (by: number) => void;
+    go: (to: number) => void;
+};
+
 export type SqueezeCarouselProps = {
     /** The panels, in the order they are read. */
     slides: SqueezeSlide[];
@@ -154,28 +161,32 @@ export type SqueezeCarouselProps = {
  * down the right-hand side. Opening a slat widens it and slides the row along;
  * the copy and the button underneath cross-fade to match.
  */
-export function SqueezeCarousel({
-    slides,
-    defaultIndex = 0,
-    onIndexChange,
-    height = "clamp(180px, 32cqi, 340px)",
-    slatWidth = 8,
-    slatGap = 8,
-    gap = 16,
-    radius = 6,
-    duration = 1000,
-    hoverGrow = true,
-    autoplay = false,
-    interval = 6000,
-    controls = true,
-    accent = "var(--sq-accent, var(--primary, currentColor))",
-    accentForeground = "var(--sq-accent-foreground, var(--primary-foreground, white))",
-    label = "Featured",
-    panelClassName,
-    className,
-    style,
-    ...props
-}: SqueezeCarouselProps) {
+export const SqueezeCarousel = forwardRef<SqueezeCarouselHandle, SqueezeCarouselProps>(
+    function SqueezeCarousel(
+        {
+            slides,
+            defaultIndex = 0,
+            onIndexChange,
+            height = "clamp(180px, 32cqi, 340px)",
+            slatWidth = 8,
+            slatGap = 8,
+            gap = 16,
+            radius = 6,
+            duration = 1000,
+            hoverGrow = true,
+            autoplay = false,
+            interval = 6000,
+            controls = true,
+            accent = "var(--sq-accent, var(--primary, currentColor))",
+            accentForeground = "var(--sq-accent-foreground, var(--primary-foreground, white))",
+            label = "Featured",
+            panelClassName,
+            className,
+            style,
+            ...props
+        },
+        ref,
+    ) {
     const count = slides.length;
     const wrap = (i: number) => ((i % count) + count) % count;
 
@@ -297,6 +308,15 @@ export function SqueezeCarousel({
         [open, count, step],
     );
 
+    useImperativeHandle(
+        ref,
+        () => ({
+            step,
+            go,
+        }),
+        [step, go],
+    );
+
     useEffect(() => {
         onIndexChange?.(open);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -354,8 +374,8 @@ export function SqueezeCarousel({
         "--sq-on-fill": accentForeground,
         // A 16:9 block sets both the open card and the size every picture is
         // drawn at, so a picture keeps one scale however narrow its card gets.
-        "--sq-hero": "calc(var(--sq-h) * 16 / 9)",
-        "--sq-room": `calc(100% - var(--sq-hero) - ${
+        "--sq-hero": "min(58cqi, calc(var(--sq-h) * 16 / 9))",
+        "--sq-room": `calc(100cqi - var(--sq-hero) - ${
             slats
         } * var(--sq-slat-gap) - 3 * var(--sq-gap) - ${slats} * ${slat})`,
     } as CSSProperties;
@@ -463,7 +483,7 @@ export function SqueezeCarousel({
                 </div>
             </div>
 
-            <div id={`${ids}-panel`} role="tabpanel" aria-live="polite" className="mt-6 grid @xl:mt-7">
+            <div id={`${ids}-panel`} role="tabpanel" aria-live="polite" className="mt-5 grid">
                 {slides.map((slide, i) => {
                     const shown = i === open;
 
@@ -473,7 +493,7 @@ export function SqueezeCarousel({
                             aria-hidden={!shown}
                             className={cn(
                                 "col-start-1 row-start-1 flex flex-col gap-4",
-                                "@xl:flex-row @xl:items-start @xl:justify-between @xl:gap-10"
+                                "@xl:flex-row @xl:items-center @xl:justify-between @xl:gap-8"
                             )}
                             style={{
                                 opacity: shown ? 1 : 0,
@@ -482,10 +502,10 @@ export function SqueezeCarousel({
                                 transition: `opacity var(--sq-ms) var(--sq-ease), transform var(--sq-ms) var(--sq-ease)`,
                             }}
                         >
-                            <p className="max-w-[46rem] text-[15px] leading-[1.6] text-balance @lg:text-[17px]">
-                                <span className="text-foreground">{slide.title}</span>{" "}
+                            <p className="max-w-[48rem] text-[14px] sm:text-[15px] leading-[1.6] text-balance">
+                                <span className="text-white font-bold">{slide.title}</span>{" "}
                                 {slide.description && (
-                                    <span className="text-muted-foreground">{slide.description}</span>
+                                    <span className="text-slate-300/90">{slide.description}</span>
                                 )}
                             </p>
 
@@ -496,7 +516,7 @@ export function SqueezeCarousel({
             </div>
         </div>
     );
-}
+});
 
 /* -------------------------------------------------------------------------- */
 /*                                   pieces                                   */

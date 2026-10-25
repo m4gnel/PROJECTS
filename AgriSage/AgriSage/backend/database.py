@@ -62,4 +62,3 @@ async def init_db():
                 END IF;
             END $$;
         """))
-

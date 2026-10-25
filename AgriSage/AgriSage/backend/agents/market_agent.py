@@ -8,10 +8,16 @@ logger = logging.getLogger(__name__)
 
 async def market_node(state: AgriSageState) -> Dict[str, Any]:
     location = state.get("location", {})
-    district = location.get("district", "Ernakulam") if isinstance(location, dict) else "Ernakulam"
+    district = location.get("district", "") if isinstance(location, dict) else ""
     crop = state.get("crop", "coconut") or "coconut"
 
     ctx = await market_service.get_market_data(crop=crop, district=district)
+    if ctx is None:
+        return {
+            "market_data": {},
+            "warnings": ["Market provider data is unavailable; no price recommendation was generated."],
+            "agent_outputs": {},
+        }
     res_dict = {
         "crop": ctx.crop_name,
         "variety": ctx.variety,

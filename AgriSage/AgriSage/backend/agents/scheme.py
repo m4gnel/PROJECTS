@@ -1,12 +1,19 @@
+from datetime import date
 from typing import Dict, Any, List
 from backend.agents.state import AgriSAGEState
+from backend.config import settings
 
 MANDATORY_CAVEAT = "Final eligibility determined by the concerned authority. Please verify before applying."
 
 
 class SchemeAgent:
     async def run(self, state: AgriSAGEState) -> AgriSAGEState:
-        crop = state.get("crop") or "rice"
+        if settings.ENVIRONMENT.lower() == "production":
+            state["scheme_result"] = {
+                "matches": [],
+                "no_matches_reason": "Verified scheme provider data is unavailable.",
+            }
+            return state
 
         # Matched schemes with required mandatory_caveat
         matches = [
@@ -42,11 +49,13 @@ class SchemeAgent:
         return state
 
     def filter_valid_schemes(self, schemes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Filter out schemes that have expired before current date (2026-10-01)."""
+        """Filter out schemes whose validity or enrollment deadline has passed."""
         valid_schemes = []
+        today = date.today().isoformat()
         for s in schemes:
             valid_until = s.get("valid_until")
-            if valid_until and valid_until < "2026-10-01":
+            deadline = s.get("deadline")
+            if (valid_until and valid_until < today) or (deadline and deadline < today):
                 continue
             valid_schemes.append(s)
         return valid_schemes

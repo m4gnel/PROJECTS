@@ -1,13 +1,9 @@
 import logging
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, List, Optional
+from backend.config import settings
 
 logger = logging.getLogger(__name__)
-
-try:
-    from sentence_transformers import SentenceTransformer
-except ImportError:
-    SentenceTransformer = None
 
 MODEL_NAME = "intfloat/multilingual-e5-large"
 
@@ -25,9 +21,15 @@ _MODEL = None
 
 def get_model():
     global _MODEL
-    if _MODEL is None and SentenceTransformer is not None:
+    if not settings.ENABLE_EMBEDDINGS:
+        return None
+
+    if _MODEL is None:
         try:
-            _MODEL = SentenceTransformer(MODEL_NAME, device="cpu")
+            from sentence_transformers import SentenceTransformer
+
+            model_name = settings.EMBEDDING_MODEL_PATH or MODEL_NAME
+            _MODEL = SentenceTransformer(model_name, device="cpu", local_files_only=True)
         except Exception as e:
             logger.warning(f"failed_loading_rag_embedding_model: {e}")
     return _MODEL
@@ -46,6 +48,7 @@ async def retrieve_kau_advice(
     """
     model = get_model()
     prefixed_query = f"query: {query}"
+    vec = None
 
     if model is not None:
         try:
@@ -54,7 +57,7 @@ async def retrieve_kau_advice(
             logger.warning(f"rag_embedding_encoding_error: {e}")
 
     # If db_conn provided, execute pgvector query
-    if db_conn is not None:
+    if db_conn is not None and vec is not None:
         try:
             if crop and crop != "unknown":
                 sql = """
@@ -101,19 +104,7 @@ async def retrieve_kau_advice(
         except Exception as e:
             logger.warning(f"rag_db_query_error: {e}")
 
-    # In-memory / Mock fallback for offline dev & test execution
-    fallback_results = [
-        RAGResult(
-            content=f"KAU Package of Practices for {crop or 'coconut'}: Apply recommended NPK dose (500g N, 320g P, 1200g K per palm/year) in two split doses during pre-monsoon and post-monsoon.",
-            source_file=f"kau_{(crop or 'coconut').lower()}_pop.pdf",
-            crop_name=crop or "coconut",
-            similarity=0.85
-        ),
-        RAGResult(
-            content=f"KAU Plant Protection for {crop or 'coconut'}: Ensure proper field drainage during heavy rains and apply copper oxychloride for fungal prevention.",
-            source_file=f"kau_{(crop or 'coconut').lower()}_pop.pdf",
-            crop_name=crop or "coconut",
-            similarity=0.78
-        )
-    ]
-    return fallback_results[:top_k]
+    # Never invent source documents or agronomic doses when the embedding model
+    # or the authoritative database is unavailable.  Callers can present the
+    # empty evidence set and retain the farmer-safety disclaimer instead.
+    return []

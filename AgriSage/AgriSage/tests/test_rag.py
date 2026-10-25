@@ -36,13 +36,12 @@ def test_passage_prefix_applied():
 @pytest.mark.asyncio
 async def test_query_prefix_applied():
     results = await retrieve_kau_advice("coconut fertilizer dose", crop="coconut")
-    assert len(results) >= 1
-    assert isinstance(results[0], RAGResult)
-    assert results[0].similarity >= 0.70
+    # Without an authoritative vector store, the service fails closed rather
+    # than fabricating a KAU document or fertilizer dose.
+    assert results == []
 
 
 @pytest.mark.asyncio
 async def test_retrieve_returns_rag_results():
     results = await retrieve_kau_advice("rice pest control", crop="rice", top_k=2)
-    assert len(results) == 2
-    assert results[0].crop_name == "rice"
+    assert results == []

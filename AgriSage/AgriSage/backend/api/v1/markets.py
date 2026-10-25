@@ -1,5 +1,7 @@
 from typing import Dict, Any, List, Optional
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
+from backend.config import settings
+from backend.dependencies import get_current_user
 
 router = APIRouter(tags=["Markets"])
 
@@ -62,9 +64,15 @@ MOCK_MSP_RATES = [
 @router.get("/markets/prices")
 async def get_mandi_prices(
     commodity: Optional[str] = Query(None, description="Filter by commodity name"),
-    district: Optional[str] = Query(None, description="Filter by district name")
+    district: Optional[str] = Query(None, description="Filter by district name"),
+    _auth: Dict[str, Any] = Depends(get_current_user),
 ) -> List[Dict[str, Any]]:
     """Retrieve live and cached Mandi commodity prices."""
+    if settings.ENVIRONMENT.lower() == "production":
+        # The static values below are development reference data, not a live
+        # market feed.  Returning an empty result avoids stale financial advice
+        # when the configured data.gov.in integration is absent.
+        return []
     results = MOCK_MANDI_PRICES
     if commodity:
         results = [p for p in results if commodity.lower() in p["commodity"].lower()]
@@ -74,6 +82,10 @@ async def get_mandi_prices(
 
 
 @router.get("/markets/msp")
-async def get_minimum_support_prices() -> List[Dict[str, Any]]:
+async def get_minimum_support_prices(
+    _auth: Dict[str, Any] = Depends(get_current_user),
+) -> List[Dict[str, Any]]:
     """Retrieve official government Minimum Support Price (MSP) rates."""
+    if settings.ENVIRONMENT.lower() == "production":
+        return []
     return MOCK_MSP_RATES

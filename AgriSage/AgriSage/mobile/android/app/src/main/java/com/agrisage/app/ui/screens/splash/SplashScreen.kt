@@ -28,7 +28,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.agrisage.app.BuildConfig
 import com.agrisage.app.navigation.Screen
+import com.agrisage.app.ui.screens.SplashViewModel
 import com.agrisage.app.ui.theme.WireLeaf
 import com.agrisage.app.ui.theme.WireSage
 import com.agrisage.app.ui.theme.WireSageDeep
@@ -36,14 +39,17 @@ import com.agrisage.app.ui.theme.WireSageLight
 import kotlinx.coroutines.delay
 
 @Composable
-fun SplashScreen(navController: NavHostController) {
+fun SplashScreen(
+    navController: NavHostController,
+    viewModel: SplashViewModel = hiltViewModel()
+) {
     val scale = remember { Animatable(0.5f) }
     val taglineAlpha = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
         scale.animateTo(1.0f, animationSpec = tween(600, easing = FastOutSlowInEasing))
         taglineAlpha.animateTo(1.0f, animationSpec = tween(400))
-        delay(2000)
+        delay(1200)
         navController.navigate(Screen.Home) {
             popUpTo(Screen.Splash) { inclusive = true }
         }

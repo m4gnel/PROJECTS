@@ -1,6 +1,5 @@
 package com.agrisage.app.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -47,4 +46,3 @@ fun AgriSageTheme(
     darkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) = AgriSAGETheme(darkTheme = darkTheme, content = content)
-

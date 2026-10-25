@@ -39,16 +39,47 @@ fun FarmIllustration(
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "farm_animation")
 
-    // Turbine rotation angle
+    // Turbine rotation angle - spins faster in WINDY mode
     val turbineAngle by if (isAnimated) {
+        val duration = if (weatherMode == WeatherVisualMode.WINDY) 1600 else 3800
         infiniteTransition.animateFloat(
             initialValue = 0f,
             targetValue = 360f,
             animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 4000, easing = LinearEasing),
+                animation = tween(durationMillis = duration, easing = LinearEasing),
                 repeatMode = RepeatMode.Restart
             ),
             label = "turbine_spin"
+        )
+    } else {
+        remember { mutableFloatStateOf(0f) }
+    }
+
+    // Sprinkler water arc oscillation (for Sunny mode)
+    val sprinklerAngle by if (isAnimated && weatherMode == WeatherVisualMode.SUNNY) {
+        infiniteTransition.animateFloat(
+            initialValue = -35f,
+            targetValue = 35f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1400, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "sprinkler_spray"
+        )
+    } else {
+        remember { mutableFloatStateOf(0f) }
+    }
+
+    // Rain drop falling offset (for Rainy mode)
+    val rainDropOffset by if (isAnimated && weatherMode == WeatherVisualMode.RAINY) {
+        infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 650, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "rain_drops"
         )
     } else {
         remember { mutableFloatStateOf(0f) }
@@ -276,18 +307,79 @@ fun FarmIllustration(
             }
         }
 
-        // 11. Grazing Dairy Cows (Holstein Black & White)
+        // 11. Water Sprinklers in Sunny Mode (Reel 1 signature)
+        if (weatherMode == WeatherVisualMode.SUNNY) {
+            val sprinklerLocations = listOf(
+                Offset(w * 0.48f, h * 0.82f),
+                Offset(w * 0.72f, h * 0.80f),
+                Offset(w * 0.88f, h * 0.84f)
+            )
+            sprinklerLocations.forEach { nozzle ->
+                // Nozzle riser pipe
+                drawLine(Color(0xFF334155), nozzle, nozzle - Offset(0f, 6.dp.toPx()), strokeWidth = 2.dp.toPx())
+                val tip = nozzle - Offset(0f, 6.dp.toPx())
+                drawCircle(Color(0xFF64748B), 1.5.dp.toPx(), tip)
+
+                // Spray Arcs swinging with sprinklerAngle
+                val sprayRad = Math.toRadians((sprinklerAngle - 90).toDouble())
+                for (spray in -2..2) {
+                    val angleOffset = spray * 0.15
+                    val sprayEnd = Offset(
+                        tip.x + (26.dp.toPx() * cos(sprayRad + angleOffset)).toFloat(),
+                        tip.y + (22.dp.toPx() * sin(sprayRad + angleOffset)).toFloat()
+                    )
+                    drawLine(
+                        color = Color(0xFF38BDF8).copy(alpha = 0.75f - kotlin.math.abs(spray) * 0.15f),
+                        start = tip,
+                        end = sprayEnd,
+                        strokeWidth = 1.2.dp.toPx()
+                    )
+                    drawCircle(Color(0xFFBAE6FD), 1.dp.toPx(), sprayEnd)
+                }
+            }
+        }
+
+        // 12. Grazing Dairy Cows (Holstein Black & White)
         drawCow(Offset(w * 0.16f, h * 0.68f), scale = 0.95f)
         drawCow(Offset(w * 0.28f, h * 0.70f), scale = 0.85f)
 
-        // 12. Soft Pine Trees on Hills
+        // 13. Soft Pine Trees on Hills
         drawPineTree(Offset(w * 0.06f, h * 0.62f), size = 18.dp.toPx())
         drawPineTree(Offset(w * 0.10f, h * 0.60f), size = 22.dp.toPx())
         drawPineTree(Offset(w * 0.54f, h * 0.56f), size = 16.dp.toPx())
         drawPineTree(Offset(w * 0.84f, h * 0.60f), size = 20.dp.toPx())
 
-        // 13. Farmer Character in Straw Hat (Signature Reel 2 Foreground Element)
+        // 14. Farmer Character in Straw Hat (Signature Reel 2 Foreground Element)
         drawFarmer(Offset(w * 0.86f, h * 0.56f), scale = 1.15f)
+
+        // 15. Falling Rain Streaks in Rainy Mode (Reel 1)
+        if (weatherMode == WeatherVisualMode.RAINY) {
+            val dropCount = 45
+            for (i in 0 until dropCount) {
+                val startX = ((i * 31.7f) % w)
+                val startY = ((i * 47.3f + rainDropOffset * h * 1.5f) % (h * 1.1f)) - (h * 0.05f)
+                drawLine(
+                    color = Color(0xFFBAE6FD).copy(alpha = 0.70f),
+                    start = Offset(startX, startY),
+                    end = Offset(startX - 4.dp.toPx(), startY + 12.dp.toPx()),
+                    strokeWidth = 1.5.dp.toPx(),
+                    cap = StrokeCap.Round
+                )
+            }
+        }
+
+        // 16. Wind Gust Lines in Windy Mode
+        if (weatherMode == WeatherVisualMode.WINDY) {
+            for (i in 0..3) {
+                val gustY = h * (0.15f + i * 0.12f)
+                val gustX = ((turbineAngle * 2.5f + i * 90f) % (w * 1.3f)) - (w * 0.15f)
+                val gustPath = Path().apply {
+                    moveTo(gustX, gustY)
+                    quadraticTo(gustX + 30.dp.toPx(), gustY - 6.dp.toPx(), gustX + 60.dp.toPx(), gustY)
+                }
+                drawPath(gustPath, color = Color.White.copy(alpha = 0.45f), style = Stroke(1.2.dp.toPx()))
+            }
+        }
     }
 }
 

@@ -13,8 +13,15 @@ async def market_node(state: AgriState) -> dict:
         if state.get("crop_info"):
             crop_name = (state["crop_info"] or {}).get("crop_name", "")
 
+        if not settings.DATA_GOV_IN_API_KEY:
+            return {
+                "market_prices": [],
+                "error_messages": ["market: DATA_GOV_IN_API_KEY is not configured"],
+                "agents_completed": ["market"],
+            }
+
         params = {
-            "api-key": settings.DATA_GOV_IN_API_KEY or "579b464db66ec23d9960025814f3-sample",
+            "api-key": settings.DATA_GOV_IN_API_KEY,
             "format": "json",
             "limit": 10,
             "filters[State]": "Kerala",

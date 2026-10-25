@@ -6,11 +6,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -39,7 +41,7 @@ data class AlertItem(
     val id: String,
     val severity: AlertSeverity,
     val filter: AlertFilter,
-    val icon: String,
+    val icon: ImageVector,
     val title: String,
     val description: String,
     val source: String,
@@ -57,7 +59,7 @@ fun AlertsScreen(navController: NavController) {
             id = "1",
             severity = AlertSeverity.CRITICAL,
             filter = AlertFilter.PEST,
-            icon = "🐛",
+            icon = Icons.Default.BugReport,
             title = "Rugose Spiraling Whitefly Outbreak",
             description = "High incidence reported on coconut in Ernakulam district. Check your palms for sooty mold and waxy deposits.",
             source = "NBAIR RSS",
@@ -67,7 +69,7 @@ fun AlertsScreen(navController: NavController) {
             id = "2",
             severity = AlertSeverity.WARNING,
             filter = AlertFilter.WEATHER,
-            icon = "⛈️",
+            icon = Icons.Default.Thunderstorm,
             title = "Heavy Rain Alert — Kerala",
             description = "IMD issues heavy rainfall alert for Ernakulam, Thrissur. Risk of field waterlogging. Ensure drainage is clear.",
             source = "IMD Alert",
@@ -77,7 +79,7 @@ fun AlertsScreen(navController: NavController) {
             id = "3",
             severity = AlertSeverity.INFO,
             filter = AlertFilter.CROP,
-            icon = "🌾",
+            icon = Icons.Default.Agriculture,
             title = "Crop Stage Update — Rice",
             description = "Your paddy is entering the tillering stage (estimated Day 35–42). Critical irrigation window opens.",
             source = "Agri-SAGE AI",
@@ -87,7 +89,7 @@ fun AlertsScreen(navController: NavController) {
             id = "4",
             severity = AlertSeverity.SUCCESS,
             filter = AlertFilter.SOIL,
-            icon = "🧪",
+            icon = Icons.Default.Science,
             title = "Soil Moisture Optimal",
             description = "Soil moisture levels are in the ideal range for your crop. No irrigation needed today.",
             source = "Weather + Soil Model",
@@ -98,11 +100,18 @@ fun AlertsScreen(navController: NavController) {
     val filters = AlertFilter.values()
     val filterLabels = mapOf(
         AlertFilter.ALL to "All",
-        AlertFilter.PEST to "Pest 🐛",
-        AlertFilter.WEATHER to "Weather 🌧️",
-        AlertFilter.CROP to "Crop 🌾",
-        AlertFilter.MARKET to "Market 💰",
-        AlertFilter.SOIL to "Soil 🧪",
+        AlertFilter.PEST to "Pest",
+        AlertFilter.WEATHER to "Weather",
+        AlertFilter.CROP to "Crop",
+        AlertFilter.MARKET to "Market",
+        AlertFilter.SOIL to "Soil",
+    )
+    val filterIcons = mapOf(
+        AlertFilter.PEST to Icons.Default.BugReport,
+        AlertFilter.WEATHER to Icons.Default.Cloud,
+        AlertFilter.CROP to Icons.Default.Agriculture,
+        AlertFilter.MARKET to Icons.Default.TrendingUp,
+        AlertFilter.SOIL to Icons.Default.Science,
     )
 
     val filteredAlerts = if (selectedFilter == AlertFilter.ALL) {
@@ -114,7 +123,7 @@ fun AlertsScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("🔔 Alerts", color = Color.White) },
+                title = { Text("Alerts", color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
@@ -141,6 +150,16 @@ fun AlertsScreen(navController: NavController) {
                             selected = selectedFilter == filter,
                             onClick = { selectedFilter = filter },
                             label = { Text(filterLabels[filter] ?: filter.name) },
+                            leadingIcon = {
+                                filterIcons[filter]?.let { icon ->
+                                    Icon(
+                                        imageVector = icon,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            },
+                            modifier = Modifier.heightIn(min = 48.dp),
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = Color(0xFF1B4332),
                                 selectedLabelColor = Color.White
@@ -157,7 +176,12 @@ fun AlertsScreen(navController: NavController) {
                     contentAlignment = androidx.compose.ui.Alignment.Center
                 ) {
                     Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-                        Text("✅", fontSize = 48.sp)
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "No active alerts",
+                            tint = Color(0xFF2D6A4F),
+                            modifier = Modifier.size(48.dp)
+                        )
                         Spacer(Modifier.height(8.dp))
                         Text(
                             "No active alerts",
@@ -221,12 +245,17 @@ private fun AlertCard(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(
+                Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row {
-                    Text(alert.icon, fontSize = 20.sp)
+                    Icon(
+                        imageVector = alert.icon,
+                        contentDescription = "${(badgeText as String).lowercase()} alert",
+                        tint = borderColor as Color,
+                        modifier = Modifier.size(22.dp)
+                    )
                     Spacer(Modifier.width(8.dp))
                     Box(
                         modifier = Modifier
@@ -268,13 +297,21 @@ private fun AlertCard(
                 Spacer(Modifier.height(10.dp))
                 TextButton(
                     onClick = onAskAI,
+                    modifier = Modifier.heightIn(min = 48.dp),
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        "Ask AI what to do →",
-                        color = borderColor,
+                        "Ask AI what to do",
+                        color = borderColor as Color,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 13.sp
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = borderColor as Color,
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }

@@ -18,6 +18,9 @@ interface FieldDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFields(fields: List<FieldEntity>)
 
+    @Query("DELETE FROM fields")
+    suspend fun deleteAll()
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertField(field: FieldEntity)
 

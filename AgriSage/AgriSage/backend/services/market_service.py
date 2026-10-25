@@ -77,13 +77,13 @@ class MarketService:
                         _MARKET_DB.append(item)
                     return _MARKET_DB
                 elif resp.status_code in (401, 403):
-                    logger.warning("market_service_unauthorized_key", status=resp.status_code)
+                    logger.warning("market_service_unauthorized_key: status=%s", resp.status_code)
         except Exception as e:
-            logger.warning("market_service_fetch_error", error=str(e))
+            logger.warning("market_service_fetch_error: %s", e)
 
         return _MARKET_DB
 
-    async def get_market_data(self, crop: str = "coconut", district: str = "Ernakulam") -> MarketContext:
+    async def get_market_data(self, crop: str = "coconut", district: str = "Ernakulam") -> Optional[MarketContext]:
         crop_lower = crop.lower()
         district_lower = district.lower()
         today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -111,7 +111,14 @@ class MarketService:
                 sell_recommendation=rec
             )
 
-        # Default fallback values for Kerala markets
+        if settings.ENVIRONMENT.lower() == "production":
+            # Never turn missing market data into a fabricated price or sell
+            # recommendation.  The advisory pipeline will surface an empty
+            # market section and retain its uncertainty disclaimer.
+            return None
+
+        # Development-only reference values keep local demos useful.  They are
+        # never reachable in a production environment.
         default_prices = {
             "coconut": (28.0, 34.0, 31.0),
             "rice": (32.0, 42.0, 38.0),

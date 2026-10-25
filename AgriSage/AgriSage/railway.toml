@@ -4,7 +4,7 @@
 
 [deploy]
   startCommand = "alembic upgrade head && uvicorn backend.main:app --host 0.0.0.0 --port 8000 --workers 2"
-  healthcheckPath = "/health"
+  healthcheckPath = "/ready"
   healthcheckTimeout = 30
   restartPolicyType = "on_failure"
   restartPolicyMaxRetries = 3

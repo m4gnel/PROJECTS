@@ -3,6 +3,7 @@ import httpx
 from typing import Dict, Any, Tuple, Optional
 from pydantic import BaseModel
 from backend.agents.state import AgriSAGEState
+from backend.config import settings
 
 
 class WeatherIndicators(BaseModel):
@@ -12,6 +13,19 @@ class WeatherIndicators(BaseModel):
     dfi: float
     spray_window: Optional[str] = None
     provider: str = "open_meteo"
+
+
+def _unavailable_weather() -> Dict[str, Any]:
+    return {
+        "temperature_c": 0.0,
+        "humidity_pct": 0.0,
+        "consecutive_wet_days": 0,
+        "dfi": 0.0,
+        "spray_window": None,
+        "provider": "unavailable",
+        "safe_to_act": False,
+        "warning": "Weather data is unavailable; do not make field-treatment decisions from this result.",
+    }
 
 
 
@@ -37,11 +51,11 @@ class WeatherAgent:
         return state
 
     async def _fetch_open_meteo(self, lat: float, lon: float) -> Dict[str, Any]:
-        url = "https://api.open-meteo.com/v1/forecast"
+        url = f"{settings.OPEN_METEO_BASE_URL.rstrip('/')}/forecast"
         params = {
             "latitude": lat,
             "longitude": lon,
-            "hourly": "temperature_2m,relativehumidity_2m,precipitation_probability,windspeed_10m",
+            "hourly": "temperature_2m,relative_humidity_2m,precipitation_probability,windspeed_10m",
             "daily": "precipitation_sum,temperature_2m_max,temperature_2m_min",
             "forecast_days": 7
         }
@@ -54,23 +68,27 @@ class WeatherAgent:
         except Exception:
             pass
 
-        # Fallback default values if API call fails
-        return {
-            "temperature_c": 27.5,
-            "humidity_pct": 82.0,
-            "consecutive_wet_days": 3,
-            "dfi": 0.83,
-            "spray_window": "07:00 AM - 11:00 AM",
-            "provider": "open_meteo_fallback"
-        }
+        # Fail closed instead of presenting synthetic weather as an observation
+        # that could drive spraying or irrigation decisions.
+        return _unavailable_weather()
 
     def _process_weather_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         daily = data.get("daily", {})
         hourly = data.get("hourly", {})
 
-        precip_sums = daily.get("precipitation_sum", [0])
-        tmax = daily.get("temperature_2m_max", [30])
-        tmin = daily.get("temperature_2m_min", [22])
+        required = (
+            daily.get("precipitation_sum"),
+            daily.get("temperature_2m_max"),
+            daily.get("temperature_2m_min"),
+            hourly.get("temperature_2m"),
+            hourly.get("relative_humidity_2m"),
+            hourly.get("precipitation_probability"),
+            hourly.get("windspeed_10m"),
+        )
+        if any(not isinstance(values, list) or not values for values in required):
+            return _unavailable_weather()
+
+        precip_sums = daily["precipitation_sum"]
 
         # Compute consecutive wet days
         consecutive_wet_days = 0
@@ -80,13 +98,13 @@ class WeatherAgent:
             else:
                 break
 
-        temps = hourly.get("temperature_2m", [27])
-        humidities = hourly.get("relativehumidity_2m", [80])
-        rain_probs = hourly.get("precipitation_probability", [0])
-        winds = hourly.get("windspeed_10m", [5])
+        temps = hourly["temperature_2m"]
+        humidities = hourly["relative_humidity_2m"]
+        rain_probs = hourly["precipitation_probability"]
+        winds = hourly["windspeed_10m"]
 
-        current_temp = temps[0] if temps else 27.0
-        current_humidity = humidities[0] if humidities else 80.0
+        current_temp = temps[0]
+        current_humidity = humidities[0]
 
         # Compute DFI (Disease Favorability Index) exact formula from prompt:
         # dfi = ((humidity_pct > 80) * 0.4 + (20 <= temperature_c <= 30) * 0.3 + (consecutive_wet_days / 7) * 0.3)

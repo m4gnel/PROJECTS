@@ -1,0 +1,54 @@
+.git
+.git/*
+.git_subrepo
+.git_subrepo/*
+.github
+.github/*
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Installed dependencies
+node_modules
+**/node_modules
+**/.venv
+**/venv
+
+# Python caches and test artifacts
+__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+**/.pytest_cache
+.ruff_cache
+**/.ruff_cache
+.mypy_cache
+**/.mypy_cache
+.coverage
+coverage.xml
+htmlcov
+
+# Frontend and generated build output
+out
+**/dist
+.next
+**/.next
+test-results
+**/test-results
+
+# Android/Gradle build artifacts
+**/.gradle
+**/build
+**/captures
+**/.externalNativeBuild
+**/.cxx
+
+# Logs and local-only files
+*.log
+*.tmp
+.DS_Store
+Thumbs.db

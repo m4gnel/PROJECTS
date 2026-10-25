@@ -7,7 +7,6 @@ import com.agrisage.app.data.remote.dto.WeatherCurrentDto
 import com.agrisage.app.data.remote.dto.WeatherForecastDto
 import kotlinx.coroutines.flow.Flow
 import retrofit2.Response
-import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,7 +22,9 @@ class WeatherRepository @Inject constructor(
         if (response.isSuccessful && response.body() != null) {
             val dto = response.body()!!
             val entity = WeatherEntity(
-                id = UUID.randomUUID().toString(),
+                // One stable row per location prevents periodic refresh from
+                // growing the database without bound.
+                id = "${dto.latitude}:${dto.longitude}",
                 lat = dto.latitude,
                 lon = dto.longitude,
                 tempCelsius = dto.temperatureC,

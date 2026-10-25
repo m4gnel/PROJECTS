@@ -1,5 +1,4 @@
 import json
-from typing import Dict, Any
 from backend.agents.state import AgriSAGEState
 from backend.services.llm_service import llm_service
 
@@ -54,9 +53,9 @@ OUTPUT JSON:
 """
 
 SAFE_FALLBACK = {
-    "diagnosis_summary": "We analyzed your crop photo and farm conditions.",
-    "confidence_explanation": "Our confidence is limited — please see evidence details.",
-    "risk_explanation": "Please inspect your field and consult a local agronomist.",
+    "diagnosis_summary": "There is not enough verified evidence to identify a crop problem.",
+    "confidence_explanation": "Our confidence is limited because required evidence is unavailable.",
+    "risk_explanation": "Please inspect your field and consult a local agronomist before taking action.",
     "recommended_action": {
         "what": "Inspect 10 plants in different parts of the field",
         "when": "Today",
@@ -64,8 +63,8 @@ SAFE_FALLBACK = {
         "cost_note": "No cost — visual inspection only",
         "spray_window": None
     },
-    "evidence_summary": ["Photo analyzed", "Weather checked", "Crop stage estimated"],
-    "what_would_change_this": ["A clearer photo", "A soil test result"],
+    "evidence_summary": ["Verified image inference unavailable", "Provider-backed evidence incomplete"],
+    "what_would_change_this": ["A usable image inference result", "Current provider-backed observations"],
     "safe_to_act": False,
     "insufficient_data_message": "Advisory generation encountered a technical issue.",
     "modelled_estimate_label": "modelled estimate — actual results vary by field conditions"
@@ -111,7 +110,7 @@ KNOWLEDGE CHUNKS: {json.dumps(knowledge.get('top_chunks', []))}
 SIMULATION: {json.dumps(sim)}
 CONFLICTS: {json.dumps(critic.get('conflicts', []))}
 MISSING: {json.dumps(state.get('warnings', []))}
-CONTEXT: crop={state.get('crop')} location=Palakkad,Kerala language={lang_name}
+        CONTEXT: crop={state.get('crop')} location={state.get('location') or state.get('farm_state') or {}} language={lang_name}
 Generate advisory JSON now. Output JSON only.
 """
 

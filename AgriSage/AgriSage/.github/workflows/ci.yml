@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -28,21 +31,34 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.11.9'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.lock
+            requirements-dev.lock
       - name: Install dependencies
-        run: pip install -r backend/requirements.txt
+        run: python -m pip install --require-hashes --requirement requirements.lock --requirement requirements-dev.lock
       - name: Run migrations
         env:
           DATABASE_URL: postgresql+asyncpg://agrisage:testpassword@localhost/agrisage_test
+          GEMINI_API_KEY: ""
           SECRET_KEY: test-secret-key-ci-only
           ENVIRONMENT: test
         run: alembic upgrade head
       - name: Run tests
         env:
           DATABASE_URL: postgresql+asyncpg://agrisage:testpassword@localhost/agrisage_test
+          GEMINI_API_KEY: ""
           SECRET_KEY: test-secret-key-ci-only
           ENVIRONMENT: test
-        run: pytest tests/ -v --tb=short --asyncio-mode=auto
+        run: python -m pytest tests/ -v --tb=short --asyncio-mode=auto
+      - name: Run backend compatibility tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://agrisage:testpassword@localhost/agrisage_test
+          GEMINI_API_KEY: ""
+          SECRET_KEY: test-secret-key-ci-only
+          ENVIRONMENT: test
+        run: python -m pytest backend/tests/ -v --tb=short --asyncio-mode=auto
 
   lint:
     runs-on: ubuntu-latest
@@ -50,10 +66,36 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      - run: pip install black ruff
-      - run: black --check backend/
-      - run: ruff check backend/
+          python-version: '3.11.9'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.lock
+            requirements-dev.lock
+      - run: python -m pip install --require-hashes --requirement requirements.lock --requirement requirements-dev.lock
+      - run: python -m compileall -q backend tests scripts alembic
+      - run: python -m ruff check backend/ --select E9,F821 --ignore E501
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+          cache: npm
+          cache-dependency-path: apps/web-expert/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: apps/web-expert
+        run: npm ci
+      - name: Typecheck frontend
+        working-directory: apps/web-expert
+        run: npm run typecheck
+      - name: Build frontend
+        working-directory: apps/web-expert
+        run: npm run build
+      - name: Lint frontend
+        working-directory: apps/web-expert
+        run: npm run lint
 
   security:
     runs-on: ubuntu-latest
@@ -61,7 +103,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.11.9'
+          cache: 'pip'
+          cache-dependency-path: requirements.lock
       - name: Check hardcoded secrets
         run: |
           if grep -rn --include="*.py" --include="*.kt" \
@@ -77,9 +121,22 @@ jobs:
           fi
       - name: Dependency vulnerability scan
         run: |
-          pip install pip-audit
-          pip-audit -r backend/requirements.txt --fail-on CRITICAL
+          python -m pip install --require-hashes --requirement requirements.lock
+          pip-audit -r requirements.lock --fail-on CRITICAL
       - name: SAST scan
         run: |
-          pip install bandit
           bandit -r backend/ -lll
+
+  container:
+    runs-on: ubuntu-latest
+    needs: [test, lint, web, security]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare non-secret Compose environment
+        run: cp .env.example .env
+      - name: Validate Compose files
+        run: |
+          docker compose config --quiet
+          docker compose -f docker-compose.prod.yml config --quiet
+      - name: Build backend image
+        run: docker build --tag agrisage-ci:${{ github.sha }} .

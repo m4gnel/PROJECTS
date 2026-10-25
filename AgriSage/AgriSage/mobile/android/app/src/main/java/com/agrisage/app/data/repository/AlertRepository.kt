@@ -4,7 +4,6 @@ import com.agrisage.app.data.local.dao.AlertDao
 import com.agrisage.app.data.local.entity.AlertEntity
 import com.agrisage.app.data.remote.ApiService
 import com.agrisage.app.data.remote.dto.AlertDto
-import com.agrisage.app.data.remote.dto.MarkReadRequest
 import kotlinx.coroutines.flow.Flow
 import retrofit2.Response
 import javax.inject.Inject
@@ -31,6 +30,7 @@ class AlertRepository @Inject constructor(
                     createdAt = System.currentTimeMillis()
                 )
             }
+            alertDao.deleteAll()
             alertDao.insertAlerts(entities)
         }
         return response
@@ -38,9 +38,6 @@ class AlertRepository @Inject constructor(
 
     suspend fun markAsRead(alertId: String) {
         alertDao.markAsRead(alertId)
-        try {
-            apiService.markAlertsRead(MarkReadRequest(listOf(alertId)))
-        } catch (_: Exception) {}
     }
 
     suspend fun markAllAsRead() {

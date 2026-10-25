@@ -12,4 +12,6 @@
     <string name="my_fields">எனது வயல்கள்</string>
     <string name="get_started">தொடங்குங்கள்</string>
     <string name="welcome">அக்ரி-சேஜுக்கு நல்வரவு</string>
+    <string name="notification_channel_name">பண்ணை எச்சரிக்கைகள்</string>
+    <string name="notification_channel_description">அக்ரி-சேஜிலிருந்து வானிலை, பூச்சி மற்றும் வயல் எச்சரிக்கைகள்</string>
 </resources>

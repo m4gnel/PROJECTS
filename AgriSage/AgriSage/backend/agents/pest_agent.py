@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 async def pest_node(state: AgriSageState) -> Dict[str, Any]:
     location = state.get("location", {})
-    district = location.get("district", "Ernakulam") if isinstance(location, dict) else "Ernakulam"
+    district = location.get("district", "") if isinstance(location, dict) else ""
     crop = state.get("crop", None)
 
     ctx = await pest_service.get_alerts_for_district_and_crop(district=district, crop=crop)

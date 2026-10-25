@@ -3,6 +3,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
+from backend.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,73 @@ KERALA_DISTRICT_COORDS: Dict[str, tuple[float, float]] = {
     "Kasaragod": (12.5102, 74.9852)
 }
 
+# State/UT centroids keep the service useful across India when a device has
+# not yet supplied precise coordinates. These are fallbacks, not field-level
+# measurements; device coordinates always take precedence.
+INDIA_STATE_COORDS: Dict[str, tuple[float, float]] = {
+    "andaman and nicobar islands": (11.7401, 92.6586),
+    "andhra pradesh": (15.9129, 79.7400),
+    "arunachal pradesh": (28.2180, 94.7278),
+    "assam": (26.2006, 92.9376),
+    "bihar": (25.0961, 85.3131),
+    "chandigarh": (30.7333, 76.7794),
+    "chhattisgarh": (21.2787, 81.8661),
+    "dadra and nagar haveli and daman and diu": (20.1809, 73.0169),
+    "delhi": (28.7041, 77.1025),
+    "goa": (15.2993, 74.1240),
+    "gujarat": (22.2587, 71.1924),
+    "haryana": (29.0588, 76.0856),
+    "himachal pradesh": (31.1048, 77.1734),
+    "jammu and kashmir": (33.7782, 76.5762),
+    "jharkhand": (23.6102, 85.2799),
+    "karnataka": (15.3173, 75.7139),
+    "kerala": (10.8505, 76.2711),
+    "ladakh": (34.1526, 77.5771),
+    "lakshadweep": (10.5667, 72.6417),
+    "madhya pradesh": (22.9734, 78.6569),
+    "maharashtra": (19.7515, 75.7139),
+    "manipur": (24.6637, 93.9063),
+    "meghalaya": (25.4670, 91.3662),
+    "mizoram": (23.1645, 92.9376),
+    "nagaland": (26.1584, 94.5624),
+    "odisha": (20.9517, 85.0985),
+    "puducherry": (11.9416, 79.8083),
+    "punjab": (31.1471, 75.3412),
+    "rajasthan": (27.0238, 74.2179),
+    "sikkim": (27.5330, 88.5122),
+    "tamil nadu": (11.1271, 78.6569),
+    "telangana": (18.1124, 79.0193),
+    "tripura": (23.9408, 91.9882),
+    "uttar pradesh": (26.8467, 80.9462),
+    "uttarakhand": (30.0668, 79.0193),
+    "west bengal": (22.9868, 87.8550),
+}
+
+INDIA_CENTROID = (22.5937, 78.9629)
+
+
+def _normalise_location(value: str | None) -> str:
+    return " ".join((value or "").casefold().split())
+
+
+def resolve_coordinates(
+    *,
+    state: str = "India",
+    district: str = "",
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
+) -> tuple[float, float]:
+    """Resolve safe weather coordinates without assuming Kerala."""
+
+    district_key = next(
+        (name for name in KERALA_DISTRICT_COORDS if _normalise_location(name) == _normalise_location(district)),
+        None,
+    )
+    fallback = KERALA_DISTRICT_COORDS[district_key] if district_key else INDIA_STATE_COORDS.get(
+        _normalise_location(state), INDIA_CENTROID
+    )
+    return (lat if lat is not None else fallback[0], lon if lon is not None else fallback[1])
+
 
 @dataclass
 class WeatherContext:
@@ -32,9 +100,10 @@ class WeatherContext:
     rain_mm_24h: float
     rain_chance_pct: int
     wind_kmh: float
-    advice_flag: str  # SPRAY_RISK | IRRIGATION_NEEDED | FLOOD_RISK | NORMAL
+    advice_flag: str  # SPRAY_RISK | IRRIGATION_NEEDED | FLOOD_RISK | NORMAL | UNKNOWN
     cached: bool = False
     stale: bool = False
+    available: bool = True
 
 
 # In-memory cache for fast lookup & test execution
@@ -53,14 +122,21 @@ class WeatherService:
 
     async def get_weather(
         self,
-        district: str = "Ernakulam",
+        state: str = "India",
+        district: str = "",
         lat: Optional[float] = None,
         lon: Optional[float] = None
     ) -> WeatherContext:
-        coords = KERALA_DISTRICT_COORDS.get(district, (9.9816, 76.2999))
-        target_lat = lat if lat is not None else coords[0]
-        target_lon = lon if lon is not None else coords[1]
-        cache_key = f"{district}_{round(target_lat, 2)}_{round(target_lon, 2)}"
+        target_lat, target_lon = resolve_coordinates(
+            state=state,
+            district=district,
+            lat=lat,
+            lon=lon,
+        )
+        cache_key = (
+            f"{_normalise_location(state)}_{_normalise_location(district)}_"
+            f"{round(target_lat, 2)}_{round(target_lon, 2)}"
+        )
 
         # Check in-memory cache first (1 hour TTL)
         now = datetime.now(timezone.utc)
@@ -76,10 +152,11 @@ class WeatherService:
                     wind_kmh=ctx.wind_kmh,
                     advice_flag=ctx.advice_flag,
                     cached=True,
-                    stale=False
+                    stale=False,
+                    available=ctx.available,
                 )
 
-        url = "https://api.open-meteo.com/v1/forecast"
+        url = f"{settings.OPEN_METEO_BASE_URL.rstrip('/')}/forecast"
         params = {
             "latitude": target_lat,
             "longitude": target_lon,
@@ -94,17 +171,19 @@ class WeatherService:
                 if resp.status_code == 200:
                     data = resp.json()
                     hourly = data.get("hourly", {})
-                    temps = hourly.get("temperature_2m", [28.0])
-                    humidities = hourly.get("relative_humidity_2m", [80])
-                    precip = hourly.get("precipitation", [0.0])
-                    winds = hourly.get("windspeed_10m", [10.0])
-                    precip_prob = hourly.get("precipitation_probability", [0])
+                    temps = hourly.get("temperature_2m")
+                    humidities = hourly.get("relative_humidity_2m")
+                    precip = hourly.get("precipitation")
+                    winds = hourly.get("windspeed_10m")
+                    precip_prob = hourly.get("precipitation_probability")
+                    if any(not values for values in (temps, humidities, precip, winds, precip_prob)):
+                        raise ValueError("Open-Meteo response omitted required hourly fields")
 
-                    temp_c = float(temps[0]) if temps else 28.0
-                    humidity_pct = int(humidities[0]) if humidities else 80
-                    rain_mm_24h = float(sum(precip[:24])) if precip else 0.0
-                    rain_chance_pct = int(max(precip_prob[:12])) if precip_prob else 0
-                    wind_kmh = float(winds[0]) if winds else 10.0
+                    temp_c = float(temps[0])
+                    humidity_pct = int(humidities[0])
+                    rain_mm_24h = float(sum(precip[:24]))
+                    rain_chance_pct = int(max(precip_prob[:12]))
+                    wind_kmh = float(winds[0])
 
                     advice_flag = self.compute_advice_flag(humidity_pct, rain_mm_24h, temp_c)
                     context = WeatherContext(
@@ -115,7 +194,8 @@ class WeatherService:
                         wind_kmh=wind_kmh,
                         advice_flag=advice_flag,
                         cached=False,
-                        stale=False
+                        stale=False,
+                        available=True,
                     )
 
                     # Save to cache
@@ -125,7 +205,7 @@ class WeatherService:
                     }
                     return context
         except Exception as e:
-            logger.warning("weather_service_fetch_failed", error=str(e))
+            logger.warning("weather_service_fetch_failed: %s", e)
             if cache_key in _WEATHER_CACHE:
                 cached_ctx = _WEATHER_CACHE[cache_key]["context"]
                 return WeatherContext(
@@ -136,19 +216,24 @@ class WeatherService:
                     wind_kmh=cached_ctx.wind_kmh,
                     advice_flag=cached_ctx.advice_flag,
                     cached=True,
-                    stale=True
+                    stale=True,
+                    available=cached_ctx.available,
                 )
 
-        # Fallback default
+        # Do not turn a provider outage into synthetic weather that could drive
+        # an irrigation or spray decision.  Numeric zeroes are compatibility
+        # sentinels for existing clients; ``available`` and ``advice_flag`` are
+        # the authoritative state.
         return WeatherContext(
-            temp_c=28.5,
-            humidity_pct=82,
-            rain_mm_24h=5.0,
-            rain_chance_pct=30,
-            wind_kmh=12.0,
-            advice_flag="NORMAL",
+            temp_c=0.0,
+            humidity_pct=0,
+            rain_mm_24h=0.0,
+            rain_chance_pct=0,
+            wind_kmh=0.0,
+            advice_flag="UNKNOWN",
             cached=False,
-            stale=True
+            stale=True,
+            available=False,
         )
 
 

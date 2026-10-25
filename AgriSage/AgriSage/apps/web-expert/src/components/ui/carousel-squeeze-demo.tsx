@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { SqueezeCarousel, type SqueezeSlide } from "@/components/ui/carousel-squeeze";
+import { SqueezeCarousel, type SqueezeSlide, type SqueezeCarouselHandle } from "@/components/ui/carousel-squeeze";
 import { Cpu, Globe, Layers, Mic, ShieldAlert, Sparkles } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { getPublicUrl } from "@/lib/utils";
 
 export const settings = {
-    height: 380,
+    height: "clamp(240px, 26cqi, 320px)",
     gap: 16,
     slatGap: 8,
     slatWidth: 10,
@@ -17,7 +17,7 @@ export const settings = {
     hoverGrow: true,
     autoplay: true,
     interval: 3800,
-    controls: true,
+    controls: false,
 };
 
 type DemoProps = Partial<typeof settings>;
@@ -96,6 +96,7 @@ const agriSlides: SqueezeSlide[] = [
 export function SqueezeCarouselDemo(props: DemoProps) {
     const options = { ...settings, ...props };
     const containerRef = useRef<HTMLDivElement>(null);
+    const carouselRef = useRef<SqueezeCarouselHandle>(null);
     const [activeIndex, setActiveIndex] = useState(0);
 
     useEffect(() => {
@@ -135,29 +136,52 @@ export function SqueezeCarouselDemo(props: DemoProps) {
     return (
         <div 
             ref={containerRef}
-            className="w-full bg-slate-950/90 rounded-3xl border border-emerald-500/20 p-6 md:p-8 shadow-2xl backdrop-blur-xl transition-all duration-300 relative z-20 overflow-hidden"
+            className="w-full bg-slate-950/90 rounded-3xl border border-emerald-500/20 p-6 md:p-8 pb-7 md:pb-8 shadow-2xl backdrop-blur-xl transition-all duration-300 relative z-20 overflow-hidden"
         >
             {/* Top Glow Ambient Accent */}
             <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-48 bg-emerald-500/10 blur-3xl pointer-events-none rounded-full" />
 
-            <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-emerald-500/10 pb-4 relative z-10">
+            <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-emerald-500/10 pb-4 relative z-10">
                 <div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono font-medium mb-2">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono font-medium mb-1.5">
                         <Sparkles className="size-3.5 animate-pulse text-emerald-400" />
                         <span>Dynamic Squeeze Slat Carousel</span>
                     </div>
-                    <h3 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
+                    <h3 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-white">
                         Agri-SAGE Agronomic Intelligence Stack
                     </h3>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 self-end sm:self-auto">
                     <span className="text-xs font-mono text-emerald-400/90 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
                         Slide {activeIndex + 1} of {agriSlides.length}
                     </span>
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            type="button"
+                            aria-label="Previous slide"
+                            onClick={() => carouselRef.current?.step(-1)}
+                            className="size-8 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                        >
+                            <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                                <path d="M9.6 2.6 5.1 7.1h9.1v1.8H5.1l4.5 4.5-1.2 1.2-6-6L1.8 8l.6-.6 6-6 1.2 1.2Z" />
+                            </svg>
+                        </button>
+                        <button
+                            type="button"
+                            aria-label="Next slide"
+                            onClick={() => carouselRef.current?.step(1)}
+                            className="size-8 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                        >
+                            <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                                <path d="M6.4 2.6l4.5 4.5H1.8v1.8h9.1l-4.5 4.5 1.2 1.2 6-6 .6-.6-.6-.6-6-6-1.2 1.2Z" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
             
             <SqueezeCarousel 
+                ref={carouselRef}
                 slides={agriSlides} 
                 label="Agri-SAGE Featured Intelligence" 
                 accent="#10b981" 

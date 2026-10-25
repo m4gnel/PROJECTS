@@ -1,8 +1,7 @@
 import io
 from PIL import Image
-import magic
+from backend.config import settings
 
-MAX_SIZE_BYTES = 5 * 1024 * 1024
 ALLOWED_MIMES = {"image/jpeg", "image/png", "image/webp"}
 
 
@@ -12,11 +11,14 @@ def process_uploaded_image(file_bytes: bytes) -> bytes:
     Returns clean JPEG byte buffer.
     """
     # 1. Check size
-    if len(file_bytes) > MAX_SIZE_BYTES:
+    max_size_bytes = max(1, settings.MAX_IMAGE_SIZE_MB) * 1024 * 1024
+    if len(file_bytes) > max_size_bytes:
         raise ValueError("Too large")
 
     # 2. Check MIME from content
     try:
+        import magic
+
         mime = magic.from_buffer(file_bytes, mime=True)
     except Exception:
         # Fallback MIME check using PIL header inspection

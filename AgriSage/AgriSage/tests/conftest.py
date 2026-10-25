@@ -1,6 +1,10 @@
 import pytest
 import pytest_asyncio
 import httpx
+import os
+
+os.environ["GEMINI_API_KEY"] = ""
+
 from backend.main import app
 from backend.database import AsyncSessionLocal, engine, Base
 
@@ -21,4 +25,3 @@ async def async_client():
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
-

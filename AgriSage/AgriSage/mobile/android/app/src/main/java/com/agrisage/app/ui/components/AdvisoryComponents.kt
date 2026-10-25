@@ -230,10 +230,18 @@ fun FeedbackRow(onThumbsUp: () -> Unit, onThumbsDown: () -> Unit) {
         Text("Was this advisory helpful?", style = MaterialTheme.typography.bodyMedium)
         Row {
             IconButton(onClick = onThumbsUp, modifier = Modifier.size(48.dp)) {
-                Text("👍", style = MaterialTheme.typography.headlineMedium)
+                Icon(
+                    imageVector = Icons.Default.ThumbUp,
+                    contentDescription = "Helpful",
+                    tint = ColorPrimary
+                )
             }
             IconButton(onClick = onThumbsDown, modifier = Modifier.size(48.dp)) {
-                Text("👎", style = MaterialTheme.typography.headlineMedium)
+                Icon(
+                    imageVector = Icons.Default.ThumbDown,
+                    contentDescription = "Not helpful",
+                    tint = ColorPrimary
+                )
             }
         }
     }

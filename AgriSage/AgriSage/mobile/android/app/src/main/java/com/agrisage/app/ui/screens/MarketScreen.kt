@@ -2,7 +2,6 @@ package com.agrisage.app.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -10,6 +9,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
@@ -116,9 +117,18 @@ fun MarketScreen(navController: NavController) {
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
-                        Text("📈 APMC Market Prices", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 17.sp)
-                        Text("Real-time Mandi Rates & AI Sell/Hold Advice", fontSize = 11.sp, color = Color.White.copy(alpha = 0.8f))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.TrendingUp,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Column {
+                            Text("APMC Market Prices", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 17.sp)
+                            Text("Real-time Mandi Rates & AI Sell/Hold Advice", fontSize = 11.sp, color = Color.White.copy(alpha = 0.8f))
+                        }
                     }
                 },
                 navigationIcon = {
@@ -165,9 +175,21 @@ fun MarketScreen(navController: NavController) {
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Column {
-                            Text("📍 Punjab & North APMC Mandis", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF1B4332))
-                            Text("Updated Today · 6:00 AM Govt Agmarknet Feed", fontSize = 11.sp, color = Color(0xFF555555))
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = "Mandi location",
+                                tint = Color(0xFF2D6A4F),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Column {
+                                Text("Punjab & North APMC Mandis", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF1B4332))
+                                Text("Updated Today · 6:00 AM Govt Agmarknet Feed", fontSize = 11.sp, color = Color(0xFF555555))
+                            }
                         }
                         Badge(containerColor = Color(0xFF2D6A4F)) {
                             Text("LIVE", color = Color.White, modifier = Modifier.padding(horizontal = 4.dp))
@@ -185,6 +207,7 @@ fun MarketScreen(navController: NavController) {
                             selected = selected,
                             onClick = { selectedCategory = category },
                             label = { Text(category, fontSize = 12.sp) },
+                            modifier = Modifier.heightIn(min = 48.dp),
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = Color(0xFF2D6A4F),
                                 selectedLabelColor = Color.White
@@ -268,11 +291,20 @@ fun MarketScreen(navController: NavController) {
                         // Ask AI Action
                         OutlinedButton(
                             onClick = { navController.navigate(Advisor) },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 48.dp),
                             shape = RoundedCornerShape(10.dp),
                             border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2D6A4F))
                         ) {
-                            Text("Ask AI Market Advice →", fontSize = 12.sp, color = Color(0xFF2D6A4F), fontWeight = FontWeight.SemiBold)
+                            Text("Ask AI Market Advice", fontSize = 12.sp, color = Color(0xFF2D6A4F), fontWeight = FontWeight.SemiBold)
+                            Spacer(Modifier.width(4.dp))
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                tint = Color(0xFF2D6A4F),
+                                modifier = Modifier.size(16.dp)
+                            )
                         }
                     }
                 }

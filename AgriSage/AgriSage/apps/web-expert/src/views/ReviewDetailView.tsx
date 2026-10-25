@@ -48,6 +48,7 @@ export const ReviewDetailView: React.FC<ReviewDetailViewProps> = ({
   const [safetyApproved, setSafetyApproved] = useState(true);
   const [expertNotes, setExpertNotes] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const handleZoomIn = () => setZoomLevel((prev) => Math.min(prev + 0.3, 2.5));
   const handleZoomOut = () => setZoomLevel((prev) => Math.max(prev - 0.3, 0.8));
@@ -55,8 +56,9 @@ export const ReviewDetailView: React.FC<ReviewDetailViewProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError('');
     if (!safetyApproved) {
-      alert('You must verify chemical safety and CIB&RC compliance before submitting the verdict.');
+      setSubmitError('Verify chemical safety and CIB&RC compliance before submitting the verdict.');
       return;
     }
     onSaveVerdict(advisory.id, verdict, expertNotes, safetyApproved);
@@ -125,6 +127,7 @@ export const ReviewDetailView: React.FC<ReviewDetailViewProps> = ({
                   onClick={handleZoomIn}
                   className="p-1 hover:bg-white rounded text-[var(--color-on-surface)] transition-all"
                   title="Zoom In"
+                  aria-label="Zoom in on specimen image"
                 >
                   <ZoomIn size={15} />
                 </button>
@@ -133,6 +136,7 @@ export const ReviewDetailView: React.FC<ReviewDetailViewProps> = ({
                   onClick={handleZoomOut}
                   className="p-1 hover:bg-white rounded text-[var(--color-on-surface)] transition-all"
                   title="Zoom Out"
+                  aria-label="Zoom out on specimen image"
                 >
                   <ZoomOut size={15} />
                 </button>
@@ -141,6 +145,7 @@ export const ReviewDetailView: React.FC<ReviewDetailViewProps> = ({
                   onClick={handleResetZoom}
                   className="p-1 hover:bg-white rounded text-[var(--color-on-surface)] transition-all"
                   title="Reset"
+                  aria-label="Reset specimen image zoom"
                 >
                   <RotateCcw size={15} />
                 </button>
@@ -449,7 +454,7 @@ export const ReviewDetailView: React.FC<ReviewDetailViewProps> = ({
                     name="verdict"
                     value={opt.value}
                     checked={verdict === opt.value}
-                    onChange={() => setVerdict(opt.value as any)}
+                  onChange={() => setVerdict(opt.value as 'AGREE' | 'PARTIAL' | 'DISAGREE')}
                     className="sr-only"
                   />
                   <opt.icon size={20} className={`${opt.color} mb-1.5`} />
@@ -477,13 +482,18 @@ export const ReviewDetailView: React.FC<ReviewDetailViewProps> = ({
               <input
                 type="checkbox"
                 checked={safetyApproved}
-                onChange={(e) => setSafetyApproved(e.target.checked)}
+                onChange={(e) => {
+                  setSafetyApproved(e.target.checked);
+                  if (e.target.checked) setSubmitError('');
+                }}
                 className="mt-0.5 rounded text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
               />
               <span className="text-[var(--color-on-surface)] leading-relaxed">
                 I certify that the recommended fungicide/dosage has been cross-checked against the <strong>CIB&RC registered product schedule</strong>, respects harvest waiting intervals, and matches the crop phenology stage.
               </span>
             </label>
+
+            {submitError && <p className="text-xs font-semibold text-red-700" role="alert">{submitError}</p>}
 
             {/* Submit Button */}
             <div className="flex justify-end gap-3 pt-2">

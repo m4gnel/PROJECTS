@@ -2,7 +2,6 @@ package com.agrisage.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,6 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,12 +33,11 @@ import androidx.compose.ui.unit.sp
  */
 @Composable
 fun QuickStatCard(
-    emojiOrIcon: String,
+    iconVector: ImageVector,
     value: String,
     label: String,
     badgeBgColor: Color,
     badgeTextColor: Color = Color.Unspecified,
-    iconVector: ImageVector? = null,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
@@ -43,7 +45,15 @@ fun QuickStatCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .tactilePress(scaleDown = 0.95f, onClick = onClick),
+            .semantics(mergeDescendants = true) {
+                contentDescription = "$label: $value"
+                role = Role.Button
+            }
+            .tactilePress(
+                scaleDown = 0.95f,
+                onClickLabel = "Open $label details",
+                onClick = onClick
+            ),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -67,19 +77,12 @@ fun QuickStatCard(
                         .background(badgeBgColor),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (iconVector != null) {
-                        Icon(
-                            imageVector = iconVector,
-                            contentDescription = label,
-                            tint = badgeTextColor,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    } else {
-                        Text(
-                            text = emojiOrIcon,
-                            fontSize = 20.sp
-                        )
-                    }
+                    Icon(
+                        imageVector = iconVector,
+                        contentDescription = null,
+                        tint = badgeTextColor,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
 
                 Box(
@@ -92,7 +95,7 @@ fun QuickStatCard(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = "Details",
+                        contentDescription = null,
                         tint = Color(0xFF64748B),
                         modifier = Modifier.size(16.dp)
                     )

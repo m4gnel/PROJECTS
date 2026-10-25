@@ -1,6 +1,8 @@
-from typing import Dict, Any, List, Optional
-from fastapi import APIRouter, Query
+from typing import Dict, Any, List
+from fastapi import APIRouter, Depends, Query
 from backend.simulation.rules import DiseaseFavorabilityRules
+from backend.config import settings
+from backend.dependencies import get_current_user
 
 router = APIRouter(tags=["Risk & Radar"])
 
@@ -9,7 +11,8 @@ router = APIRouter(tags=["Risk & Radar"])
 async def calculate_dfi_index(
     humidity_pct: float = Query(75.0, ge=0.0, le=100.0),
     temp_c: float = Query(27.0, ge=-10.0, le=50.0),
-    consecutive_wet_days: int = Query(2, ge=0, le=30)
+    consecutive_wet_days: int = Query(2, ge=0, le=30),
+    _auth: Dict[str, Any] = Depends(get_current_user),
 ) -> Dict[str, Any]:
     """Calculate Disease Favorability Index (DFI) for micro-climate conditions."""
     dfi = DiseaseFavorabilityRules.calculate_dfi(
@@ -38,12 +41,20 @@ async def calculate_dfi_index(
 
 @router.get("/risk/radar")
 async def get_outbreak_radar_clusters(
-    state: str = Query("Kerala", description="State name filter")
+    state: str = Query("India", description="State or union territory name filter"),
+    _auth: Dict[str, Any] = Depends(get_current_user),
 ) -> List[Dict[str, Any]]:
     """Retrieve regional disease and pest outbreak radar clusters."""
+    if settings.ENVIRONMENT.lower() == "production":
+        # The bundled clusters are dated reference fixtures, not a live
+        # outbreak feed. Never present them as current public-health data.
+        return []
+    if state.casefold() not in {"india", "kerala"}:
+        return []
+
     return [
         {
-            "cluster_id": "CLUST-KL-01",
+            "cluster_id": "CLUST-IN-KL-01",
             "district": "Palakkad",
             "crop": "Paddy",
             "disease": "Rice Blast (Pyricularia oryzae)",
@@ -56,7 +67,7 @@ async def get_outbreak_radar_clusters(
             "last_updated": "2026-10-03T08:00:00Z"
         },
         {
-            "cluster_id": "CLUST-KL-02",
+            "cluster_id": "CLUST-IN-KL-02",
             "district": "Wayanad",
             "crop": "Pepper",
             "disease": "Quick Wilt (Phytophthora capsici)",
@@ -69,7 +80,7 @@ async def get_outbreak_radar_clusters(
             "last_updated": "2026-10-03T09:30:00Z"
         },
         {
-            "cluster_id": "CLUST-KL-03",
+            "cluster_id": "CLUST-IN-KL-03",
             "district": "Thrissur",
             "crop": "Banana",
             "disease": "Banana Bunchy Top Virus (BBTV)",

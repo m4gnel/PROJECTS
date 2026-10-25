@@ -36,6 +36,7 @@ class FieldRepository @Inject constructor(
                     updatedAt = System.currentTimeMillis()
                 )
             }
+            fieldDao.deleteAll()
             fieldDao.insertFields(entities)
         }
         return response
@@ -64,7 +65,10 @@ class FieldRepository @Inject constructor(
     }
 
     suspend fun deleteField(fieldId: String): Response<Unit> {
-        fieldDao.deleteField(fieldId)
-        return apiService.deleteField(fieldId)
+        val response = apiService.deleteField(fieldId)
+        if (response.isSuccessful) {
+            fieldDao.deleteField(fieldId)
+        }
+        return response
     }
 }

@@ -1,576 +1,762 @@
 package com.agrisage.app.ui.screens
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Agriculture
+import androidx.compose.material.icons.filled.Eco
+import androidx.compose.material.icons.filled.Grass
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Pets
+import androidx.compose.material.icons.filled.ShoppingBasket
+import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.agrisage.app.navigation.FieldDetail
 import com.agrisage.app.ui.components.AgriBottomNav
 import com.agrisage.app.ui.components.tactilePress
-import com.agrisage.app.ui.theme.*
+import com.agrisage.app.ui.theme.WireAlert
+import com.agrisage.app.ui.theme.WireAlertPale
+import com.agrisage.app.ui.theme.WireBorder
+import com.agrisage.app.ui.theme.WireGold
+import com.agrisage.app.ui.theme.WireGoldPale
+import com.agrisage.app.ui.theme.WireLeaf
+import com.agrisage.app.ui.theme.WireLeafPale
+import com.agrisage.app.ui.theme.WireSage
+import com.agrisage.app.ui.theme.WireSageDeep
+import com.agrisage.app.ui.theme.WireSky
+import com.agrisage.app.ui.theme.WireSkyPale
+import com.agrisage.app.ui.theme.WireSoil
+import com.agrisage.app.ui.theme.WireSoilPale
+import com.agrisage.app.ui.theme.WireSurface
+import com.agrisage.app.ui.theme.WireSurface2
+import com.agrisage.app.ui.theme.WireTextPrimary
+import com.agrisage.app.ui.theme.WireTextSecondary
+import com.agrisage.app.ui.theme.WireWhite
 
-/**
- * Screen: Farm Screen / Management View (Replicated from Reference Reel 2 - DailyFlutterUI Farm App)
- * Route: Fields
- *
- * Features:
- * - Clean Top Bar with circular back button & Green Valley Farm selector pill
- * - Farm Health Index Card with circular progress gauge (92% Healthy) & telemetry summary
- * - Interactive filter pills: All Plots (3), Crops 🌱 (2), Livestock 🐮 (1)
- * - Rich Plot & Field Cards with pastel icon pills, NDVI meters, soil moisture gauges, and action controls
- * - AgriBottomNav integration
- */
-
-enum class FarmFilter {
-    ALL, CROPS, LIVESTOCK
+private enum class FarmSection(val label: String) {
+    OVERVIEW("Overview"),
+    CROPS("Crops"),
+    LIVESTOCK("Livestock"),
+    WATER("Water"),
+    STORAGE("Storage")
 }
 
-data class FarmEntity(
+private data class FarmArea(
     val id: String,
     val name: String,
-    val category: FarmFilter,
-    val emoji: String,
-    val badgeBg: Color,
-    val badgeText: Color,
-    val subhead: String,
-    val areaOrCount: String,
-    val healthPercent: Int,
-    val healthLabel: String,
-    val moistureOrMetric: String,
-    val moisturePercent: Int,
-    val secondaryMetric: String,
-    val statusChip: String,
-    val isActionNeeded: Boolean = false
+    val detail: String,
+    val icon: ImageVector,
+    val surfaceColor: Color,
+    val iconTint: Color,
+    val xFraction: Float,
+    val yFraction: Float
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
+private val farmAreas = listOf(
+    FarmArea(
+        id = "house",
+        name = "House",
+        detail = "Home base",
+        icon = Icons.Default.Home,
+        surfaceColor = WireGoldPale,
+        iconTint = WireSoil,
+        xFraction = 0.05f,
+        yFraction = 0.05f
+    ),
+    FarmArea(
+        id = "storage",
+        name = "Storage",
+        detail = "Tools & harvest",
+        icon = Icons.Default.ShoppingBasket,
+        surfaceColor = WireSurface,
+        iconTint = WireSageDeep,
+        xFraction = 0.67f,
+        yFraction = 0.05f
+    ),
+    FarmArea(
+        id = "tomatoes",
+        name = "Tomatoes",
+        detail = "2 beds",
+        icon = Icons.Default.Agriculture,
+        surfaceColor = WireAlertPale,
+        iconTint = WireAlert,
+        xFraction = 0.03f,
+        yFraction = 0.36f
+    ),
+    FarmArea(
+        id = "vegetables",
+        name = "Vegetables",
+        detail = "Kitchen garden",
+        icon = Icons.Default.Grass,
+        surfaceColor = WireLeafPale,
+        iconTint = WireSage,
+        xFraction = 0.33f,
+        yFraction = 0.37f
+    ),
+    FarmArea(
+        id = "corn",
+        name = "Corn",
+        detail = "East plot",
+        icon = Icons.Default.Eco,
+        surfaceColor = WireGoldPale,
+        iconTint = WireGold,
+        xFraction = 0.67f,
+        yFraction = 0.36f
+    ),
+    FarmArea(
+        id = "water",
+        name = "Water",
+        detail = "Pond & pump",
+        icon = Icons.Default.WaterDrop,
+        surfaceColor = WireSkyPale,
+        iconTint = WireSky,
+        xFraction = 0.05f,
+        yFraction = 0.70f
+    ),
+    FarmArea(
+        id = "animals",
+        name = "Animals",
+        detail = "Barn & pasture",
+        icon = Icons.Default.Pets,
+        surfaceColor = WireSoilPale,
+        iconTint = WireSoil,
+        xFraction = 0.66f,
+        yFraction = 0.70f
+    )
+)
+
+/**
+ * Farm overview with a warm, map-led layout inspired by the supplied reference videos.
+ * The map areas are real touch targets: selecting one updates the helper card and chip context.
+ */
 @Composable
 fun FieldsScreen(navController: NavController) {
-    var activeFilter by remember { mutableStateOf(FarmFilter.ALL) }
+    var selectedSection by remember { mutableStateOf(FarmSection.OVERVIEW) }
+    var selectedAreaId by remember { mutableStateOf<String?>(null) }
 
-    val farmEntities = listOf(
-        FarmEntity(
-            id = "1",
-            name = "North Paddy Field",
-            category = FarmFilter.CROPS,
-            emoji = "🌾",
-            badgeBg = Color(0xFFDCFCE7),
-            badgeText = Color(0xFF166534),
-            subhead = "Basmati Rice · Vegetative Stage (Day 45)",
-            areaOrCount = "2.5 Acres",
-            healthPercent = 94,
-            healthLabel = "Optimal NDVI 0.78",
-            moistureOrMetric = "Soil Moisture: 76%",
-            moisturePercent = 76,
-            secondaryMetric = "Water level 4.2 cm · Last fed Yesterday",
-            statusChip = "● Irrigation Active"
-        ),
-        FarmEntity(
-            id = "2",
-            name = "Coconut & Fruit Grove",
-            category = FarmFilter.CROPS,
-            emoji = "🥥",
-            badgeBg = Color(0xFFFEF3C7),
-            badgeText = Color(0xFF92400E),
-            subhead = "Hybrid Coconut Palms & Tapioca Intercrop",
-            areaOrCount = "1.2 Acres",
-            healthPercent = 88,
-            healthLabel = "Good NDVI 0.68",
-            moistureOrMetric = "Soil Moisture: 68%",
-            moisturePercent = 68,
-            secondaryMetric = "Fertilizer due in 3 days · Weed-free",
-            statusChip = "● Healthy"
-        ),
-        FarmEntity(
-            id = "3",
-            name = "Dairy Pasture & Shed",
-            category = FarmFilter.LIVESTOCK,
-            emoji = "🐮",
-            badgeBg = Color(0xFFFFEDD5),
-            badgeText = Color(0xFF9A3412),
-            subhead = "Holstein Dairy Cows & Calves",
-            areaOrCount = "48 Animals (0.8 Ac)",
-            healthPercent = 96,
-            healthLabel = "Optimal Vitality",
-            moistureOrMetric = "Feed Reserve: 92%",
-            moisturePercent = 92,
-            secondaryMetric = "Daily Milk 420 L · Water Dispenser Active",
-            statusChip = "● Grazing Active"
-        )
-    )
-
-    val filteredEntities = remember(activeFilter) {
-        when (activeFilter) {
-            FarmFilter.ALL -> farmEntities
-            FarmFilter.CROPS -> farmEntities.filter { it.category == FarmFilter.CROPS }
-            FarmFilter.LIVESTOCK -> farmEntities.filter { it.category == FarmFilter.LIVESTOCK }
-        }
-    }
+    val selectedArea = farmAreas.firstOrNull { it.id == selectedAreaId }
 
     Scaffold(
+        containerColor = WireWhite,
         topBar = {
-            Surface(
-                color = Color.White,
-                shadowElevation = 0.5.dp
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(horizontal = 20.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Circular White Back Button
-                    Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(CircleShape)
-                            .background(Color.White)
-                            .border(1.dp, Color(0xFFE2E8F0), CircleShape)
-                            .clickable { navController.popBackStack() },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color(0xFF1E293B),
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    // Farm Selector Pill
-                    Surface(
-                        color = Color(0xFFF1F5F9),
-                        shape = RoundedCornerShape(20.dp),
-                        modifier = Modifier.height(38.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("🌿", fontSize = 14.sp)
-                            Spacer(Modifier.width(6.dp))
-                            Text(
-                                text = "Green Valley Farm",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF0F172A)
-                            )
-                            Spacer(Modifier.width(4.dp))
-                            Text(
-                                text = "⌵",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF64748B)
-                            )
-                        }
-                    }
-
-                    // Filter Action Button
-                    Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(CircleShape)
-                            .background(Color.White)
-                            .border(1.dp, Color(0xFFE2E8F0), CircleShape)
-                            .clickable { /* Filter */ },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.FilterList,
-                            contentDescription = "Filter",
-                            tint = Color(0xFF1E293B),
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-            }
+            FarmOverviewTopBar(
+                onNavigateBack = { navController.popBackStack() }
+            )
         },
         bottomBar = {
             AgriBottomNav(
                 currentRoute = "fields",
                 onNavigate = { route ->
                     when (route) {
-                        "home" -> navController.navigate(com.agrisage.app.navigation.Home) { popUpTo(com.agrisage.app.navigation.Home) { inclusive = true } }
+                        "home" -> navController.navigate(com.agrisage.app.navigation.Home) {
+                            popUpTo(com.agrisage.app.navigation.Home) { inclusive = true }
+                        }
                         "advisor" -> navController.navigate(com.agrisage.app.navigation.Advisor)
                         "weather" -> navController.navigate(com.agrisage.app.navigation.Weather)
                         "profile" -> navController.navigate(com.agrisage.app.navigation.Profile)
                     }
                 }
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { /* Add field */ },
-                containerColor = Color(0xFF16A34A),
-                contentColor = Color.White,
-                shape = RoundedCornerShape(16.dp),
-                elevation = FloatingActionButtonDefaults.elevation(4.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Plot")
-                    Spacer(Modifier.width(6.dp))
-                    Text("Add Plot", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                }
-            }
         }
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color(0xFFF8FAFC)),
-            contentPadding = PaddingValues(16.dp),
+                .background(WireWhite),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // ── FARM HEALTH INDEX HERO CARD (Reel 2 Inspired) ──
             item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(2.dp, RoundedCornerShape(24.dp), ambientColor = Color(0x14000000)),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(1.dp, Color(0xFFF1F5F9), RoundedCornerShape(24.dp))
-                            .padding(20.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    text = "Farm Health Index",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color(0xFF64748B)
-                                )
-                                Spacer(Modifier.height(2.dp))
-                                Text(
-                                    text = "92% · Optimal",
-                                    fontSize = 22.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF0F172A)
-                                )
-                            }
-
-                            // Circular Progress Ring Gauge
-                            Box(
-                                modifier = Modifier.size(54.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(
-                                    progress = { 0.92f },
-                                    modifier = Modifier.fillMaxSize(),
-                                    color = Color(0xFF16A34A),
-                                    trackColor = Color(0xFFDCFCE7),
-                                    strokeWidth = 5.dp,
-                                    strokeCap = StrokeCap.Round
-                                )
-                                Text(
-                                    text = "92%",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF0F172A)
-                                )
-                            }
-                        }
-
-                        Spacer(Modifier.height(16.dp))
-                        HorizontalDivider(color = Color(0xFFF1F5F9))
-                        Spacer(Modifier.height(14.dp))
-
-                        // Stats Summary Row
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            FarmSummaryPill("Total Area", "4.5 Acres", "🌱")
-                            FarmSummaryPill("Active Plots", "3 Plots", "📍")
-                            FarmSummaryPill("Livestock", "48 Cattle", "🐮")
+                FarmSectionChips(
+                    selectedSection = selectedSection,
+                    onSectionSelected = { section ->
+                        selectedSection = section
+                        selectedAreaId = when (section) {
+                            FarmSection.OVERVIEW -> null
+                            FarmSection.CROPS -> "tomatoes"
+                            FarmSection.LIVESTOCK -> "animals"
+                            FarmSection.WATER -> "water"
+                            FarmSection.STORAGE -> "storage"
                         }
                     }
-                }
-            }
-
-            // ── SEGMENTED FILTER PILLS ──
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilterPill(
-                        label = "All Plots (3)",
-                        isSelected = activeFilter == FarmFilter.ALL,
-                        onClick = { activeFilter = FarmFilter.ALL },
-                        modifier = Modifier.weight(1f)
-                    )
-                    FilterPill(
-                        label = "Crops 🌱 (2)",
-                        isSelected = activeFilter == FarmFilter.CROPS,
-                        onClick = { activeFilter = FarmFilter.CROPS },
-                        modifier = Modifier.weight(1f)
-                    )
-                    FilterPill(
-                        label = "Livestock 🐮 (1)",
-                        isSelected = activeFilter == FarmFilter.LIVESTOCK,
-                        onClick = { activeFilter = FarmFilter.LIVESTOCK },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-
-            // ── FARM PLOT & ENTITY CARDS ──
-            items(filteredEntities.size) { i ->
-                val entity = filteredEntities[i]
-                FarmEntityCard(
-                    entity = entity,
-                    onClick = { navController.navigate(FieldDetail(fieldId = entity.id)) }
                 )
             }
 
             item {
-                Spacer(Modifier.height(60.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "Your farm plan",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = WireTextPrimary
+                    )
+                    Text(
+                        text = selectedArea?.let { "${it.name} selected · tap another area to explore" }
+                            ?: "A simple view of every area on your farm",
+                        fontSize = 13.sp,
+                        color = WireTextSecondary
+                    )
+                }
+            }
+
+            item {
+                FarmPlanMap(
+                    selectedAreaId = selectedAreaId,
+                    onAreaSelected = { area ->
+                        selectedAreaId = area.id
+                        selectedSection = when (area.id) {
+                            "tomatoes", "vegetables", "corn" -> FarmSection.CROPS
+                            "animals" -> FarmSection.LIVESTOCK
+                            "water" -> FarmSection.WATER
+                            "storage" -> FarmSection.STORAGE
+                            else -> FarmSection.OVERVIEW
+                        }
+                    }
+                )
+            }
+
+            item {
+                FarmHelperCard(selectedArea = selectedArea)
             }
         }
     }
 }
 
 @Composable
-private fun FarmSummaryPill(title: String, value: String, emoji: String) {
-    Column {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(emoji, fontSize = 12.sp)
-            Spacer(Modifier.width(4.dp))
-            Text(title, fontSize = 11.sp, color = Color(0xFF64748B))
+private fun FarmOverviewTopBar(onNavigateBack: () -> Unit) {
+    Surface(
+        color = WireWhite,
+        shadowElevation = 0.5.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                modifier = Modifier
+                    .size(48.dp)
+                    .semantics {
+                        contentDescription = "Go back"
+                        role = Role.Button
+                    }
+                    .tactilePress(
+                        scaleDown = 0.94f,
+                        onClickLabel = "Go back",
+                        onClick = onNavigateBack
+                    ),
+                shape = CircleShape,
+                color = WireSurface,
+                border = BorderStroke(1.dp, WireBorder)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = null,
+                        tint = WireTextPrimary,
+                        modifier = Modifier.size(21.dp)
+                    )
+                }
+            }
+
+            Spacer(Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Green Valley Farm",
+                    fontSize = 22.sp,
+                    lineHeight = 26.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = WireTextPrimary
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 3.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = WireSage,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = "Nashik, Maharashtra",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = WireTextSecondary
+                    )
+                }
+            }
+
+            Surface(
+                shape = CircleShape,
+                color = WireLeafPale,
+                modifier = Modifier.size(42.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Eco,
+                        contentDescription = "Farm overview",
+                        tint = WireSageDeep,
+                        modifier = Modifier.size(21.dp)
+                    )
+                }
+            }
         }
-        Spacer(Modifier.height(2.dp))
-        Text(value, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
     }
 }
 
 @Composable
-private fun FilterPill(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+private fun FarmSectionChips(
+    selectedSection: FarmSection,
+    onSectionSelected: (FarmSection) -> Unit
 ) {
-    val bgAnim by animateColorAsState(
-        targetValue = if (isSelected) Color(0xFF1E293B) else Color.White,
-        label = "filter_pill_bg"
+    LazyRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics { contentDescription = "Farm sections" },
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(end = 8.dp)
+    ) {
+        items(FarmSection.values().size) { index ->
+            val section = FarmSection.values()[index]
+            FarmSectionChip(
+                label = section.label,
+                selected = selectedSection == section,
+                onClick = { onSectionSelected(section) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun FarmSectionChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val backgroundColor by animateColorAsState(
+        targetValue = if (selected) WireSageDeep else WireWhite,
+        label = "farm_section_background"
     )
-    val textAnim by animateColorAsState(
-        targetValue = if (isSelected) Color.White else Color(0xFF64748B),
-        label = "filter_pill_text"
+    val textColor by animateColorAsState(
+        targetValue = if (selected) WireWhite else WireTextSecondary,
+        label = "farm_section_text"
     )
 
     Surface(
-        color = bgAnim,
-        shape = RoundedCornerShape(16.dp),
-        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
-        shadowElevation = if (isSelected) 2.dp else 0.5.dp,
-        modifier = modifier
-            .height(40.dp)
-            .tactilePress(scaleDown = 0.94f, onClick = onClick)
+        color = backgroundColor,
+        shape = RoundedCornerShape(15.dp),
+        border = if (selected) null else BorderStroke(1.dp, WireBorder),
+        shadowElevation = if (selected) 2.dp else 0.dp,
+        modifier = Modifier
+            .heightIn(min = 48.dp)
+            .semantics {
+                contentDescription = "$label section"
+                role = Role.Button
+                stateDescription = if (selected) "Selected" else "Not selected"
+            }
+            .tactilePress(
+                scaleDown = 0.95f,
+                onClickLabel = "Open $label section",
+                onClick = onClick
+            )
     ) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier.padding(horizontal = 17.dp),
+            contentAlignment = Alignment.Center
+        ) {
             Text(
                 text = label,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = textAnim
+                fontSize = 13.sp,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+                color = textColor
             )
         }
     }
 }
 
 @Composable
-private fun FarmEntityCard(
-    entity: FarmEntity,
-    onClick: () -> Unit
+private fun FarmPlanMap(
+    selectedAreaId: String?,
+    onAreaSelected: (FarmArea) -> Unit
 ) {
-    Card(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
-            .tactilePress(scaleDown = 0.97f, onClick = onClick),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            .height(360.dp)
+            .clip(RoundedCornerShape(28.dp))
+            .background(WireSurface2)
+            .semantics {
+                contentDescription = "Interactive farm plan with seven labeled areas"
+            }
     ) {
-        Column(
+        Canvas(modifier = Modifier.matchParentSize()) {
+            drawFarmPlan()
+        }
+
+        Surface(
+            color = WireWhite.copy(alpha = 0.9f),
+            shape = RoundedCornerShape(12.dp),
+            shadowElevation = 1.dp,
             modifier = Modifier
-                .fillMaxWidth()
-                .border(1.dp, Color(0xFFF1F5F9), RoundedCornerShape(22.dp))
-                .padding(18.dp)
+                .align(Alignment.TopCenter)
+                .padding(top = 14.dp)
         ) {
-            // Header Row: Pastel Badge + Title/Subhead + Circular Navigation Chevron
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                    // Pastel Emoji Badge
-                    Box(
-                        modifier = Modifier
-                            .size(46.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(entity.badgeBg),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(entity.emoji, fontSize = 22.sp)
-                    }
-
-                    Spacer(Modifier.width(14.dp))
-
-                    Column {
-                        Text(
-                            text = entity.name,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F172A)
-                        )
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            text = entity.areaOrCount,
-                            fontSize = 12.sp,
-                            color = Color(0xFF64748B),
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-
-                // Status Badge Chip
-                Surface(
-                    color = Color(0xFFDCFCE7),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text(
-                        text = entity.statusChip,
-                        color = Color(0xFF166534),
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 11.sp,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(14.dp))
-
-            // Subhead Stage description
-            Text(
-                text = entity.subhead,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFF334155)
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            // Progress Gauge Row: Soil Moisture or Feed Meter
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = entity.moistureOrMetric,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF0F172A)
-                    )
-                    Text(
-                        text = entity.healthLabel,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF16A34A)
-                    )
-                }
-                Spacer(Modifier.height(6.dp))
-                // Progress Bar
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(3.dp))
-                        .background(Color(0xFFE2E8F0))
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(entity.moisturePercent / 100f)
-                            .fillMaxHeight()
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(Color(0xFF16A34A))
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            // Footer Details & Chevron Action
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = entity.secondaryMetric,
-                    fontSize = 11.sp,
-                    color = Color(0xFF94A3B8)
+                    text = "N",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = WireSageDeep
                 )
+                Spacer(Modifier.width(5.dp))
+                Text(
+                    text = "Farm plan",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = WireTextSecondary
+                )
+            }
+        }
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable(onClick = onClick)
-                ) {
-                    Text(
-                        text = "Manage",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF16A34A)
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = "Details",
-                        tint = Color(0xFF16A34A),
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
+        BoxWithConstraints(modifier = Modifier.matchParentSize()) {
+            farmAreas.forEach { area ->
+                FarmAreaButton(
+                    area = area,
+                    selected = selectedAreaId == area.id,
+                    onClick = { onAreaSelected(area) },
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(
+                            x = maxWidth * area.xFraction,
+                            y = maxHeight * area.yFraction
+                        )
+                )
             }
         }
     }
+}
+
+@Composable
+private fun FarmAreaButton(
+    area: FarmArea,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val containerColor = if (selected) WireWhite else area.surfaceColor.copy(alpha = 0.96f)
+    val borderColor = if (selected) WireSageDeep else WireWhite.copy(alpha = 0.8f)
+
+    Surface(
+        color = containerColor,
+        shape = RoundedCornerShape(17.dp),
+        border = BorderStroke(if (selected) 2.dp else 1.dp, borderColor),
+        shadowElevation = if (selected) 5.dp else 2.dp,
+        modifier = modifier
+            .width(92.dp)
+            .heightIn(min = 56.dp)
+            .semantics {
+                contentDescription = "${area.name} area. ${area.detail}"
+                role = Role.Button
+                stateDescription = if (selected) "Selected" else "Tap to explore"
+            }
+            .tactilePress(
+                scaleDown = 0.94f,
+                onClickLabel = "Explore ${area.name}",
+                onClick = onClick
+            )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(CircleShape)
+                    .background(area.surfaceColor),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = area.icon,
+                    contentDescription = null,
+                    tint = area.iconTint,
+                    modifier = Modifier.size(17.dp)
+                )
+            }
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = area.name,
+                fontSize = 12.sp,
+                lineHeight = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = WireTextPrimary,
+                maxLines = 1
+            )
+        }
+    }
+}
+
+@Composable
+private fun FarmHelperCard(selectedArea: FarmArea?) {
+    val message = selectedArea?.let {
+        "${it.name} is selected. Tap another area to keep exploring."
+    } ?: "Tap an area on the map to explore your farm."
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics { contentDescription = "Farm map helper. $message" },
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = WireSageDeep),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 15.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                color = WireLeafPale,
+                shape = CircleShape,
+                modifier = Modifier.size(44.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = WireSageDeep,
+                        modifier = Modifier.size(21.dp)
+                    )
+                }
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(
+                    text = "Explore your farm",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = WireWhite
+                )
+                Text(
+                    text = message,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    color = WireWhite.copy(alpha = 0.84f)
+                )
+            }
+        }
+    }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawFarmPlan() {
+    val w = size.width
+    val h = size.height
+
+    drawRect(
+        brush = Brush.linearGradient(
+            colors = listOf(WireSurface2, WireWhite),
+            start = Offset(0f, 0f),
+            end = Offset(w, h)
+        )
+    )
+
+    val upperMeadow = Path().apply {
+        moveTo(0f, h * 0.04f)
+        cubicTo(w * 0.25f, h * 0.16f, w * 0.44f, h * 0.02f, w * 0.72f, h * 0.12f)
+        cubicTo(w * 0.86f, h * 0.16f, w * 0.96f, h * 0.10f, w, h * 0.18f)
+        lineTo(w, h * 0.42f)
+        cubicTo(w * 0.75f, h * 0.36f, w * 0.48f, h * 0.49f, 0f, h * 0.39f)
+        close()
+    }
+    drawPath(upperMeadow, color = WireLeafPale.copy(alpha = 0.56f))
+
+    val lowerMeadow = Path().apply {
+        moveTo(0f, h * 0.62f)
+        cubicTo(w * 0.25f, h * 0.54f, w * 0.48f, h * 0.67f, w * 0.73f, h * 0.58f)
+        cubicTo(w * 0.86f, h * 0.54f, w * 0.95f, h * 0.62f, w, h * 0.58f)
+        lineTo(w, h)
+        lineTo(0f, h)
+        close()
+    }
+    drawPath(lowerMeadow, color = WireLeafPale.copy(alpha = 0.38f))
+
+    val mainPath = Path().apply {
+        moveTo(w * 0.48f, 0f)
+        cubicTo(w * 0.45f, h * 0.20f, w * 0.56f, h * 0.28f, w * 0.48f, h * 0.46f)
+        cubicTo(w * 0.41f, h * 0.64f, w * 0.48f, h * 0.77f, w * 0.53f, h)
+    }
+    drawPath(
+        path = mainPath,
+        color = WireSoilPale.copy(alpha = 0.94f),
+        style = androidx.compose.ui.graphics.drawscope.Stroke(
+            width = 18.dp.toPx(),
+            cap = StrokeCap.Round,
+            join = StrokeJoin.Round
+        )
+    )
+    drawPath(
+        path = mainPath,
+        color = WireSoil.copy(alpha = 0.17f),
+        style = androidx.compose.ui.graphics.drawscope.Stroke(
+            width = 2.dp.toPx(),
+            cap = StrokeCap.Round,
+            join = StrokeJoin.Round
+        )
+    )
+
+    val crossPath = Path().apply {
+        moveTo(0f, h * 0.53f)
+        cubicTo(w * 0.27f, h * 0.48f, w * 0.51f, h * 0.52f, w, h * 0.46f)
+    }
+    drawPath(
+        path = crossPath,
+        color = WireSoilPale.copy(alpha = 0.85f),
+        style = androidx.compose.ui.graphics.drawscope.Stroke(
+            width = 14.dp.toPx(),
+            cap = StrokeCap.Round,
+            join = StrokeJoin.Round
+        )
+    )
+
+    val cropLineColor = WireSage.copy(alpha = 0.28f)
+    for (index in 0..4) {
+        val y = h * 0.47f + (index * 12.dp.toPx())
+        drawLine(
+            color = cropLineColor,
+            start = Offset(w * 0.07f, y),
+            end = Offset(w * 0.35f, y + 5.dp.toPx()),
+            strokeWidth = 1.5.dp.toPx(),
+            cap = StrokeCap.Round
+        )
+        drawLine(
+            color = cropLineColor,
+            start = Offset(w * 0.63f, y + 4.dp.toPx()),
+            end = Offset(w * 0.94f, y - 2.dp.toPx()),
+            strokeWidth = 1.5.dp.toPx(),
+            cap = StrokeCap.Round
+        )
+    }
+
+    drawOval(
+        brush = Brush.linearGradient(
+            colors = listOf(WireSkyPale, WireSky.copy(alpha = 0.66f)),
+            start = Offset(w * 0.05f, h * 0.73f),
+            end = Offset(w * 0.28f, h * 0.92f)
+        ),
+        topLeft = Offset(w * 0.04f, h * 0.70f),
+        size = Size(w * 0.27f, h * 0.18f)
+    )
+    drawArc(
+        color = WireWhite.copy(alpha = 0.72f),
+        startAngle = 190f,
+        sweepAngle = 150f,
+        useCenter = false,
+        topLeft = Offset(w * 0.08f, h * 0.75f),
+        size = Size(w * 0.18f, h * 0.07f),
+        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5.dp.toPx())
+    )
+
+    val fencePath = Path().apply {
+        moveTo(w * 0.03f, h * 0.32f)
+        lineTo(w * 0.35f, h * 0.32f)
+        lineTo(w * 0.36f, h * 0.64f)
+        moveTo(w * 0.63f, h * 0.31f)
+        lineTo(w * 0.96f, h * 0.31f)
+        lineTo(w * 0.96f, h * 0.64f)
+    }
+    drawPath(
+        path = fencePath,
+        color = WireSage.copy(alpha = 0.30f),
+        style = androidx.compose.ui.graphics.drawscope.Stroke(
+            width = 1.5.dp.toPx(),
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(8.dp.toPx(), 6.dp.toPx()))
+        )
+    )
+
+    drawMapTree(Offset(w * 0.31f, h * 0.17f), 0.8f)
+    drawMapTree(Offset(w * 0.57f, h * 0.16f), 0.65f)
+    drawMapTree(Offset(w * 0.89f, h * 0.75f), 0.9f)
+    drawMapTree(Offset(w * 0.34f, h * 0.84f), 0.7f)
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawMapTree(
+    center: Offset,
+    scale: Float
+) {
+    val trunkHeight = 12.dp.toPx() * scale
+    drawLine(
+        color = WireSoil.copy(alpha = 0.78f),
+        start = center + Offset(0f, 5.dp.toPx() * scale),
+        end = center + Offset(0f, trunkHeight),
+        strokeWidth = 2.dp.toPx() * scale,
+        cap = StrokeCap.Round
+    )
+    drawCircle(
+        color = WireSageDeep.copy(alpha = 0.72f),
+        radius = 9.dp.toPx() * scale,
+        center = center + Offset(-5.dp.toPx() * scale, 0f)
+    )
+    drawCircle(
+        color = WireSage.copy(alpha = 0.78f),
+        radius = 11.dp.toPx() * scale,
+        center = center + Offset(4.dp.toPx() * scale, -2.dp.toPx() * scale)
+    )
+    drawCircle(
+        color = WireLeaf.copy(alpha = 0.72f),
+        radius = 7.dp.toPx() * scale,
+        center = center + Offset(0f, -8.dp.toPx() * scale)
+    )
 }

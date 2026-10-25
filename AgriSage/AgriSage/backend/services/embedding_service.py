@@ -7,10 +7,7 @@ except ImportError:
     import logging
     logger = logging.getLogger(__name__)
 
-try:
-    from sentence_transformers import SentenceTransformer
-except ImportError:
-    SentenceTransformer = None
+from backend.config import settings
 
 
 class EmbeddingService:
@@ -19,9 +16,15 @@ class EmbeddingService:
     @classmethod
     def get_model(cls):
         """Lazy singleton loader for intfloat/multilingual-e5-large."""
-        if cls._model is None and SentenceTransformer is not None:
+        if not settings.ENABLE_EMBEDDINGS:
+            return None
+
+        if cls._model is None:
             try:
-                cls._model = SentenceTransformer('intfloat/multilingual-e5-large', device='cpu')
+                from sentence_transformers import SentenceTransformer
+
+                model_name = settings.EMBEDDING_MODEL_PATH or 'intfloat/multilingual-e5-large'
+                cls._model = SentenceTransformer(model_name, device='cpu', local_files_only=True)
             except Exception as e:
                 logger.warning("failed_loading_embedding_model", error=str(e))
         return cls._model

@@ -12,12 +12,12 @@ async def call_gemini_safe(prompt: str, system_prompt: str = "", max_retries: in
     Includes exponential backoff retries on rate limit / 429 status codes.
     """
     api_key = settings.GEMINI_API_KEY
-    if not api_key:
-        logger.warning("call_gemini_safe: GEMINI_API_KEY missing, using fallback response")
+    if settings.LLM_PROVIDER != "gemini" or not api_key:
+        logger.warning("call_gemini_safe: Gemini provider is not configured")
         return ""
 
     import httpx
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.LLM_MODEL}:generateContent?key={api_key}"
 
     payload = {
         "contents": [{"parts": [{"text": prompt}]}]

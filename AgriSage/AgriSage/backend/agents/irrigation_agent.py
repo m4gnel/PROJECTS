@@ -10,6 +10,19 @@ async def irrigation_node(state: AgriSageState) -> Dict[str, Any]:
     crop = state.get("crop", "coconut")
     stage = state.get("crop_stage", "vegetative")
 
+    if weather.get("available") is False or weather.get("advice_flag") == "UNKNOWN":
+        return {
+            "agent_outputs": {
+                "irrigation": {
+                    "available": False,
+                    "recommendation": "Irrigation guidance is unavailable until current weather data is verified.",
+                    "water_mm": None,
+                    "crop": crop,
+                    "stage": stage,
+                }
+            }
+        }
+
     temp_c = weather.get("temp_c", 28.0)
     rain_24h = weather.get("rain_mm_24h", 0.0)
 

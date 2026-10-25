@@ -8,21 +8,22 @@ class MarketAgent:
     async def run(self, state: AgriSAGEState) -> AgriSAGEState:
         crop = state.get("crop") or "rice"
         farm_state = state.get("farm_state") or {}
-        district = farm_state.get("district") or "Ernakulam"
+        district = farm_state.get("district") or ""
+        state_name = farm_state.get("state") or "India"
 
-        market_data = await self.fetch_apmc_prices(crop=crop, district=district)
+        market_data = await self.fetch_apmc_prices(crop=crop, district=district, state=state_name)
         state["market_data"] = market_data
         return state
 
-    async def fetch_apmc_prices(self, crop: str, district: str) -> Dict[str, Any]:
+    async def fetch_apmc_prices(self, crop: str, district: str, state: str = "India") -> Dict[str, Any]:
         api_key = settings.DATA_GOV_IN_KEY
         if api_key:
             url = "https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070"
             params = {
                 "api-key": api_key,
                 "format": "json",
-                "filters[state]": "Kerala",
-                "filters[district]": district,
+                "filters[state]": state,
+                **({"filters[district]": district} if district else {}),
                 "limit": 50
             }
             try:
@@ -48,7 +49,13 @@ class MarketAgent:
             except Exception:
                 pass
 
-        # Fallback Kerala APMC benchmark prices
+        if settings.ENVIRONMENT.lower() == "production":
+            # The values below are development reference benchmarks, not a
+            # live market feed. Never expose them as financial guidance.
+            return {}
+
+        # Fallback regional benchmark values. They are explicitly labeled as
+        # estimates until a live market provider returns verified records.
         benchmarks = {
             "rice": {"min": 2400, "max": 2900, "modal": 2750, "unit": "Quintal"},
             "coconut": {"min": 2800, "max": 3500, "modal": 3200, "unit": "100 nuts"},
@@ -66,8 +73,9 @@ class MarketAgent:
             "modal_price": b["modal"],
             "trend": "upward",
             "unit": b["unit"],
-            "recommendation": f"Market price for {crop} in {district} is ₹{b['modal']}/{b['unit']}. Recommended to sell.",
-            "source": "kerala_apmc_benchmark"
+            "recommendation": f"Estimated market price for {crop} in {district or state} is ₹{b['modal']}/{b['unit']}. Verify with the nearest APMC before selling.",
+            "source": "regional_benchmark_estimate",
+            "is_estimate": True,
         }
 
 

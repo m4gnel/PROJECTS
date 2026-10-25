@@ -14,7 +14,7 @@ import com.agrisage.app.ui.screens.CameraScreen
 import com.agrisage.app.ui.screens.CameraViewModel
 import com.agrisage.app.ui.screens.FieldsScreen
 import com.agrisage.app.ui.screens.HomeScreen
-import com.agrisage.app.ui.screens.OnboardingScreen
+import com.agrisage.app.ui.screens.onboarding.OnboardingScreen
 import com.agrisage.app.ui.screens.ProfileScreen
 import com.agrisage.app.ui.screens.SplashScreen
 import com.agrisage.app.ui.screens.WeatherScreen
@@ -35,13 +35,7 @@ fun AgriSageNavGraph(navController: NavHostController) {
         }
 
         // ── Onboarding (3 steps) ────────────────────────────────────
-        composable<Onboarding> { backStackEntry ->
-            val route = backStackEntry.toRoute<Onboarding>()
-            OnboardingScreen(
-                navController = navController,
-                step = route.step,
-            )
-        }
+        composable<Onboarding> { OnboardingScreen(navController = navController) }
 
         // ── Home Dashboard ──────────────────────────────────────────
         composable<Home> {

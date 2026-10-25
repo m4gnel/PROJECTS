@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 from backend.agents.graph import graph
 from backend.agents.state import AgriSageState
-from backend.dependencies import require_auth
+from backend.dependencies import get_current_user, require_subject_identity
 
 try:
     import structlog
@@ -29,13 +29,19 @@ router = APIRouter(tags=["Advisory"])
 class AdvisoryRequest(BaseModel):
     """Schema for POST /api/v1/advisory — matches Android AdvisoryRequest DTO."""
     farmer_id: str = Field(..., description="Unique farmer identifier")
+    session_id: Optional[str] = Field(default=None, description="Client advisory session identifier")
+    field_id: Optional[str] = Field(default=None, description="Optional field identifier")
     query: str = Field(..., min_length=1, max_length=2000, description="Farmer's question (any language)")
     language: str = Field(default="en", description="Preferred response language: hi/en/ta/ml/te/pa")
-    state: str = Field(default="Kerala", description="Indian state name")
-    district: str = Field(default="Ernakulam", description="District name")
+    state: str = Field(default="India", description="Indian state or union territory name")
+    district: str = Field(default="", description="District name, when known")
     crops: List[str] = Field(default_factory=list, description="Farmer's crops")
     lat: Optional[float] = Field(default=None, description="GPS latitude")
     lon: Optional[float] = Field(default=None, description="GPS longitude")
+    # These aliases are sent by the Android client.  They are accepted as
+    # input-only compatibility fields and normalized into the canonical state.
+    latitude: Optional[float] = Field(default=None, description="Android latitude alias")
+    longitude: Optional[float] = Field(default=None, description="Android longitude alias")
     farm_size_acres: Optional[float] = Field(default=None, description="Total farm size in acres")
 
 
@@ -49,6 +55,7 @@ class AdvisoryResponse(BaseModel):
     generation_ms: int = Field(default=0, description="Pipeline latency in ms")
     fcm_triggered: bool = Field(default=False)
     warnings: List[str] = Field(default_factory=list)
+    session_id: Optional[str] = None
 
 
 # ─────────────────────────────────────────────
@@ -68,7 +75,7 @@ class AdvisoryResponse(BaseModel):
 )
 async def get_advisory(
     request: AdvisoryRequest,
-    auth: Dict[str, Any] = Depends(require_auth),
+    auth: Dict[str, Any] = Depends(get_current_user),
 ) -> AdvisoryResponse:
     """
     POST /api/v1/advisory
@@ -79,18 +86,21 @@ async def get_advisory(
     Returns the synthesised advisory in the farmer's preferred language.
     """
     start_ms = int(time.time() * 1000)
+    subject = require_subject_identity(request.farmer_id, auth)
+    latitude = request.lat if request.lat is not None else request.latitude
+    longitude = request.lon if request.lon is not None else request.longitude
 
     # Build initial LangGraph state
     initial_state: AgriSageState = {
-        "farmer_id": request.farmer_id,
-        "user_id": auth.get("sub", request.farmer_id),
+        "farmer_id": subject,
+        "user_id": subject,
         "farmer_query": request.query,
         "language": request.language,
         "location": {
             "state": request.state,
             "district": request.district,
-            "lat": request.lat,
-            "lon": request.lon,
+            "lat": latitude,
+            "lon": longitude,
         },
         "crop": request.crops[0] if request.crops else None,
         "crops": request.crops,
@@ -123,20 +133,22 @@ async def get_advisory(
     try:
         import asyncio
         config = {
-            "configurable": {"thread_id": f"{request.farmer_id}_{int(time.time())}"}
+            "configurable": {
+                "thread_id": f"{subject}:{request.session_id or int(time.time())}"
+            }
         }
         result = await asyncio.wait_for(
             graph.ainvoke(initial_state, config=config),
             timeout=20.0,
         )
     except asyncio.TimeoutError:
-        logger.error("advisory_pipeline_timeout", farmer_id=request.farmer_id)
+        logger.error("advisory_pipeline_timeout", farmer_id=subject)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Advisory pipeline timed out. Please try again.",
         )
     except Exception as exc:
-        logger.error("advisory_pipeline_error", farmer_id=request.farmer_id, error=str(exc))
+        logger.error("advisory_pipeline_error", farmer_id=subject, error=str(exc))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",
@@ -163,7 +175,7 @@ async def get_advisory(
 
     logger.info(
         "advisory_complete",
-        farmer_id=request.farmer_id,
+        farmer_id=subject,
         language=detected_lang,
         agents_used=agents_used,
         gen_ms=gen_ms,
@@ -175,8 +187,9 @@ async def get_advisory(
         answer_en=answer_en,
         agents_used=agents_used,
         language=detected_lang,
-        farmer_id=request.farmer_id,
+        farmer_id=subject,
         generation_ms=gen_ms,
         fcm_triggered=fcm_triggered,
         warnings=warnings,
+        session_id=request.session_id,
     )

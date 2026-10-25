@@ -2,23 +2,28 @@ package com.agrisage.app.data.remote
 
 import com.agrisage.app.data.remote.dto.*
 import retrofit2.Response
-import retrofit2.http.*
+import retrofit2.http.Body
+import retrofit2.http.DELETE
+import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface ApiService {
 
     // Auth
-    @POST("auth/register")
-    suspend fun register(@Body request: RegisterRequest): Response<TokenResponse>
+    @POST("auth/send-otp")
+    suspend fun sendOtp(@Body request: SendOtpRequest): Response<SendOtpResponse>
 
-    @POST("auth/token")
-    @FormUrlEncoded
-    suspend fun login(
-        @Field("username") username: String,
-        @Field("password") password: String
-    ): Response<TokenResponse>
+    @POST("auth/verify-otp")
+    suspend fun verifyOtp(@Body request: VerifyOtpRequest): Response<AuthResponse>
+
+    @POST("auth/refresh")
+    suspend fun refresh(@Body request: RefreshTokenRequest): Response<AuthResponse>
 
     // Farmer
-    @GET("farmers/me")
+    @GET("auth/me")
     suspend fun getMyProfile(): Response<FarmerDto>
 
     @PUT("farmers/me")
@@ -35,7 +40,7 @@ interface ApiService {
     suspend fun deleteField(@Path("fieldId") fieldId: String): Response<Unit>
 
     // Chat
-    @POST("chat/")
+    @POST("advisory")
     suspend fun sendMessage(@Body request: ChatRequest): Response<ChatResponse>
 
     // Weather
@@ -52,13 +57,14 @@ interface ApiService {
     ): Response<WeatherForecastDto>
 
     // Alerts
-    @GET("alerts/")
+    @GET("notifications")
     suspend fun getAlerts(@Query("unread_only") unreadOnly: Boolean = false): Response<List<AlertDto>>
 
-    @POST("alerts/mark-read")
-    suspend fun markAlertsRead(@Body request: MarkReadRequest): Response<Unit>
-
     // Advisory
-    @POST("advisory/ask")
+    @POST("advisory")
     suspend fun askAdvisory(@Body request: AdvisoryRequest): Response<AdvisoryResponse>
+
+    // Offline observation sync
+    @POST("sync/upload")
+    suspend fun uploadSyncBatch(@Body request: SyncUploadRequest): Response<SyncUploadResponse>
 }

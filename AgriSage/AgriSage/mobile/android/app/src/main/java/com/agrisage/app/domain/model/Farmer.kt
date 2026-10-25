@@ -6,7 +6,7 @@ data class Farmer(
     val name: String,
     val village: String? = null,
     val district: String? = null,
-    val state: String = "Kerala",
+    val state: String = "India",
     val preferredLanguage: String = "ml",
     val latitude: Double? = null,
     val longitude: Double? = null,

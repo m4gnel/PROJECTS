@@ -1,5 +1,7 @@
 package com.agrisage.app.ui.screens.onboarding
 
+import android.Manifest
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,6 +20,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,9 +30,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.agrisage.app.navigation.Screen
+import com.agrisage.app.navigation.Home
+import com.agrisage.app.navigation.Onboarding
 import com.agrisage.app.ui.components.LoadingOverlay
 import com.agrisage.app.ui.theme.OnSurface
 import com.agrisage.app.ui.theme.OnSurfaceVar
@@ -45,6 +51,15 @@ fun OnboardingScreen(
     viewModel: OnboardingViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { }
+
+    LaunchedEffect(state.currentPage) {
+        if (state.currentPage == 2 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize().background(Surface)) {
         Column(
@@ -81,11 +96,13 @@ fun OnboardingScreen(
                             color = OnSurface
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        val languages = listOf(
+                            val languages = listOf(
                             "ml" to "മലയാളം (Malayalam)",
                             "en" to "English",
                             "ta" to "தமிழ் (Tamil)",
-                            "hi" to "हिन्दी (Hindi)"
+                            "hi" to "हिन्दी (Hindi)",
+                            "te" to "తెలుగు (Telugu)",
+                            "pa" to "ਪੰਜਾਬੀ (Punjabi)"
                         )
                         languages.forEach { (code, label) ->
                             val isSelected = state.selectedLanguage == code
@@ -131,16 +148,25 @@ fun OnboardingScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         OutlinedTextField(
+                            value = state.phone,
+                            onValueChange = { viewModel.updatePhone(it) },
+                            label = { Text("Mobile number / മൊബൈൽ") },
+                            placeholder = { Text("10-digit number") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
                             value = state.village,
                             onValueChange = { viewModel.updateVillage(it) },
-                            label = { Text("Village / ഗ്രാമം (e.g. Kalady)") },
+                            label = { Text("Village / ഗ്രാമം (e.g. your village)") },
                             modifier = Modifier.fillMaxWidth()
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         OutlinedTextField(
                             value = state.district,
                             onValueChange = { viewModel.updateDistrict(it) },
-                            label = { Text("District / ജില്ല (e.g. Ernakulam)") },
+                            label = { Text("District / ജില്ല (e.g. Nashik)") },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -156,16 +182,41 @@ fun OnboardingScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "📍 Location: Needed for Hyper-local weather & soil data for Kerala.",
+                            text = "Location: Needed for field-level weather and soil guidance across India.",
                             fontSize = 14.sp,
                             color = OnSurfaceVar
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "🔔 Notifications: Receive NBAIR pest alerts and weather warnings.",
+                            text = "Notifications: Receive pest alerts, weather warnings, and field reminders.",
                             fontSize = 14.sp,
                             color = OnSurfaceVar
                         )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        if (state.otpSent) {
+                            OutlinedTextField(
+                                value = state.otp,
+                                onValueChange = { viewModel.updateOtp(it) },
+                                label = { Text("Verification code / സ്ഥിരീകരണ കോഡ്") },
+                                placeholder = { Text("6 digits") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true
+                            )
+                        } else {
+                            Text(
+                                text = "We will send a one-time code to verify your mobile number.",
+                                fontSize = 14.sp,
+                                color = OnSurfaceVar
+                            )
+                        }
+                        state.notice?.let { notice ->
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(text = notice, fontSize = 13.sp, color = SageGreen700)
+                        }
+                        state.error?.let { error ->
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(text = error, fontSize = 13.sp, color = Color(0xFFB3261E))
+                        }
                     }
                 }
             }
@@ -197,8 +248,8 @@ fun OnboardingScreen(
                     Button(
                         onClick = {
                             viewModel.completeOnboarding {
-                                navController.navigate(Screen.Home) {
-                                    popUpTo(Screen.Onboarding) { inclusive = true }
+                                navController.navigate(Home) {
+                                    popUpTo(Onboarding) { inclusive = true }
                                 }
                             }
                         },

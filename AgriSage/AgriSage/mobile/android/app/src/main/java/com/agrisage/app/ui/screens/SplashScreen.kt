@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.agrisage.app.navigation.Home
 import com.agrisage.app.navigation.Onboarding
 import com.agrisage.app.ui.theme.*
@@ -35,6 +36,7 @@ import kotlinx.coroutines.delay
  */
 @Composable
 fun SplashScreen(navController: NavController) {
+    val viewModel: SplashViewModel = hiltViewModel()
     // Logo scale animation: 0.8 → 1.0 with EaseOutBack feel
     val scale by rememberInfiniteTransition(label = "splash_scale").animateFloat(
         initialValue = 0.8f,
@@ -53,12 +55,13 @@ fun SplashScreen(navController: NavController) {
         taglineAlpha.animateTo(1f, animationSpec = tween(500))
     }
 
-    // Navigation logic: check onboarding state
-    // TODO: replace `isOnboarded = false` with DataStore read when DataStoreManager is injected
+    // Navigation is session-gated. A cached access token is enough to enter
+    // the app; the OkHttp authenticator rotates it on the first 401. If only
+    // a refresh token remains, restore it before showing the dashboard.
     LaunchedEffect(Unit) {
         delay(2000)
-        val isOnboarded = true // Set to true to display Home directly
-        if (isOnboarded) {
+        val hasSession = viewModel.restoreSession()
+        if (hasSession) {
             navController.navigate(Home) { popUpTo(com.agrisage.app.navigation.Splash) { inclusive = true } }
         } else {
             navController.navigate(Onboarding(step = 0)) { popUpTo(com.agrisage.app.navigation.Splash) { inclusive = true } }

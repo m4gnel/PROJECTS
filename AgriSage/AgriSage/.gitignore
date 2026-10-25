@@ -41,11 +41,15 @@ env/
 *.tflite
 models/
 !models/.gitkeep
+# The backend ORM and Pydantic modules are source code, not model artifacts.
+!backend/models/
+!backend/models/**/*.py
 
 # Environment & Secrets
 .env
 .env.local
 .env.*.local
+.git_subrepo/
 *.pem
 *.key
 *.p12
@@ -72,6 +76,7 @@ app/build/
 *.apk
 *.aab
 local.properties
+mobile/android/app/google-services.json
 .navigation/
 captures/
 .externalNativeBuild/

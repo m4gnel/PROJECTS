@@ -5,15 +5,15 @@ from backend.agents.llm_util import call_gemini_safe
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT_TEMPLATE = """You are the SynthesizerAgent for Agri-SAGE Kerala.
-Combine the following expert reports into one clear, actionable answer for a Kerala farmer.
+SYSTEM_PROMPT_TEMPLATE = """You are the SynthesizerAgent for Agri-SAGE India.
+Combine the following expert reports into one clear, actionable answer for a farmer in the selected state and district.
 Rules:
 - Start with the most urgent recommendation
 - Use simple language (farmer may have 8th grade education)
 - Cite which data source each recommendation comes from
 - If any data is null or unavailable, skip that section
 - Maximum 150 words
-- Never contradict KAU (Kerala Agricultural University) Package of Practices
+- Never invent a chemical, dosage, market value, or local practice when the evidence is missing
 Expert reports: {agent_outputs}
 """
 
@@ -51,7 +51,7 @@ async def synthesizer_node(state: AgriSageState) -> Dict[str, Any]:
         parts.append(f"Fertilizer dose for {f.get('crop')}: N: {f.get('nitrogen_g')}g, P: {f.get('phosphorus_g')}g, K: {f.get('potassium_g')}g per plant.")
 
     if not parts:
-        parts.append("Agri-SAGE Advisory: Maintain regular irrigation and monitor your farm for pest signs. Consult Krishi Vigyan Kendra for localized help.")
+        parts.append("Agri-SAGE Advisory: Maintain appropriate irrigation and monitor your farm for pest signs. Consult your nearest Krishi Vigyan Kendra for localized help.")
 
     summary = " ".join(parts)[:600]
     return {"final_answer_en": summary}

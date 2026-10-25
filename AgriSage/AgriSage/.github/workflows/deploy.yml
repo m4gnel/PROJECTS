@@ -24,19 +24,43 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version-file: '.nvmrc'
           cache: 'npm'
+          cache-dependency-path: apps/web-expert/package-lock.json
 
-      - name: Install dependencies
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Install frontend dependencies
+        working-directory: apps/web-expert
         run: npm ci
 
+      - name: Verify production API configuration
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+        run: |
+          if [ -z "$VITE_API_BASE_URL" ]; then
+            echo "VITE_API_BASE_URL is required for the public Pages build." >&2
+            echo "Set it as a repository variable to the HTTPS backend origin (for example, https://api.example.com)." >&2
+            exit 1
+          fi
+
       - name: Build
+        working-directory: apps/web-expert
+        env:
+          VITE_BASE_PATH: /AgriSage/
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_ENABLE_DEMO_AUTH: 'false'
         run: npm run build
+
+      - name: Add SPA fallback for direct route loads
+        working-directory: apps/web-expert
+        run: cp dist/index.html dist/404.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./out
+          path: apps/web-expert/dist
 
   deploy:
     environment:
@@ -47,4 +71,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

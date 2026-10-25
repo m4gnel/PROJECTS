@@ -17,7 +17,20 @@ try:
 except ImportError:
     import logging
     logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("agrisage_backend")
+
+    class _FallbackLogger:
+        """Small structured-logging adapter for minimal/offline installs."""
+
+        def __init__(self, name: str):
+            self._logger = logging.getLogger(name)
+
+        def info(self, event: str, **fields):
+            self._logger.info("%s %s", event, fields)
+
+        def error(self, event: str, **fields):
+            self._logger.error("%s %s", event, fields)
+
+    logger = _FallbackLogger("agrisage_backend")
 
 from backend.config import settings
 from backend.database import check_db_connection, engine
@@ -35,11 +48,13 @@ from backend.api.v1.sync import router as sync_router
 from backend.api.v1.expert import router as expert_router
 from backend.api.v1.subscriptions import router as subscriptions_router
 from backend.api.v1.advisory import router as advisory_router
+from backend.api.v1.operations import router as operations_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """FastAPI 0.115.0 Lifespan Context Manager."""
+    settings.validate_runtime()
     logger.info("app_startup", environment=settings.ENVIRONMENT, version=settings.MODEL_VERSION)
     db_connected = await check_db_connection()
     logger.info("db_connection_check", db_connected=db_connected)
@@ -94,7 +109,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         "unhandled_exception",
         path=request.url.path,
         method=request.method,
-        error=str(exc)
+        error_type=type(exc).__name__,
     )
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -107,12 +122,24 @@ async def global_exception_handler(request: Request, exc: Exception):
 async def health_check():
     db_connected = await check_db_connection()
     return {
-        "status": "healthy",
+        "status": "ok",
         "service": "agrisage-backend",
         "version": getattr(settings, "MODEL_VERSION", "1.0.0"),
         "environment": getattr(settings, "ENVIRONMENT", "development"),
         "db_connected": db_connected,
     }
+
+
+@app.get("/ready")
+async def readiness_check():
+    """Return 503 until the database-backed service is ready for traffic."""
+    db_connected = await check_db_connection()
+    if not db_connected:
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={"status": "not_ready", "service": "agrisage-backend", "db_connected": False},
+        )
+    return {"status": "ready", "service": "agrisage-backend", "db_connected": True}
 
 
 # Include Routers under /api/v1 prefix
@@ -130,3 +157,4 @@ app.include_router(sync_router, prefix="/api/v1")
 app.include_router(expert_router, prefix="/api/v1")
 app.include_router(subscriptions_router, prefix="/api/v1")
 app.include_router(advisory_router, prefix="/api/v1")
+app.include_router(operations_router, prefix="/api/v1")

@@ -1,6 +1,8 @@
 from typing import Dict, Any, List, Optional
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from backend.agents.scheme import SchemeAgent
+from backend.config import settings
+from backend.dependencies import get_current_user
 
 router = APIRouter(tags=["Schemes"])
 
@@ -42,9 +44,12 @@ MOCK_SCHEMES = [
 
 @router.get("/schemes")
 async def list_government_schemes(
-    category: Optional[str] = None
+    category: Optional[str] = None,
+    _auth: Dict[str, Any] = Depends(get_current_user),
 ) -> List[Dict[str, Any]]:
     """Retrieve verified government agricultural schemes with statutory disclaimers."""
+    if settings.ENVIRONMENT.lower() == "production":
+        return []
     valid_schemes = scheme_agent.filter_valid_schemes(MOCK_SCHEMES)
     if category:
         valid_schemes = [s for s in valid_schemes if category.lower() in s.get("category", "").lower()]
@@ -52,8 +57,16 @@ async def list_government_schemes(
 
 
 @router.get("/schemes/{scheme_id}")
-async def get_scheme_detail(scheme_id: str) -> Dict[str, Any]:
+async def get_scheme_detail(
+    scheme_id: str,
+    _auth: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
     """Retrieve detailed scheme information by scheme ID."""
+    if settings.ENVIRONMENT.lower() == "production":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Scheme with ID '{scheme_id}' not found.",
+        )
     for s in MOCK_SCHEMES:
         if s["scheme_id"].upper() == scheme_id.upper():
             return s
